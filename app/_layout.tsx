@@ -4,13 +4,22 @@ import {
 	ThemeProvider,
 } from "@react-navigation/native";
 import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import "react-native-reanimated";
+import { TamaguiProvider } from "tamagui";
 import "../global.css";
 
 import { useColorScheme } from "@/components/useColorScheme";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ChatProvider } from "@/contexts/ChatContext";
+import { ProjectProvider } from "@/contexts/ProjectContext";
+import { StudySessionProvider } from "@/contexts/StudySessionContext";
+import { TaskProvider } from "@/contexts/TaskContext";
+import { UserProvider } from "@/contexts/UserContext";
+import { useAuth } from "@/hooks/useAuth";
+import { config } from "@/tamagui.config";
 
 export {
 	// Catch any errors thrown by the Layout component.
@@ -18,8 +27,7 @@ export {
 } from "expo-router";
 
 export const unstable_settings = {
-	// Ensure that reloading on `/modal` keeps a back button present.
-	initialRouteName: "(tabs)",
+	initialRouteName: "(main)",
 };
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -45,23 +53,58 @@ export default function RootLayout() {
 		return null;
 	}
 
-	return <RootLayoutNav />;
+	return (
+		<TamaguiProvider config={config} defaultTheme="light">
+			<AuthProvider>
+				<RootLayoutNav />
+			</AuthProvider>
+		</TamaguiProvider>
+	);
 }
 
 function RootLayoutNav() {
 	const colorScheme = useColorScheme();
+	const { user, isLoading } = useAuth();
+	const segments = useSegments();
+	const router = useRouter();
+
+	useEffect(() => {
+		if (isLoading) return;
+
+		const inAuthGroup = segments[0] === "(auth)";
+
+		if (!user && !inAuthGroup) {
+			router.replace("/(auth)/sign-in");
+		} else if (user && inAuthGroup) {
+			router.replace("/study");
+		}
+	}, [user, segments, isLoading]);
 
 	return (
 		<ThemeProvider
 			value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
 		>
-			<Stack>
-				<Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-				<Stack.Screen
-					name="modal"
-					options={{ presentation: "modal" }}
-				/>
-			</Stack>
+			<UserProvider>
+				<ProjectProvider>
+					<TaskProvider>
+						<StudySessionProvider>
+							<ChatProvider>
+								<Stack>
+									<Stack.Screen
+										name="(auth)"
+										options={{ headerShown: false }}
+									/>
+									<Stack.Screen
+										name="(main)/(tabs)"
+										options={{ headerShown: false }}
+									/>
+									<Stack.Screen name="+not-found" />
+								</Stack>
+							</ChatProvider>
+						</StudySessionProvider>
+					</TaskProvider>
+				</ProjectProvider>
+			</UserProvider>
 		</ThemeProvider>
 	);
 }
