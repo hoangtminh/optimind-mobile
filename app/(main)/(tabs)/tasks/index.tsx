@@ -1,254 +1,435 @@
-import AddProjectModal from "@/components/projects/AddProjectModal";
-import { useNavigation } from "@react-navigation/native";
-import { ArrowRight, FolderOpen } from "lucide-react-native";
+import { useProject } from "@/contexts/ProjectContext";
+import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
+import { CheckCircle2, Folder, Plus, X } from "lucide-react-native";
 import React, { useState } from "react";
-import {
-	ScrollView,
-	StyleSheet,
-	Text,
-	TouchableOpacity,
-	View,
-} from "react-native";
+import { FlatList, Modal, Platform, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Button, Input, Text, View, XStack, YStack, styled } from "tamagui";
 
-interface Project {
-	id: string;
-	name: string;
-	description: string;
-	lastModified: string;
-	taskCount: number;
-	completedTasks: number;
-}
+const ProjectCard = styled(YStack, {
+	padding: "$5",
+	borderRadius: "$5",
+	backgroundColor: "$surface_container_lowest",
+	borderWidth: 1,
+	borderColor: "$surface_variant",
+	shadowColor: "$on_surface",
+	shadowRadius: 12,
+	shadowOpacity: 0.04,
+	shadowOffset: { width: 0, height: 4 },
+	pressStyle: { scale: 0.98, backgroundColor: "$surface_container_low" },
+});
 
-const mockProjects: Project[] = [
+const CreateNewCard = styled(YStack, {
+	padding: "$6",
+	borderRadius: "$5",
+	borderWidth: 2,
+	borderStyle: "dashed",
+	borderColor: "$outline_variant",
+	backgroundColor: "transparent",
+	alignItems: "center",
+	justifyContent: "center",
+	pressStyle: {
+		backgroundColor: "$surface_container_lowest",
+		borderColor: "$primary",
+	},
+});
+
+export const MOCK_PROJECTS = [
 	{
-		id: "927687412895493685",
-		name: "Study Sanctuary App",
+		id: "p1",
+		name: "Quantum Physics Research",
 		description:
-			"Productivity and study management application with Pomodoro timer",
-		lastModified: "2026-03-23",
-		taskCount: 24,
-		completedTasks: 18,
+			"Exploring the fundamentals of quantum entanglement and its applications in modern computing.",
+		taskCount: 12,
+		createdAt: "2023-10-01T12:00:00Z",
+		updatedAt: "2023-10-15T12:00:00Z",
 	},
 	{
-		id: "6222951898278486672",
-		name: "E-commerce Platform",
-		description: "Vietnamese marketplace with seller and buyer dashboards",
-		lastModified: "2026-03-14",
-		taskCount: 45,
-		completedTasks: 32,
+		id: "p2",
+		name: "Architecture Thesis",
+		description:
+			"Designing sustainable urban housing solutions for the 21st century.",
+		taskCount: 5,
+		createdAt: "2023-09-15T09:30:00Z",
+		updatedAt: "2023-10-10T14:20:00Z",
+	},
+	{
+		id: "p3",
+		name: "Data Ethics Presentation",
+		description:
+			"Preparing slides and research on the ethical implications of AI and big data.",
+		taskCount: 8,
+		createdAt: "2023-10-20T10:00:00Z",
+		updatedAt: "2023-10-21T11:00:00Z",
 	},
 ];
 
-export default function Task() {
-	const navigation = useNavigation();
-	const [isAddProjectVisible, setIsAddProjectVisible] = useState(false);
+// --- Create Project Modal Component ---
+function CreateProjectModal({
+	isOpen,
+	onClose,
+	onCreate,
+}: {
+	isOpen: boolean;
+	onClose: () => void;
+	onCreate: (data: { name: string; description: string }) => void;
+}) {
+	const [name, setName] = useState("");
+	const [description, setDescription] = useState("");
 
-	const handleProjectSelect = (project: Project) => {
-		// Navigate to ProjectTasks screen with project ID
-		navigation.navigate([
-			"ProjectTasks",
-			{ projectId: project.id },
-		] as never);
+	const handleCreate = () => {
+		if (name.trim()) {
+			onCreate({ name: name.trim(), description: description.trim() });
+			setName("");
+			setDescription("");
+			onClose();
+		}
 	};
 
 	return (
-		<SafeAreaView style={styles.container} edges={["top"]}>
-			{/* Header */}
-			<View style={styles.header}>
-				<Text style={styles.headerTitle}>Projects</Text>
-				<Text style={styles.headerSubtitle}>
-					Manage your tasks across different projects
-				</Text>
-			</View>
-
-			{/* Projects List */}
-			<ScrollView
-				style={styles.content}
-				showsVerticalScrollIndicator={false}
+		<Modal
+			visible={isOpen}
+			transparent
+			animationType="fade"
+			onRequestClose={onClose}
+		>
+			<View
+				flex={1}
+				justifyContent="center"
+				alignItems="center"
+				backgroundColor="rgba(25, 28, 30, 0.4)"
+				style={
+					Platform.OS === "web"
+						? ({ backdropFilter: "blur(8px)" } as any)
+						: {}
+				}
+				padding="$4"
 			>
-				{mockProjects.map((project) => (
-					<TouchableOpacity
-						key={project.id}
-						style={styles.projectCard}
-						onPress={() => handleProjectSelect(project)}
-					>
-						<View style={styles.projectHeader}>
-							<FolderOpen size={24} color="#0058be" />
-							<View style={styles.projectInfo}>
-								<Text style={styles.projectName}>
-									{project.name}
-								</Text>
-								<Text style={styles.projectDescription}>
-									{project.description}
-								</Text>
-							</View>
-							<ArrowRight size={20} color="#cbd5e1" />
-						</View>
-
-						<View style={styles.projectStats}>
-							<View style={styles.stat}>
-								<Text style={styles.statValue}>
-									{project.taskCount}
-								</Text>
-								<Text style={styles.statLabel}>Tasks</Text>
-							</View>
-							<View style={styles.stat}>
-								<Text style={styles.statValue}>
-									{project.completedTasks}
-								</Text>
-								<Text style={styles.statLabel}>Done</Text>
-							</View>
-							<View style={styles.stat}>
-								<Text style={styles.statValue}>
-									{Math.round(
-										(project.completedTasks /
-											project.taskCount) *
-											100,
-									)}
-									%
-								</Text>
-								<Text style={styles.statLabel}>Progress</Text>
-							</View>
-						</View>
-
-						<Text style={styles.lastModified}>
-							Last modified: {project.lastModified}
-						</Text>
-					</TouchableOpacity>
-				))}
-
-				{/* Add Project Button */}
-				<TouchableOpacity
-					style={styles.addProjectCard}
-					onPress={() => setIsAddProjectVisible(true)}
+				<View
+					backgroundColor="white"
+					width="100%"
+					maxWidth={450}
+					borderRadius={24}
+					padding="$6"
+					shadowColor="#000"
+					shadowRadius={30}
+					shadowOpacity={0.15}
+					shadowOffset={{ width: 0, height: 10 }}
 				>
-					<View style={styles.addProjectContent}>
-						<Text style={styles.addProjectIcon}>+</Text>
-						<Text style={styles.addProjectText}>
-							Create New Project
+					<XStack
+						justifyContent="space-between"
+						alignItems="center"
+						marginBottom="$6"
+					>
+						<Text
+							fontSize="$6"
+							fontWeight="700"
+							color="$on_surface"
+						>
+							Start New Project
 						</Text>
-					</View>
-				</TouchableOpacity>
-			</ScrollView>
+						<Button
+							circular
+							chromeless
+							icon={<X size={24} color="$on_surface_variant" />}
+							onPress={onClose}
+						/>
+					</XStack>
 
-			<AddProjectModal
-				visible={isAddProjectVisible}
-				onClose={() => setIsAddProjectVisible(false)}
+					<YStack gap="$4" marginBottom="$6">
+						<YStack gap="$2">
+							<Text
+								fontSize="$3"
+								color="$on_surface_variant"
+								fontWeight="600"
+							>
+								Project Name
+							</Text>
+							<Input
+								backgroundColor="$surface_container_high"
+								borderWidth={0}
+								height={52}
+								borderRadius={12}
+								placeholder="e.g., Thesis Research"
+								value={name}
+								onChangeText={setName}
+							/>
+						</YStack>
+						<YStack gap="$2">
+							<Text
+								fontSize="$3"
+								color="$on_surface_variant"
+								fontWeight="600"
+							>
+								Description
+							</Text>
+							<Input
+								backgroundColor="$surface_container_high"
+								borderWidth={0}
+								borderRadius={12}
+								placeholder="Brief overview of your project..."
+								multiline
+								numberOfLines={3}
+								height={100}
+								textAlignVertical="top"
+								paddingTop="$3"
+								value={description}
+								onChangeText={setDescription}
+							/>
+						</YStack>
+					</YStack>
+
+					<XStack justifyContent="flex-end" gap="$3">
+						<Button chromeless onPress={onClose}>
+							Cancel
+						</Button>
+						<LinearGradient
+							colors={["#0058be", "#2170e4"]}
+							start={{ x: 0, y: 0 }}
+							end={{ x: 1, y: 1 }}
+							style={{ borderRadius: 12 }}
+						>
+							<Button
+								unstyled
+								paddingHorizontal="$5"
+								height={44}
+								justifyContent="center"
+								alignItems="center"
+								pressStyle={{ scale: 0.98 }}
+								disabled={!name.trim()}
+								onPress={handleCreate}
+								opacity={!name.trim() ? 0.5 : 1}
+							>
+								<Text color="white" fontWeight="600">
+									Create
+								</Text>
+							</Button>
+						</LinearGradient>
+					</XStack>
+				</View>
+			</View>
+		</Modal>
+	);
+}
+
+export default function ProjectsListScreen() {
+	const router = useRouter();
+	const [isModalOpen, setIsModalOpen] = useState(false);
+	const { projects, createProject } = useProject();
+
+	const handleCreateProject = (data: {
+		name: string;
+		description: string;
+	}) => {
+		console.log("Create project triggered:", data);
+		createProject(data);
+	};
+	console.log(projects);
+
+	return (
+		<SafeAreaView
+			style={{ flex: 1, backgroundColor: "#f8f9fb" }}
+			edges={["top"]}
+		>
+			<YStack flex={1} backgroundColor="$background" position="relative">
+				{/* Floating Header */}
+				<XStack
+					height={64}
+					alignItems="center"
+					paddingHorizontal="$4"
+					backgroundColor="rgba(248, 249, 251, 0.8)"
+					zIndex={10}
+					style={
+						Platform.OS === "web"
+							? ({ backdropFilter: "blur(10px)" } as any)
+							: {}
+					}
+				>
+					<Text fontSize="$5" fontWeight="600" color="$on_surface">
+						Project Workspace
+					</Text>
+				</XStack>
+
+				<FlatList
+					data={MOCK_PROJECTS}
+					keyExtractor={(item) => item.id}
+					contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
+					ItemSeparatorComponent={() => <View height={16} />}
+					ListHeaderComponent={
+						<YStack paddingBottom="$6" paddingTop="$2">
+							<Text
+								fontSize={36}
+								fontWeight="800"
+								color="$on_surface"
+								letterSpacing={-1}
+								marginBottom="$2"
+							>
+								Active Research
+							</Text>
+							<Text
+								fontSize="$4"
+								color="$on_surface_variant"
+								lineHeight={24}
+							>
+								Manage your academic pursuits with surgical
+								precision. Each project is a sanctuary for
+								thought.
+							</Text>
+						</YStack>
+					}
+					renderItem={({ item }) => (
+						<ProjectCard
+							onPress={() =>
+								router.push(`/(main)/(tabs)/tasks/${item.id}`)
+							}
+						>
+							<XStack
+								alignItems="center"
+								gap="$3"
+								marginBottom="$4"
+							>
+								<View
+									width={40}
+									height={40}
+									borderRadius="$3"
+									backgroundColor="$primary_fixed"
+									alignItems="center"
+									justifyContent="center"
+								>
+									<Folder color="#0058be" size={20} />
+								</View>
+								<Text
+									fontSize={11}
+									fontWeight="800"
+									textTransform="uppercase"
+									letterSpacing={1}
+									color="$on_surface_variant"
+								>
+									Workspace
+								</Text>
+							</XStack>
+
+							<Text
+								fontWeight="800"
+								fontSize="$6"
+								color="$on_surface"
+								marginBottom="$2"
+							>
+								{item.name}
+							</Text>
+
+							<Text
+								fontSize="$3"
+								color="$on_surface_variant"
+								numberOfLines={2}
+								marginBottom="$5"
+							>
+								{item.description}
+							</Text>
+
+							<XStack
+								paddingTop="$4"
+								borderTopWidth={1}
+								borderTopColor="$surface_variant"
+								justifyContent="space-between"
+								alignItems="center"
+							>
+								<XStack alignItems="center" gap="$2">
+									<CheckCircle2 size={16} color="#727785" />
+									<Text
+										fontSize={12}
+										fontWeight="600"
+										color="$on_surface_variant"
+									>
+										{item.taskCount} Tasks
+									</Text>
+								</XStack>
+								{/* Mock Avatars Container */}
+								<XStack>
+									<View
+										width={24}
+										height={24}
+										borderRadius="$full"
+										backgroundColor="$surface_dim"
+										borderWidth={2}
+										borderColor="$surface_container_lowest"
+										zIndex={2}
+									/>
+									<View
+										width={24}
+										height={24}
+										borderRadius="$full"
+										backgroundColor="$outline_variant"
+										borderWidth={2}
+										borderColor="$surface_container_lowest"
+										marginLeft={-8}
+										zIndex={1}
+									/>
+								</XStack>
+							</XStack>
+						</ProjectCard>
+					)}
+					ListFooterComponent={
+						<CreateNewCard
+							onPress={() => setIsModalOpen(true)}
+							marginTop="$4"
+						>
+							<View
+								width={48}
+								height={48}
+								borderRadius="$full"
+								backgroundColor="$surface_container_high"
+								alignItems="center"
+								justifyContent="center"
+								marginBottom="$3"
+							>
+								<Plus color="#727785" size={24} />
+							</View>
+							<Text fontWeight="700" color="$on_surface_variant">
+								Start New Project
+							</Text>
+							<Text fontSize="$2" color="$outline" marginTop="$1">
+								Begin a new academic journey
+							</Text>
+						</CreateNewCard>
+					}
+				/>
+
+				{/* FAB */}
+				<View position="absolute" bottom={24} right={24} zIndex={100}>
+					<TouchableOpacity
+						onPress={() => setIsModalOpen(true)}
+						activeOpacity={0.8}
+					>
+						<LinearGradient
+							colors={["#0058be", "#2170e4"]}
+							start={{ x: 0, y: 0 }}
+							end={{ x: 1, y: 1 }}
+							style={{
+								width: 64,
+								height: 64,
+								borderRadius: 24,
+								justifyContent: "center",
+								alignItems: "center",
+								shadowColor: "#000",
+								shadowOffset: { width: 0, height: 8 },
+								shadowOpacity: 0.15,
+								shadowRadius: 24,
+								elevation: 8,
+							}}
+						>
+							<Plus color="white" size={32} />
+						</LinearGradient>
+					</TouchableOpacity>
+				</View>
+			</YStack>
+
+			<CreateProjectModal
+				isOpen={isModalOpen}
+				onClose={() => setIsModalOpen(false)}
+				onCreate={handleCreateProject}
 			/>
 		</SafeAreaView>
 	);
 }
-
-const styles = StyleSheet.create({
-	container: {
-		flex: 1,
-		backgroundColor: "#f8f9fb",
-	},
-	header: {
-		padding: 20,
-		backgroundColor: "#ffffff",
-		borderBottomWidth: 1,
-		borderBottomColor: "#f1f5f9",
-	},
-	headerTitle: {
-		fontSize: 24,
-		fontWeight: "bold",
-		color: "#1e293b",
-		textAlign: "center",
-	},
-	headerSubtitle: {
-		fontSize: 16,
-		color: "#64748b",
-		textAlign: "center",
-		marginTop: 4,
-	},
-	content: {
-		flex: 1,
-		padding: 20,
-	},
-	projectCard: {
-		backgroundColor: "#ffffff",
-		borderRadius: 16,
-		padding: 20,
-		marginBottom: 16,
-		shadowColor: "#000",
-		shadowOffset: {
-			width: 0,
-			height: 2,
-		},
-		shadowOpacity: 0.1,
-		shadowRadius: 3.84,
-		elevation: 5,
-	},
-	projectHeader: {
-		flexDirection: "row",
-		alignItems: "flex-start",
-		marginBottom: 16,
-	},
-	projectInfo: {
-		flex: 1,
-		marginLeft: 12,
-		marginRight: 12,
-	},
-	projectName: {
-		fontSize: 18,
-		fontWeight: "600",
-		color: "#1e293b",
-		marginBottom: 4,
-	},
-	projectDescription: {
-		fontSize: 14,
-		color: "#64748b",
-		lineHeight: 20,
-	},
-	projectStats: {
-		flexDirection: "row",
-		justifyContent: "space-between",
-		marginBottom: 12,
-	},
-	stat: {
-		alignItems: "center",
-		flex: 1,
-	},
-	statValue: {
-		fontSize: 20,
-		fontWeight: "bold",
-		color: "#0058be",
-	},
-	statLabel: {
-		fontSize: 12,
-		color: "#64748b",
-		marginTop: 2,
-	},
-	lastModified: {
-		fontSize: 12,
-		color: "#94a3b8",
-		textAlign: "right",
-	},
-	addProjectCard: {
-		backgroundColor: "#ffffff",
-		borderRadius: 16,
-		padding: 20,
-		marginBottom: 16,
-		borderWidth: 2,
-		borderColor: "#e2e8f0",
-		borderStyle: "dashed",
-		alignItems: "center",
-		justifyContent: "center",
-		minHeight: 120,
-	},
-	addProjectContent: {
-		alignItems: "center",
-	},
-	addProjectIcon: {
-		fontSize: 32,
-		color: "#cbd5e1",
-		marginBottom: 8,
-	},
-	addProjectText: {
-		fontSize: 16,
-		color: "#64748b",
-		fontWeight: "500",
-	},
-});
