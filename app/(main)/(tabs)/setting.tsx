@@ -1,6 +1,7 @@
 import GlobalHeader from "@/components/app/GlobalHeader";
-import { useUser } from "@/contexts/UserContext";
+import { useAuth } from "@/hooks/useAuth";
 import { DrawerActions, useNavigation } from "@react-navigation/native";
+import { router } from "expo-router";
 import {
 	Bell,
 	ChevronRight,
@@ -65,7 +66,7 @@ const SettingItem: React.FC<SettingItemProps> = ({
 
 export default function Setting() {
 	const navigation = useNavigation();
-	const { user } = useUser();
+	const { user } = useAuth();
 	const [notifications, setNotifications] = useState(true);
 	const [darkMode, setDarkMode] = useState(false);
 	const [soundEnabled, setSoundEnabled] = useState(true);
@@ -94,7 +95,7 @@ export default function Setting() {
 					subtitle:
 						user?.username || "Update your profile information",
 					icon: <User size={20} color="#0058be" />,
-					onPress: () => console.log("Navigate to profile"),
+					onPress: () => router.push("/(main)/(tabs)/profile"),
 				},
 				{
 					title: "Notifications",

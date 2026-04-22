@@ -1,6 +1,6 @@
 import GlobalHeader from "@/components/app/GlobalHeader";
 import { useStudySessions } from "@/contexts/StudySessionContext";
-import { useUser } from "@/contexts/UserContext";
+import { useAuth } from "@/hooks/useAuth";
 import { useProgressCalculator, useTimeFormatter } from "@/hooks/useUtils";
 import { DrawerActions, useNavigation } from "@react-navigation/native";
 import { Camera, Edit, Flame, Target, Trophy, User } from "lucide-react-native";
@@ -16,14 +16,19 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Profile() {
 	const navigation = useNavigation();
-	const { user } = useUser();
-	const { totalTodayTime, completedTodaySessions } = useStudySessions();
+	const { user } = useAuth();
+	const { studySessions } = useStudySessions();
 	const { getExperienceProgress } = useProgressCalculator();
 	const { formatDuration } = useTimeFormatter();
 
 	if (!user) return null;
 
 	const experienceProgress = getExperienceProgress(user.exp);
+
+	const completedTodaySessions = studySessions.filter((session) => {
+		const today = new Date().toDateString();
+		return session.completed;
+	}).length;
 
 	return (
 		<SafeAreaView style={styles.container}>
@@ -42,6 +47,7 @@ export default function Profile() {
 					<View style={styles.avatarContainer}>
 						<View style={styles.avatar}>
 							<Text style={styles.avatarText}>
+								User
 								{user.username?.charAt(0).toUpperCase()}
 							</Text>
 						</View>
@@ -138,7 +144,7 @@ export default function Profile() {
 						<View style={styles.activityItem}>
 							<Text style={styles.activityLabel}>Study Time</Text>
 							<Text style={styles.activityValue}>
-								{formatDuration(totalTodayTime)}
+								{formatDuration(user.studyTime || 0)}
 							</Text>
 						</View>
 						<View style={styles.activityDivider} />

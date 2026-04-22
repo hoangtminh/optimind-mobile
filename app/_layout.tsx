@@ -20,6 +20,7 @@ import { TaskProvider } from "@/contexts/TaskContext";
 import { UserProvider } from "@/contexts/UserContext";
 import { useAuth } from "@/hooks/useAuth";
 import { config } from "@/tamagui.config";
+import { KeyboardProvider } from "react-native-keyboard-controller";
 
 export {
 	// Catch any errors thrown by the Layout component.
@@ -54,11 +55,13 @@ export default function RootLayout() {
 	}
 
 	return (
-		<TamaguiProvider config={config} defaultTheme="light">
-			<AuthProvider>
-				<RootLayoutNav />
-			</AuthProvider>
-		</TamaguiProvider>
+		<KeyboardProvider>
+			<TamaguiProvider config={config} defaultTheme="light">
+				<AuthProvider>
+					<RootLayoutNav />
+				</AuthProvider>
+			</TamaguiProvider>
+		</KeyboardProvider>
 	);
 }
 
@@ -69,16 +72,17 @@ function RootLayoutNav() {
 	const router = useRouter();
 
 	useEffect(() => {
+		// Wait for the authentication state to load.
 		if (isLoading) return;
 
+		// Check if the user is in the authentication-related routes.
 		const inAuthGroup = segments[0] === "(auth)";
-
 		if (!user && !inAuthGroup) {
 			router.replace("/(auth)/sign-in");
 		} else if (user && inAuthGroup) {
 			router.replace("/study");
 		}
-	}, [user, segments, isLoading]);
+	}, [user, segments, isLoading, router]);
 
 	return (
 		<ThemeProvider
@@ -91,11 +95,11 @@ function RootLayoutNav() {
 							<ChatProvider>
 								<Stack>
 									<Stack.Screen
-										name="(auth)"
+										name="(main)/(tabs)"
 										options={{ headerShown: false }}
 									/>
 									<Stack.Screen
-										name="(main)/(tabs)"
+										name="(auth)"
 										options={{ headerShown: false }}
 									/>
 									<Stack.Screen name="+not-found" />
