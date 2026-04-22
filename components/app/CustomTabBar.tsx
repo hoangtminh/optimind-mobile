@@ -1,6 +1,7 @@
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import {
 	BookOpen,
+	Camera,
 	Clock,
 	Home,
 	ListTodo,
@@ -24,6 +25,7 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
 		{ name: "history", icon: Clock, label: "History" },
 		{ name: "rank", icon: Trophy, label: "Rank" },
 		{ name: "setting", icon: Settings, label: "Setting" },
+		{ name: "mediapipe", icon: Camera, label: "Mediapipe" },
 	];
 
 	return (
