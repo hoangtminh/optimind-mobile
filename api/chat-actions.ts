@@ -1,29 +1,13 @@
+import { ChatMessageResponse, ChatRoomResponse } from "../lib/types/chat";
 import { apiGet, apiPost, ApiResponse } from "./client";
-
-export interface ChatMessage {
-	id: string;
-	chatId: string;
-	senderId: string;
-	content: string;
-	createdAt: string;
-}
-
-export interface Chat {
-	id: string;
-	name: string;
-	lastMessage?: {
-		content: string;
-		createdAt: string;
-	};
-}
 
 export const chatActions = {
 	getHistory: (
 		chatId: string,
 		page: number,
 		size: number,
-	): Promise<ApiResponse<ChatMessage[]>> => {
-		return apiGet<ChatMessage[]>(
+	): Promise<ApiResponse<ChatMessageResponse[]>> => {
+		return apiGet<ChatMessageResponse[]>(
 			`/api/messages/chat/${chatId}?page=${page}&size=${size}`,
 		);
 	},
@@ -39,13 +23,17 @@ export const chatActions = {
 	addMember: (chatId: string, userId: string): Promise<ApiResponse<any>> => {
 		return apiPost<any>(`/api/chats${chatId}/members`, { userId });
 	},
-	createChat: (name: string): Promise<ApiResponse<any>> => {
-		return apiPost<any>(`/api/chats`, { name });
+	createChat: (
+		name: string,
+		members: string[],
+		isPublic: boolean,
+	): Promise<ApiResponse<any>> => {
+		return apiPost<any>(`/api/chats`, { name, members, isPublic });
 	},
 	joinChat: (chatId: string): Promise<ApiResponse<any>> => {
 		return apiPost<any>(`/api/chats/${chatId}/join`);
 	},
-	getChats: (): Promise<ApiResponse<Chat[]>> => {
-		return apiGet<Chat[]>(`/api/chats`);
+	getChats: (): Promise<ApiResponse<ChatRoomResponse[]>> => {
+		return apiGet<ChatRoomResponse[]>(`/api/chats`);
 	},
 };

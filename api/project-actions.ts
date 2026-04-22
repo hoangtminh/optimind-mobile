@@ -1,4 +1,5 @@
-import { apiPost, apiGet, apiPut, apiDelete, ApiResponse } from "./client";
+import { ProjectResponse } from "../lib/types/project";
+import { apiDelete, apiGet, apiPost, apiPut, ApiResponse } from "./client";
 
 export interface CreateProjectRequest {
 	name: string;
@@ -8,16 +9,6 @@ export interface CreateProjectRequest {
 export interface UpdateProjectRequest {
 	name?: string;
 	description?: string;
-}
-
-export interface ProjectResponse {
-	id: string;
-	name: string;
-	description?: string;
-	user_id: string;
-	created_at: string;
-	updated_at?: string;
-	task_count?: number;
 }
 
 export const projectActions = {
@@ -75,7 +66,9 @@ export const projectActions = {
 	 */
 	async getProjectWithTasks(
 		projectId: string,
-	): Promise<ApiResponse<ProjectResponse & { tasks: any[] }>> {
-		return apiGet(`/api/projects/${projectId}?include=tasks`);
+	): Promise<ApiResponse<ProjectResponse>> {
+		return apiGet<ProjectResponse>(
+			`/api/projects/${projectId}?include=tasks`,
+		);
 	},
 };

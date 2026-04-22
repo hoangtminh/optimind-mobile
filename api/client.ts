@@ -1,10 +1,6 @@
 import { getServerIp } from "@/utils/getServerIp";
-import Constants from "expo-constants";
 
-const API_BASE_URL =
-	process.env.EXPO_PUBLIC_API_URL ||
-	Constants.expoConfig?.extra?.apiUrl ||
-	`http://${getServerIp()}:8080`;
+const API_BASE_URL = `http://${getServerIp()}:8080`;
 
 export interface ApiResponse<T> {
 	success: boolean;
@@ -35,7 +31,7 @@ async function apiRequest<T>(
 	options: RequestInit = {},
 ): Promise<ApiResponse<T>> {
 	try {
-		const url = `${API_BASE_URL}${endpoint}`;
+		const url = `http://10.219.144.88:8080${endpoint}`;
 
 		const headers: Record<string, string> = {
 			"Content-Type": "application/json",
@@ -45,6 +41,9 @@ async function apiRequest<T>(
 			headers["Authorization"] = `Bearer ${authToken}`;
 		}
 
+		console.log("Server: ", url, getServerIp());
+		console.log("Options: ", options);
+
 		const response = await fetch(url, {
 			...options,
 			headers,
@@ -53,10 +52,14 @@ async function apiRequest<T>(
 		const contentType = response.headers.get("content-type");
 		let data;
 
-		if (contentType?.includes("application/json")) {
-			data = await response.json();
-		} else {
-			data = await response.text();
+		try {
+			if (contentType?.includes("application/json")) {
+				data = await response.json();
+			} else {
+				data = await response.text();
+			}
+		} catch (e) {
+			data = null;
 		}
 
 		if (response.ok) {
@@ -69,6 +72,7 @@ async function apiRequest<T>(
 
 		throw new ApiError(response.status, data);
 	} catch (error) {
+		console.log("Error: ", error);
 		if (error instanceof ApiError) {
 			return {
 				success: false,

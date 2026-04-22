@@ -1,13 +1,5 @@
-import { apiGet, apiPost, apiPut, apiDelete, ApiResponse } from "./client";
-
-export interface StudySession {
-	id: string;
-	date: string;
-	duration: number;
-	type: string;
-	completed: boolean;
-	userId?: string;
-}
+import { StudySession } from "../lib/types/study";
+import { apiDelete, apiGet, apiPost, apiPut, ApiResponse } from "./client";
 
 export const studyActions = {
 	getSessions: (): Promise<ApiResponse<StudySession[]>> =>
