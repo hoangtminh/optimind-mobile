@@ -27,6 +27,12 @@ export const setAuthToken = (token: string | null) => {
 	authToken = token;
 };
 
+let onUnauthorized: (() => void) | null = null;
+
+export const setOnUnauthorized = (callback: () => void) => {
+	onUnauthorized = callback;
+};
+
 async function apiRequest<T>(
 	endpoint: string,
 	options: RequestInit = {},
@@ -70,6 +76,10 @@ async function apiRequest<T>(
 				data,
 				status: response.status,
 			};
+		}
+
+		if (response.status === 401) {
+			onUnauthorized?.();
 		}
 
 		throw new ApiError(response.status, data);

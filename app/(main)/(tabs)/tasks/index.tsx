@@ -1,5 +1,5 @@
 import { AppHeader } from "@/components/common/AppHeader";
-import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
+import { PremiumAlertDialog } from "@/components/common/PremiumAlertDialog";
 import ProjectModal from "@/components/projects/CreateProjectModal";
 import { useProject } from "@/contexts/ProjectContext";
 import { LinearGradient } from "expo-linear-gradient";
@@ -282,7 +282,7 @@ export default function ProjectsListScreen() {
 				onCreate={handleCreateProject}
 			/>
 
-			<DeleteConfirmDialog
+			<PremiumAlertDialog
 				open={deleteDialogOpen}
 				onOpenChange={setDeleteDialogOpen}
 				onConfirm={() => {
@@ -293,6 +293,8 @@ export default function ProjectsListScreen() {
 				}}
 				title="Delete Project"
 				description="Are you sure you want to delete this project? This action cannot be undone."
+				type="error"
+				confirmText="Delete"
 			/>
 		</SafeAreaView>
 	);

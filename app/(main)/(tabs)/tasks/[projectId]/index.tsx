@@ -1,5 +1,5 @@
 import { AppHeader } from "@/components/common/AppHeader";
-import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
+import { PremiumAlertDialog } from "@/components/common/PremiumAlertDialog";
 import { useProject } from "@/contexts/ProjectContext";
 import { Task, useTask } from "@/contexts/TaskContext";
 import { LinearGradient } from "expo-linear-gradient";
@@ -367,7 +367,7 @@ export default function ProjectTaskScreen() {
 				onUpdate={updateProject}
 			/>
 
-			<DeleteConfirmDialog
+			<PremiumAlertDialog
 				open={deleteDialogOpen}
 				onOpenChange={setDeleteDialogOpen}
 				onConfirm={async () => {
@@ -380,6 +380,8 @@ export default function ProjectTaskScreen() {
 				}}
 				title="Delete Project"
 				description="Are you sure you want to delete this project and all its tasks? This action cannot be undone."
+				type="error"
+				confirmText="Delete"
 			/>
 		</SafeAreaView>
 	);

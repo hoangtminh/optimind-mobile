@@ -1,10 +1,10 @@
+import { PremiumAlertDialog } from "@/components/common/PremiumAlertDialog";
 import { AntDesign } from "@expo/vector-icons";
 import { Link } from "@react-navigation/native";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
 	ActivityIndicator,
-	Alert,
 	Dimensions,
 	ScrollView,
 	Text,
@@ -25,13 +25,25 @@ export default function SignInScreen() {
 	const { signIn } = useAuth();
 	const router = useRouter();
 
+	const [dialog, setDialog] = useState({
+		open: false,
+		title: "",
+		description: "",
+		type: "error" as const,
+	});
+
 	const handleSignIn = async () => {
 		try {
 			setLoading(true);
 			await signIn(email, password, remember);
-			router.replace("/study/index");
+			router.replace("/(main)/(tabs)/home");
 		} catch (error: any) {
-			Alert.alert("Sign In Failed", error.message);
+			setDialog({
+				open: true,
+				title: "Sign In Failed",
+				description: error.message,
+				type: "error",
+			});
 		} finally {
 			setLoading(false);
 		}
@@ -238,6 +250,16 @@ export default function SignInScreen() {
 					</Text>
 				</View>
 			</ScrollView>
+
+			<PremiumAlertDialog
+				open={dialog.open}
+				onOpenChange={(open) =>
+					setDialog((prev) => ({ ...prev, open }))
+				}
+				title={dialog.title}
+				description={dialog.description}
+				type={dialog.type}
+			/>
 		</View>
 	);
 }

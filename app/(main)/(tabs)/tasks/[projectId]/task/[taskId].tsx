@@ -1,5 +1,5 @@
 import { AppHeader } from "@/components/common/AppHeader";
-import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
+import { PremiumAlertDialog } from "@/components/common/PremiumAlertDialog";
 import TaskModal from "@/components/tasks/TaskModal";
 import { Task, useTask } from "@/contexts/TaskContext";
 import { LinearGradient } from "expo-linear-gradient";
@@ -405,7 +405,7 @@ export default function TaskDetailsScreen() {
 				task={task || undefined}
 			/>
 
-			<DeleteConfirmDialog
+			<PremiumAlertDialog
 				open={isDeleteDialogOpen}
 				onOpenChange={setIsDeleteDialogOpen}
 				onConfirm={async () => {
@@ -420,6 +420,8 @@ export default function TaskDetailsScreen() {
 				}}
 				title="Delete Task"
 				description="Are you sure you want to delete this task? This action cannot be undone."
+				type="error"
+				confirmText="Delete"
 			/>
 		</SafeAreaView>
 	);

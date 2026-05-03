@@ -11,7 +11,7 @@ import {
 } from "lucide-react-native";
 import { useState } from "react";
 import { Button, styled, Text, XStack, YStack } from "tamagui";
-import { DeleteConfirmDialog } from "../common/DeleteConfirmDialog";
+import { PremiumAlertDialog } from "../common/PremiumAlertDialog";
 
 const TaskCard = styled(YStack, {
 	padding: "$4",
@@ -73,9 +73,7 @@ export default function TaskItem({
 		priorityColors.low;
 
 	return (
-		<TaskCard
-			opacity={isCompleted ? 0.7 : 1}
-		>
+		<TaskCard opacity={isCompleted ? 0.7 : 1}>
 			<XStack gap="$3" alignItems="flex-start">
 				<Button
 					circular
@@ -212,12 +210,14 @@ export default function TaskItem({
 				</YStack>
 			</XStack>
 
-			<DeleteConfirmDialog
+			<PremiumAlertDialog
 				open={isDeleteDialogOpen}
 				onOpenChange={setIsDeleteDialogOpen}
 				onConfirm={() => deleteTask(task.id)}
 				title="Delete Task"
 				description="Are you sure you want to delete this task? This action cannot be undone."
+				type="error"
+				confirmText="Delete"
 			/>
 		</TaskCard>
 	);

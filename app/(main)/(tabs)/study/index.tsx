@@ -1,21 +1,44 @@
+import { AppHeader } from "@/components/common/AppHeader";
 import ProductivityChart from "@/components/study/ProductivityChart";
 import TaskManager, { Task } from "@/components/study/TaskManager";
-import TimerComponent, {
-	TimerSettings,
-} from "@/components/study/TimerComponent";
-import TimerSettingsModal from "@/components/study/TimerSettingsModal";
-import { Eye, EyeOff, LayoutDashboard } from "lucide-react-native";
+import { PremiumPomodoro } from "@/components/study/PremiumPomodoro";
+import { FocusCamera } from "@/components/study/FocusCamera";
+import { TimerSettingsModal, TimerSettings } from "@/components/study/TimerSettingsModal";
+import { Brain, Camera, LayoutDashboard, ListTodo, Settings } from "lucide-react-native";
 import React, { useState } from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { YStack, XStack, Text, Button, View, styled, AnimatePresence } from "tamagui";
+
+const TabButton = styled(YStack, {
+	paddingVertical: "$2",
+	paddingHorizontal: "$4",
+	borderRadius: 100,
+	alignItems: "center",
+	justifyContent: "center",
+	flexDirection: "row",
+	gap: "$2",
+	pressStyle: { scale: 0.95 },
+	variants: {
+		active: {
+			true: {
+				backgroundColor: "#e9ddff",
+			},
+			false: {
+				backgroundColor: "transparent",
+			},
+		},
+	} as const,
+});
 
 export default function StudyScreen() {
-	const [contentVisible, setContentVisible] = useState(true);
-	const [activeTab, setActiveTab] = useState<"chart" | "tasks">("chart");
+	const [activeTab, setActiveTab] = useState<"pomodoro" | "camera" | "tasks">("pomodoro");
 	const [tasks, setTasks] = useState<Task[]>([]);
-	const [settingsModalVisible, setSettingsModalVisible] = useState(false);
-
-	const [timerSettings, setTimerSettings] = useState<TimerSettings>({
+	const [timerRunning, setTimerRunning] = useState(false);
+	const [timerTimeElapsed, setTimerTimeElapsed] = useState(0);
+	const [settingsModalOpen, setSettingsModalOpen] = useState(false);
+    
+    const [timerSettings, setTimerSettings] = useState<TimerSettings>({
 		mode: "pomodoro",
 		focusDuration: 25,
 		breakDuration: 5,
@@ -24,19 +47,12 @@ export default function StudyScreen() {
 		totalCycles: 4,
 	});
 
-	const [timerRunning, setTimerRunning] = useState(false);
-	const [timerTimeElapsed, setTimerTimeElapsed] = useState(0);
-
 	const handleAddTask = (task: Task) => {
 		setTasks((prev) => [...prev, task]);
 	};
 
 	const handleDeleteTask = (id: string) => {
 		setTasks((prev) => prev.filter((task) => task.id !== id));
-	};
-
-	const handleSettingsSave = (newSettings: TimerSettings) => {
-		setTimerSettings(newSettings);
 	};
 
 	const handleTimerStateChange = (
@@ -49,101 +65,117 @@ export default function StudyScreen() {
 
 	return (
 		<SafeAreaView
-			style={{ flex: 1, backgroundColor: "#f8f9fb" }}
+			style={{ flex: 1, backgroundColor: "#fdf7ff" }}
 			edges={["top"]}
 		>
-			{/* Header */}
-			<View className="flex-row items-center justify-between px-6 py-4 bg-white border-b border-gray-100">
-				<View className="flex-row items-center">
-					<TouchableOpacity className="p-2 mr-2">
-						<LayoutDashboard size={24} color="#0058be" />
-					</TouchableOpacity>
-					<Text className="text-xl font-bold text-slate-900">
-						Study Mode
-					</Text>
-				</View>
-			</View>
-
-			<ScrollView
-				contentContainerStyle={{ paddingBottom: 120 }}
-				className="flex-1 px-4 pt-6"
-				showsVerticalScrollIndicator={false}
-			>
-				{/* Pomodoro Timer Section */}
-				<TimerComponent
-					settings={timerSettings}
-					onSettingsPress={() => setSettingsModalVisible(true)}
-					onTimerStateChange={handleTimerStateChange}
-				/>
-
-				{/* Visibility & Switcher Toggle */}
-				<View className="flex-row items-center bg-gray-100 p-1.5 rounded-full border border-gray-200 mt-6">
-					<TouchableOpacity
-						onPress={() => setContentVisible(!contentVisible)}
-						className="flex-row items-center px-4 py-2 rounded-full bg-white shadow-sm"
-					>
-						{contentVisible ? (
-							<Eye size={14} color="#191c1e" />
-						) : (
-							<EyeOff size={14} color="#191c1e" />
-						)}
-						<Text className="ml-2 text-[10px] font-bold">
-							{contentVisible ? "Hide" : "Show"}
-						</Text>
-					</TouchableOpacity>
-
-					<View className="w-[1px] h-4 bg-gray-300 mx-2" />
-
-					<View className="flex-row bg-gray-200 rounded-full p-1">
-						<TouchableOpacity
-							onPress={() => setActiveTab("chart")}
-							className={`px-4 py-1.5 rounded-full ${activeTab === "chart" ? "bg-[#0058be]" : ""}`}
-						>
-							<Text
-								className={`text-[9px] font-bold uppercase ${activeTab === "chart" ? "text-white" : "text-gray-500"}`}
-							>
-								Chart
-							</Text>
-						</TouchableOpacity>
-						<TouchableOpacity
-							onPress={() => setActiveTab("tasks")}
-							className={`px-4 py-1.5 rounded-full ${activeTab === "tasks" ? "bg-[#0058be]" : ""}`}
-						>
-							<Text
-								className={`text-[9px] font-bold uppercase ${activeTab === "tasks" ? "text-white" : "text-gray-500"}`}
-							>
-								Tasks ({tasks.length})
-							</Text>
-						</TouchableOpacity>
-					</View>
-				</View>
-
-				{/* Dynamic Content Area */}
-				{contentVisible && (
-					<View className="mt-6 pb-6">
-						{activeTab === "chart" ? (
-							<ProductivityChart
-								isRunning={timerRunning}
-								timeElapsed={timerTimeElapsed}
-							/>
-						) : (
-							<TaskManager
-								tasks={tasks}
-								onAddTask={handleAddTask}
-								onDeleteTask={handleDeleteTask}
-							/>
-						)}
-					</View>
-				)}
-			</ScrollView>
-
-			{/* Timer Settings Modal */}
-			<TimerSettingsModal
-				visible={settingsModalVisible}
-				settings={timerSettings}
-				onSave={handleSettingsSave}
-				onClose={() => setSettingsModalVisible(false)}
+			<AppHeader
+				title="Study Center"
+				rightElement={
+					<Button 
+                        circular 
+                        size="$3" 
+                        chromeless 
+                        icon={<Settings size={20} color="white" />} 
+                        onPress={() => setSettingsModalOpen(true)}
+                    />
+				}
 			/>
+
+			<YStack flex={1}>
+				{/* Tab Navigation */}
+				<XStack
+					paddingHorizontal="$4"
+					paddingVertical="$3"
+					gap="$2"
+					backgroundColor="white"
+					borderBottomWidth={1}
+					borderBottomColor="#f2ecf4"
+				>
+					<TabButton
+						active={activeTab === "pomodoro"}
+						onPress={() => setActiveTab("pomodoro")}
+					>
+						<Brain size={16} color={activeTab === "pomodoro" ? "#6750A4" : "#7a7582"} />
+						<Text
+							fontSize="$3"
+							fontWeight="700"
+							color={activeTab === "pomodoro" ? "#6750A4" : "#7a7582"}
+						>
+							Timer
+						</Text>
+					</TabButton>
+					<TabButton
+						active={activeTab === "camera"}
+						onPress={() => setActiveTab("camera")}
+					>
+						<Camera size={16} color={activeTab === "camera" ? "#6750A4" : "#7a7582"} />
+						<Text
+							fontSize="$3"
+							fontWeight="700"
+							color={activeTab === "camera" ? "#6750A4" : "#7a7582"}
+						>
+							Camera
+						</Text>
+					</TabButton>
+					<TabButton
+						active={activeTab === "tasks"}
+						onPress={() => setActiveTab("tasks")}
+					>
+						<ListTodo size={16} color={activeTab === "tasks" ? "#6750A4" : "#7a7582"} />
+						<Text
+							fontSize="$3"
+							fontWeight="700"
+							color={activeTab === "tasks" ? "#6750A4" : "#7a7582"}
+						>
+							Tasks
+						</Text>
+					</TabButton>
+				</XStack>
+
+				<ScrollView
+					style={{ flex: 1 }}
+					contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
+					showsVerticalScrollIndicator={false}
+				>
+					<AnimatePresence mode="wait">
+						<YStack key={activeTab} animation="quick" enterStyle={{ opacity: 0, y: 10 }} exitStyle={{ opacity: 0, y: -10 }}>
+							{activeTab === "pomodoro" && (
+								<YStack gap="$6">
+									<PremiumPomodoro
+										focusDuration={timerSettings.focusDuration}
+										breakDuration={timerSettings.breakDuration}
+										onStateChange={handleTimerStateChange}
+                                        onSettingsPress={() => setSettingsModalOpen(true)}
+									/>
+									<ProductivityChart
+										isRunning={timerRunning}
+										timeElapsed={timerTimeElapsed}
+									/>
+								</YStack>
+							)}
+
+							{activeTab === "camera" && (
+								<FocusCamera />
+							)}
+
+							{activeTab === "tasks" && (
+								<TaskManager
+									tasks={tasks}
+									onAddTask={handleAddTask}
+									onDeleteTask={handleDeleteTask}
+								/>
+							)}
+						</YStack>
+					</AnimatePresence>
+				</ScrollView>
+			</YStack>
+
+            <TimerSettingsModal 
+                open={settingsModalOpen}
+                onOpenChange={setSettingsModalOpen}
+                settings={timerSettings}
+                onSave={setTimerSettings}
+            />
 		</SafeAreaView>
 	);
 }

@@ -1,11 +1,11 @@
+import { PremiumAlertDialog } from "@/components/common/PremiumAlertDialog";
 import { useAuth } from "@/hooks/useAuth"; // Hook của bạn
 import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons"; // Sử dụng expo icons
 import { LinearGradient } from "expo-linear-gradient"; // Đổi sang expo-linear-gradient cho đồng bộ
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
 	ActivityIndicator,
-	Alert,
 	KeyboardAvoidingView,
 	Platform,
 	ScrollView,
@@ -28,25 +28,54 @@ const SignUpScreen = () => {
 	const [confirmPassword, setConfirmPassword] = useState("");
 	const [agree, setAgree] = useState(false);
 	const [loading, setLoading] = useState(false);
+	const [dialog, setDialog] = useState({
+		open: false,
+		title: "",
+		description: "",
+		type: "error",
+		onConfirm: () => {},
+	});
 
 	const handleSignUp = async () => {
 		if (!agree) {
-			Alert.alert("Error", "Please agree to the terms and conditions");
+			setDialog({
+				open: true,
+				title: "Error",
+				description: "Please agree to the terms and conditions",
+				type: "error",
+				onConfirm: () => {},
+			});
 			return;
 		}
 		if (password !== confirmPassword) {
-			Alert.alert("Error", "Passwords do not match");
+			setDialog({
+				open: true,
+				title: "Error",
+				description: "Passwords do not match",
+				type: "error",
+				onConfirm: () => {},
+			});
 			return;
 		}
 
 		setLoading(true);
 		try {
 			await signUp(username, email, password);
-			Alert.alert("Success", "Account created! Please sign in.", [
-				{ text: "OK", onPress: () => router.push("/(auth)/sign-in") },
-			]);
+			setDialog({
+				open: true,
+				title: "Success",
+				description: "Account created! Please sign in.",
+				type: "success",
+				onConfirm: () => router.push("/(auth)/sign-in"),
+			});
 		} catch (error: any) {
-			Alert.alert("Sign Up Failed", error.message);
+			setDialog({
+				open: true,
+				title: "Sign Up Failed",
+				description: error.message,
+				type: "error",
+				onConfirm: () => {},
+			});
 		} finally {
 			setLoading(false);
 		}
@@ -256,6 +285,17 @@ const SignUpScreen = () => {
 					</View>
 				</ScrollView>
 			</KeyboardAvoidingView>
+
+			<PremiumAlertDialog
+				open={dialog.open}
+				onOpenChange={(open) =>
+					setDialog((prev) => ({ ...prev, open }))
+				}
+				title={dialog.title}
+				description={dialog.description}
+				type={dialog.type as any}
+				onConfirm={dialog.onConfirm}
+			/>
 		</SafeAreaView>
 	);
 };

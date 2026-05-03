@@ -1,4 +1,5 @@
 import GlobalHeader from "@/components/app/GlobalHeader";
+import { PremiumAlertDialog } from "@/components/common/PremiumAlertDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { DrawerActions, useNavigation } from "@react-navigation/native";
 import { router } from "expo-router";
@@ -16,14 +17,7 @@ import {
 	User,
 } from "lucide-react-native";
 import React, { useState } from "react";
-import {
-	Alert,
-	ScrollView,
-	Switch,
-	Text,
-	TouchableOpacity,
-	View,
-} from "react-native";
+import { ScrollView, Switch, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 interface SettingItemProps {
@@ -71,19 +65,16 @@ export default function Setting() {
 	const [darkMode, setDarkMode] = useState(false);
 	const [soundEnabled, setSoundEnabled] = useState(true);
 	const [autoBreak, setAutoBreak] = useState(true);
+	const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
 	const handleLogout = () => {
-		Alert.alert("Logout", "Are you sure you want to logout?", [
-			{ text: "Cancel", style: "cancel" },
-			{
-				text: "Logout",
-				style: "destructive",
-				onPress: () => {
-					// Handle logout logic here
-					console.log("User logged out");
-				},
-			},
-		]);
+		setShowLogoutDialog(true);
+	};
+
+	const onConfirmLogout = () => {
+		// Handle logout logic here
+		console.log("User logged out");
+		setShowLogoutDialog(false);
 	};
 
 	const settingSections = [
@@ -237,7 +228,8 @@ export default function Setting() {
 						</Text>
 						<View className="flex-row items-center">
 							<Text className="text-sm text-slate-500">
-								Level {user?.level || 1} • {user?.exp || 0} XP
+								{/* Level {user?.level || 1} • {user?.exp || 0} XP */}
+								30 XP
 							</Text>
 						</View>
 					</View>
@@ -277,6 +269,16 @@ export default function Setting() {
 					</Text>
 				</View>
 			</ScrollView>
+
+			<PremiumAlertDialog
+				open={showLogoutDialog}
+				onOpenChange={setShowLogoutDialog}
+				onConfirm={onConfirmLogout}
+				title="Logout"
+				description="Are you sure you want to logout? You will need to sign in again to access your tasks and chats."
+				type="confirm"
+				confirmText="Logout"
+			/>
 		</SafeAreaView>
 	);
 }

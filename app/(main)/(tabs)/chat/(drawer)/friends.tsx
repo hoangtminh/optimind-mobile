@@ -1,72 +1,14 @@
+import { AppHeader } from "@/components/common/AppHeader";
+import { FriendListItem } from "@/components/chat/FriendListItem";
+import { SearchInput } from "@/components/chat/SearchInput";
 import { DrawerActions, useNavigation } from "@react-navigation/native";
 import { useRouter } from "expo-router";
-import {
-	Check,
-	Menu,
-	MessageSquare,
-	Search,
-	Users,
-	X,
-} from "lucide-react-native";
+import { Check, MessageSquare, Users, X } from "lucide-react-native";
 import React from "react";
-import {
-	FlatList,
-	Modal,
-	Platform,
-	ScrollView,
-	TouchableOpacity,
-} from "react-native";
+import { FlatList, Modal, Platform, ScrollView, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-	Avatar,
-	Button,
-	Circle,
-	Input,
-	Text,
-	View,
-	XStack,
-	YStack,
-	styled,
-} from "tamagui";
+import { Avatar, Button, Circle, Text, View, XStack, YStack, styled } from "tamagui";
 
-// --- Styled Components ---
-const GlassHeader = styled(XStack, {
-	height: 64,
-	alignItems: "center",
-	justifyContent: "space-between",
-	paddingHorizontal: "$4",
-	backgroundColor: "rgba(248, 249, 251, 0.8)", // background color with opacity
-	zIndex: 100,
-});
-
-const FriendCard = styled(TouchableOpacity, {
-	padding: "$3",
-	borderRadius: "$4",
-	alignItems: "center",
-	gap: "$3",
-	backgroundColor: "$surface_container_low",
-	flexDirection: "row",
-	pressStyle: { scale: 0.98, backgroundColor: "$surface_container" },
-	transition: "quick",
-});
-
-const RequestCard = styled(View, {
-	padding: "$3",
-	borderRadius: "$4",
-	alignItems: "center",
-	gap: "$3",
-	backgroundColor: "$surface_container_low",
-	flexDirection: "row",
-});
-
-const SentRequestItem = styled(View, {
-	padding: "$4", // p-4
-	borderRadius: "$xl", // rounded-xl
-	flexDirection: "row",
-	alignItems: "center",
-	gap: "$4",
-	backgroundColor: "$surface_container_low",
-});
 
 // --- Mock Data ---
 const MOCK_FRIENDS = [
@@ -113,117 +55,83 @@ function SentRequestsModal({
 				flex={1}
 				justifyContent="center"
 				alignItems="center"
-				backgroundColor="rgba(25, 28, 30, 0.2)" // bg-on-background/20
-				style={
-					Platform.OS === "web"
-						? ({ backdropFilter: "blur(4px)" } as any)
-						: {}
-				}
+				backgroundColor="rgba(0,0,0,0.4)"
 				padding="$4"
 			>
 				<View
 					backgroundColor="white"
 					width="100%"
-					maxWidth={512} // max-w-lg
-					maxHeight="90%" // to be safe
-					borderRadius={30} // rounded-2xl
+					maxWidth={500}
+					maxHeight="80%"
+					borderRadius={32}
 					shadowColor="#000"
 					shadowRadius={30}
-					shadowOpacity={0.15}
-					shadowOffset={{ width: 0, height: 10 }}
+					shadowOpacity={0.1}
 					overflow="hidden"
-					display="flex"
-					flexDirection="column"
 				>
-					{/* Modal Header */}
 					<XStack
-						paddingHorizontal="$6" // px-8
-						paddingVertical="$4" // py-6
+						padding="$6"
 						justifyContent="space-between"
 						alignItems="center"
 						borderBottomWidth={1}
+						borderBottomColor="#f2ecf4"
 					>
 						<YStack>
-							<Text
-								fontSize="$7" // text-2xl
-								fontWeight="800" // font-extrabold
-								color="$on_surface"
-								letterSpacing={-0.5} // tracking-tight
-							>
+							<Text fontSize="$6" fontWeight="800" color="#1d1b20">
 								Sent Requests
 							</Text>
-							<Text fontSize="$2" color="$on_surface_variant">
+							<Text fontSize="$2" color="#7a7582">
 								Manage your pending invitations
 							</Text>
 						</YStack>
 						<Button
 							circular
 							chromeless
-							icon={<X size={24} color="black" />}
+							icon={<X size={20} color="#1d1b20" />}
 							onPress={onClose}
-							pressStyle={{
-								backgroundColor: "lightgray",
-							}}
+							pressStyle={{ backgroundColor: "#f2ecf4" }}
 						/>
 					</XStack>
 
-					{/* Modal Content (Scrollable List) */}
-					<ScrollView
-						contentContainerStyle={{
-							paddingHorizontal: 32, // px-8
-							paddingVertical: 18, // pb-8
-						}}
-					>
+					<ScrollView contentContainerStyle={{ padding: 24 }}>
 						<YStack gap="$3">
 							{MOCK_SENT_REQUESTS.map((req) => (
 								<XStack
 									key={req.id}
-									paddingVertical="$2" // p-4
-									backgroundColor="$surface_container_low"
-									borderRadius="$xl" // rounded-xl
+									padding="$3"
+									backgroundColor="#fdf7ff"
+									borderRadius={20}
 									alignItems="center"
 									justifyContent="space-between"
-									hoverStyle={{
-										backgroundColor:
-											"$surface_container_high",
-									}}
 								>
-									<XStack alignItems="center" gap="$4">
-										<Avatar circular size={56}>
+									<XStack alignItems="center" gap="$3">
+										<Avatar circular size={48}>
 											<Avatar.Image
-												src={`https://ui-avatars.com/api/?name=${encodeURIComponent(req.name)}&background=0058be&color=fff`}
+												src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
+													req.name,
+												)}&background=6750A4&color=fff`}
 											/>
-											<Avatar.Fallback backgroundColor="$surface_variant" />
+											<Avatar.Fallback backgroundColor="#e9ddff" />
 										</Avatar>
 										<YStack>
 											<Text
 												fontWeight="700"
-												color="$on_surface"
+												color="#1d1b20"
 											>
 												{req.name}
 											</Text>
-											{/* <Text
-												fontSize="$2"
-												color="$on_surface_variant"
-												fontWeight="500"
-											>
-												{req.role}
-											</Text> */}
 											<Button
-												backgroundColor="$primary_fixed"
-												borderRadius="$lg" // rounded-lg
-												pressStyle={{
-													backgroundColor:
-														"$primary_container",
-												}}
-												hoverStyle={{
-													backgroundColor:
-														"$primary_container",
-												}}
-												// The text color change on hover is complex in Tamagui
-												width={"fit-content"}
+												size="$1"
+												backgroundColor="#ffdad6"
+												borderRadius={8}
+												marginTop="$1"
+												onPress={() => {}}
 											>
-												<Text fontSize={12}>
+												<Text
+													fontSize={10}
+													fontWeight="700"
+													color="#93000a"
+												>
 													Withdraw
 												</Text>
 											</Button>
@@ -234,20 +142,16 @@ function SentRequestsModal({
 						</YStack>
 					</ScrollView>
 
-					{/* Modal Footer */}
 					<View
-						paddingHorizontal="$8"
-						paddingVertical="$6"
-						backgroundColor="$surface_container"
-						marginTop="auto"
+						padding="$4"
+						backgroundColor="#f2ecf4"
+						alignItems="center"
 					>
 						<Text
-							fontSize={11}
+							fontSize={10}
 							fontWeight="700"
+							color="#7a7582"
 							textTransform="uppercase"
-							letterSpacing={1.5}
-							color="$on_surface_variant"
-							opacity={0.6}
 						>
 							Pending requests expire in 30 days
 						</Text>
@@ -282,61 +186,30 @@ export default function FriendsScreen() {
 			style={{ flex: 1, backgroundColor: "#f8f9fb" }}
 			edges={["top"]}
 		>
-			<YStack flex={1} backgroundColor="$background">
-				{/* Editorial Header */}
-				<GlassHeader>
-					<Button
-						icon={<Menu size={24} color="#0058be" />}
-						circular
-						chromeless
-						onPress={() => {
-							if (Platform.OS === "web") {
-								(
-									document.activeElement as HTMLElement
-								)?.blur?.();
-							}
-							navigation.dispatch(DrawerActions.openDrawer());
-						}}
-						pressStyle={{
-							scale: 0.95,
-							backgroundColor: "$surface_container_low",
-						}}
-					/>
-					<Text fontSize="$6" fontWeight="600" color="$on_surface">
-						Friends
-					</Text>
-					<Button
-						icon={<Users size={24} color="#0058be" />}
-						circular
-						chromeless
-					/>
-				</GlassHeader>
+			<YStack flex={1} backgroundColor="#fdf7ff">
+				<AppHeader
+					title="Friends"
+					showBackButton
+					onBack={() => {
+						navigation.dispatch(DrawerActions.openDrawer());
+					}}
+					rightElement={
+						<Button
+							icon={<Users size={20} color="white" />}
+							circular
+							chromeless
+							pressStyle={{
+								backgroundColor: "rgba(255, 255, 255, 0.1)",
+							}}
+						/>
+					}
+				/>
 
-				{/* Search Input */}
-				<YStack
-					paddingHorizontal="$4"
-					paddingTop="$4"
-					paddingBottom="$2"
-					position="relative"
-				>
-					<View position="absolute" left={32} top={30} zIndex={10}>
-						<Search size={20} color="#94a3b8" />
-					</View>
-					<Input
-						backgroundColor="$surface_container_high"
-						borderWidth={0}
-						borderBottomWidth={2}
-						borderBottomColor="transparent"
-						focusStyle={{ borderBottomColor: "#0058be" }}
-						paddingLeft={48}
-						height={52}
-						borderRadius={12}
-						placeholder="Search friends..."
-						placeholderTextColor="$on_surface_variant"
-						value={search}
-						onChangeText={setSearch}
-					/>
-				</YStack>
+				<SearchInput
+					value={search}
+					onChangeText={setSearch}
+					placeholder="Search friends..."
+				/>
 
 				{/* Friends List */}
 				<FlatList
@@ -353,43 +226,56 @@ export default function FriendsScreen() {
 								marginBottom="$1"
 							>
 								<Text
-									fontWeight="700"
+									fontWeight="800"
 									fontSize="$5"
-									color="$on_surface"
+									color="#1d1b20"
 								>
 									Incoming Requests
 								</Text>
 								<Button
 									size="$2"
-									chromeless
-									backgroundColor="$primary"
+									backgroundColor="#f2ecf4"
 									onPress={() => setIsSentModalOpen(true)}
+									pressStyle={{ backgroundColor: "#e9ddff" }}
 								>
-									<Button.Text fontWeight="600">
+									<Text color="#6750A4" fontWeight="700">
 										Sent Requests
-									</Button.Text>
+									</Text>
 								</Button>
 							</XStack>
 
 							{MOCK_INCOMING_REQUESTS.map((req) => (
-								<RequestCard key={req.id}>
+								<XStack
+									key={req.id}
+									padding="$3"
+									borderRadius={24}
+									alignItems="center"
+									gap="$3"
+									backgroundColor="white"
+									shadowColor="#000"
+									shadowRadius={10}
+									shadowOpacity={0.03}
+								>
 									<Avatar circular size="$5">
 										<Avatar.Image
-											src={`https://ui-avatars.com/api/?name=${encodeURIComponent(req.name)}&background=0058be&color=fff`}
+											src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
+												req.name,
+											)}&background=e9ddff&color=6750A4&bold=true`}
 										/>
 										<Avatar.Fallback />
 									</Avatar>
 									<YStack flex={1}>
 										<Text
-											fontWeight="600"
-											color="$on_surface"
+											fontWeight="700"
+											color="#1d1b20"
+											fontSize="$4"
 										>
 											{req.name}
 										</Text>
 										<Text
 											fontSize={12}
-											color="$on_surface_variant"
-											fontWeight="500"
+											color="#7a7582"
+											fontWeight="600"
 										>
 											{req.role}
 										</Text>
@@ -398,36 +284,36 @@ export default function FriendsScreen() {
 										<Button
 											size="$3"
 											circular
-											backgroundColor="$primary"
+											backgroundColor="#6750A4"
 											icon={
 												<Check
 													size={18}
 													color="white"
 												/>
 											}
-											pressStyle={{ scale: 0.95 }}
+											pressStyle={{ opacity: 0.8 }}
 										/>
 										<Button
 											size="$3"
 											circular
-											backgroundColor="$surface_variant"
+											backgroundColor="#f2ecf4"
 											icon={
 												<X
 													size={18}
-													color="$on_surface_variant"
+													color="#6750A4"
 												/>
 											}
-											pressStyle={{ scale: 0.95 }}
+											pressStyle={{ backgroundColor: "#e9ddff" }}
 										/>
 									</XStack>
-								</RequestCard>
+								</XStack>
 							))}
 
 							<View height={12} />
 							<Text
-								fontWeight="700"
+								fontWeight="800"
 								fontSize="$5"
-								color="$on_surface"
+								color="#1d1b20"
 								marginTop="$2"
 							>
 								Your Friends
@@ -435,50 +321,11 @@ export default function FriendsScreen() {
 						</YStack>
 					}
 					renderItem={({ item }) => (
-						<FriendCard onPress={() => handleStartChat(item.id)}>
-							<Avatar circular size="$5">
-								<Avatar.Image
-									src={`https://ui-avatars.com/api/?name=${encodeURIComponent(item.name)}&background=0058be&color=fff`}
-								/>
-								<Avatar.Fallback backgroundColor="lightgreen" />
-								{item.isOnline && (
-									<Circle
-										size={14}
-										backgroundColor="$primary"
-										position="absolute"
-										bottom={0}
-										right={0}
-										borderWidth={2}
-										borderColor="$surface_container_low"
-									/>
-								)}
-							</Avatar>
-							<YStack flex={1}>
-								<Text fontWeight="600" color="$on_surface">
-									{item.name}
-								</Text>
-								<Text
-									fontSize={12}
-									color={
-										item.isOnline
-											? "$primary"
-											: "$on_surface_variant"
-									}
-								>
-									{item.isOnline ? "Online" : "Offline"}
-								</Text>
-							</YStack>
-							<Button
-								icon={
-									<MessageSquare
-										size={20}
-										color="$on_surface_variant"
-									/>
-								}
-								circular
-								chromeless
-							/>
-						</FriendCard>
+						<FriendListItem
+							friend={item}
+							onPress={() => handleStartChat(item.id)}
+							onMessagePress={() => handleStartChat(item.id)}
+						/>
 					)}
 					ListFooterComponent={
 						!search && filteredFriends.length > 5 ? (

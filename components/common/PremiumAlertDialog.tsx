@@ -1,4 +1,4 @@
-import { Trash2 } from "lucide-react-native";
+import { AlertCircle, CheckCircle2, Info } from "lucide-react-native";
 import {
 	AlertDialog,
 	Button,
@@ -9,12 +9,17 @@ import {
 	styled,
 } from "tamagui";
 
-interface DeleteConfirmDialogProps {
+type DialogType = "success" | "error" | "info" | "confirm";
+
+interface PremiumAlertDialogProps {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
-	onConfirm: () => void;
+	onConfirm?: () => void;
 	title: string;
 	description: string;
+	type?: DialogType;
+	cancelText?: string;
+	confirmText?: string;
 }
 
 const StyledOverlay = styled(AlertDialog.Overlay, {
@@ -27,10 +32,8 @@ const StyledOverlay = styled(AlertDialog.Overlay, {
 const StyledContent = styled(AlertDialog.Content, {
 	key: "content",
 	bordered: true,
-	elevate: true,
 	enterStyle: { x: 0, y: -20, opacity: 0, scale: 0.9 },
 	exitStyle: { x: 0, y: 10, opacity: 0, scale: 0.95 },
-	x: 0,
 	scale: 1,
 	opacity: 1,
 	y: 0,
@@ -42,13 +45,51 @@ const StyledContent = styled(AlertDialog.Content, {
 	alignSelf: "center",
 });
 
-export const DeleteConfirmDialog = ({
+export const PremiumAlertDialog = ({
 	open,
 	onOpenChange,
 	onConfirm,
 	title,
 	description,
-}: DeleteConfirmDialogProps) => {
+	type = "info",
+	cancelText = "Cancel",
+	confirmText = "OK",
+}: PremiumAlertDialogProps) => {
+	const getIcon = () => {
+		switch (type) {
+			case "success":
+				return <CheckCircle2 size={32} color="#006c49" />;
+			case "error":
+				return <AlertCircle size={32} color="#ba1a1a" />;
+			case "confirm":
+				return <AlertCircle size={32} color="#6750A4" />;
+			default:
+				return <Info size={32} color="#6750A4" />;
+		}
+	};
+
+	const getIconBg = () => {
+		switch (type) {
+			case "success":
+				return "#e6f4ea";
+			case "error":
+				return "#ffdad6";
+			default:
+				return "#f2ecf4";
+		}
+	};
+
+	const getConfirmBtnBg = () => {
+		switch (type) {
+			case "error":
+				return "#ba1a1a";
+			case "success":
+				return "#006c49";
+			default:
+				return "#6750A4";
+		}
+	};
+
 	return (
 		<AlertDialog open={open} onOpenChange={onOpenChange}>
 			<AlertDialog.Portal>
@@ -56,12 +97,12 @@ export const DeleteConfirmDialog = ({
 				<StyledContent>
 					<YStack gap="$4" alignItems="center">
 						<View
-							backgroundColor="#ffdad6"
+							backgroundColor={getIconBg()}
 							padding="$4"
 							borderRadius={24}
 							marginBottom="$2"
 						>
-							<Trash2 size={32} color="#93000a" />
+							{getIcon()}
 						</View>
 
 						<YStack gap="$2" alignItems="center">
@@ -84,30 +125,34 @@ export const DeleteConfirmDialog = ({
 						</YStack>
 
 						<XStack gap="$3" width="100%" marginTop="$4">
-							<AlertDialog.Cancel asChild>
-								<Button
-									flex={1}
-									height={56}
-									borderRadius={16}
-									backgroundColor="#f2ecf4"
-									chromeless
-									pressStyle={{ backgroundColor: "#e9ddff" }}
-								>
-									<Text
-										fontWeight="700"
-										color="#6750A4"
-										fontSize="$4"
+							{type === "confirm" && (
+								<AlertDialog.Cancel asChild>
+									<Button
+										flex={1}
+										height={56}
+										borderRadius={16}
+										backgroundColor="#f2ecf4"
+										chromeless
+										pressStyle={{
+											backgroundColor: "#e9ddff",
+										}}
 									>
-										Cancel
-									</Text>
-								</Button>
-							</AlertDialog.Cancel>
+										<Text
+											fontWeight="700"
+											color="#6750A4"
+											fontSize="$4"
+										>
+											{cancelText}
+										</Text>
+									</Button>
+								</AlertDialog.Cancel>
+							)}
 							<AlertDialog.Action asChild>
 								<Button
 									flex={1}
 									height={56}
 									borderRadius={16}
-									backgroundColor="#93000a"
+									backgroundColor={getConfirmBtnBg()}
 									onPress={onConfirm}
 									pressStyle={{ opacity: 0.8 }}
 								>
@@ -116,7 +161,7 @@ export const DeleteConfirmDialog = ({
 										color="white"
 										fontSize="$4"
 									>
-										Delete
+										{confirmText}
 									</Text>
 								</Button>
 							</AlertDialog.Action>
