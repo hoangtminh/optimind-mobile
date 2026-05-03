@@ -2,14 +2,24 @@ export interface TaskResponse {
 	id: string;
 	title: string;
 	note?: string;
-	priority: "low" | "medium" | "high";
-	due_date?: string;
-	status: "todo" | "in_progress" | "review" | "complete";
+	priority: TaskPriority;
+	dueDate?: string;
+	status: TaskStatus;
 	tag?: string[];
-	repeated?: string;
-	project_id: string;
-	user_id: string;
-	created_at: string;
-	updated_at?: string;
-	is_completed: boolean;
+	repeated?: TaskRepeat;
+	projectId: string;
+	userId: string;
+	createdAt: string;
+	updatedAt?: string;
+	isCompleted: boolean;
 }
+
+export type TaskStatus = "todo" | "in_progress" | "review" | "complete";
+export type TaskPriority = "low" | "medium" | "high";
+export type TaskRepeat =
+	| "daily"
+	| "weekly"
+	| "monthly"
+	| "yearly"
+	| "none"
+	| string;

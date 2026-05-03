@@ -4,9 +4,9 @@ export interface ProjectResponse {
 	id: string;
 	name: string;
 	description?: string;
-	user_id: string;
-	created_at: string;
-	updated_at?: string;
-	task_count?: number;
+	userId: string;
+	createdAt: string;
+	updatedAt?: string;
+	taskCount?: number;
 	tasks?: TaskResponse[];
 }

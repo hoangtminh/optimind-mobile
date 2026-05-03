@@ -1,6 +1,7 @@
 import { getServerIp } from "@/utils/getServerIp";
 
-const API_BASE_URL = `http://${getServerIp()}:8080`;
+export const BASE_IP = `192.168.1.9`;
+const API_BASE_URL = `http://${BASE_IP}:8080`;
 
 export interface ApiResponse<T> {
 	success: boolean;
@@ -31,7 +32,7 @@ async function apiRequest<T>(
 	options: RequestInit = {},
 ): Promise<ApiResponse<T>> {
 	try {
-		const url = `http://10.219.144.88:8080${endpoint}`;
+		const url = API_BASE_URL + endpoint;
 
 		const headers: Record<string, string> = {
 			"Content-Type": "application/json",
@@ -62,6 +63,7 @@ async function apiRequest<T>(
 			data = null;
 		}
 
+		console.log(data);
 		if (response.ok) {
 			return {
 				success: true,

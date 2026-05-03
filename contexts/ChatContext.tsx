@@ -14,6 +14,7 @@ import { chatActions } from "../api/chat-actions";
 import { useAuth } from "../hooks/useAuth";
 import { ChatMessageResponse, ChatRoomResponse } from "../lib/types/chat";
 
+import { BASE_IP } from "@/api/client";
 import { TextDecoder, TextEncoder } from "text-encoding";
 if (typeof global.TextEncoder === "undefined") {
 	global.TextEncoder = TextEncoder;
@@ -92,7 +93,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
 		const setupClient = async () => {
 			const token = await getToken("accessToken");
-			const socketUrl = `ws://10.219.144.88:8080/chat/websocket`; // Dùng chung 1 endpoint đã khai báo ở Backend
+			const socketUrl = `ws://${BASE_IP}:8080/chat/websocket`;
 
 			try {
 				const client = new Client({
@@ -104,7 +105,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 					forceBinaryWSFrames: true,
 					appendMissingNULLonIncoming: true,
 					//
-					debug: (str) => console.log("STOMP Debug:", str),
+					// debug: (str) => console.log("STOMP Debug:", str),
 					reconnectDelay: 5000,
 					onConnect: () => {
 						setIsConnected(true);
@@ -113,7 +114,6 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 							`/user/${user.id}/notifications`,
 							(message) => {
 								const payload = JSON.parse(message.body);
-								console.log(payload);
 								const targetChatId = payload.chatId;
 
 								if (targetChatId === activeChatIdRef.current) {

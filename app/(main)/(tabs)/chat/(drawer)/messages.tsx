@@ -1,10 +1,10 @@
-import { CreateChatModal } from "@/components/CreateChatModal";
+import { CreateChatModal } from "@/components/chat/CreateChatModal";
 import { useChat } from "@/contexts/ChatContext";
 import { DrawerActions, useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { Edit3, Menu, MessageSquare, Search } from "lucide-react-native";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
 	ActivityIndicator,
 	FlatList,

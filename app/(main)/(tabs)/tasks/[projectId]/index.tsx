@@ -1,416 +1,386 @@
+import { AppHeader } from "@/components/common/AppHeader";
+import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
+import { useProject } from "@/contexts/ProjectContext";
+import { Task, useTask } from "@/contexts/TaskContext";
+import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import {
-	ArrowLeft,
-	Calendar,
-	CheckCircle2,
-	Info,
-	LayoutGrid,
-	List,
-	MoreVertical,
-} from "lucide-react-native";
-import React, { useState } from "react";
-import { FlatList, Platform, ScrollView, TouchableOpacity } from "react-native";
+import { History, Layout, MessageSquare, Plus, Edit3, Trash2 } from "lucide-react-native";
+import { useEffect, useState } from "react";
+import { FlatList } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Button, styled, Text, Theme, View, XStack, YStack } from "tamagui";
-import { MOCK_PROJECTS } from "..";
+import { Button, styled, Text, View, XStack, YStack } from "tamagui";
+import ProjectModal from "@/components/projects/CreateProjectModal";
 
-const TaskCard = styled(YStack, {
-	padding: "$4",
-	borderRadius: "$5", // Slightly more rounded
-	backgroundColor: "$surface_container_lowest",
-	borderWidth: 1,
-	borderColor: "$surface_variant",
-	shadowColor: "$on_surface",
-	shadowRadius: 10,
-	shadowOpacity: 0.04,
-	shadowOffset: { width: 0, height: 4 },
-	pressStyle: { scale: 0.98, backgroundColor: "$surface_container_low" },
+import KanbanView from "@/components/tasks/KanbanView";
+import TaskItem from "@/components/tasks/TaskItem";
+import TaskModal from "@/components/tasks/TaskModal";
+import { TaskStatus } from "@/lib/types/task";
+
+const TabButton = styled(YStack, {
+	paddingVertical: "$2",
+	paddingHorizontal: "$4",
+	borderRadius: 100,
+	alignItems: "center",
+	justifyContent: "center",
+	flexDirection: "row",
+	gap: "$2",
+	pressStyle: { scale: 0.95 },
+	variants: {
+		active: {
+			true: {
+				backgroundColor: "#e9ddff",
+			},
+			false: {
+				backgroundColor: "transparent",
+			},
+		},
+	} as const,
 });
 
-export const MOCK_TASKS = [
-	{
-		id: "t1",
-		title: "Review literature on entanglement",
-		note: "Read the latest papers from Nature Physics and summarize key findings.",
-		status: "in_progress",
-		priority: "high",
-		due_date: "2023-11-01T23:59:59Z",
-		tag: ["research", "reading"],
-		project_id: "p1",
-	},
-	{
-		id: "t2",
-		title: "Draft introduction chapter",
-		note: "Write the first draft focusing on the historical context.",
-		status: "todo",
-		priority: "medium",
-		due_date: "2023-11-15T23:59:59Z",
-		tag: ["writing"],
-		project_id: "p1",
-	},
-	{
-		id: "t3",
-		title: "Compile dataset",
-		note: "Gather all experimental data into a single clean CSV file.",
-		status: "complete",
-		priority: "low",
-		due_date: "2023-10-10T23:59:59Z",
-		tag: ["data"],
-		project_id: "p1",
-	},
-];
-
-const KANBAN_COLUMNS = [
-	{ label: "To Do", value: "todo" },
-	{ label: "In Progress", value: "in_progress" },
-	{ label: "Review", value: "review" },
-	{ label: "Done", value: "complete" },
-];
-
-export default function TaskScreen() {
-	const { projectId } = useLocalSearchParams();
+export default function ProjectTaskScreen() {
+	const { projectId } = useLocalSearchParams<{ projectId: string }>();
 	const router = useRouter();
-	const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
+	const { getProject } = useProject();
+	const {
+		tasks,
+		fetchTasks,
+		updateTaskStatus,
+		isAddModalOpen,
+		setIsAddModalOpen,
+	} = useTask();
+	const [activeTab, setActiveTab] = useState<
+		"tasks" | "chat" | "kanban" | "log"
+	>("tasks");
+	const [editingTask, setEditingTask] = useState<Task | null>(null);
 
-	const project =
-		MOCK_PROJECTS.find((p) => p.id === projectId) || MOCK_PROJECTS[0];
-	const isWeb = Platform.OS === "web";
+	const [isEditProjectOpen, setIsEditProjectOpen] = useState(false);
+	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+	const { deleteProject, updateProject } = useProject();
 
-	// Helper for Task Card priority colors
-	const getPriorityStyles = (priority: string) => {
-		switch (priority) {
-			case "high":
-				return { bg: "#ffdad6", text: "#93000a", border: "#ba1a1a" }; // Error scheme
-			case "medium":
-				return { bg: "#ffdcc6", text: "#723600", border: "#b75b00" }; // Tertiary/Warning scheme
-			case "low":
-				return { bg: "#d8e2ff", text: "#001a42", border: "#0058be" }; // Primary scheme
-			default:
-				return { bg: "#e7e8ea", text: "#424754", border: "#727785" }; // Outline/Surface scheme
+	const project = getProject(projectId);
+
+	useEffect(() => {
+		if (projectId) {
+			fetchTasks(projectId);
 		}
+	}, [projectId]);
+
+	const todoTasks = tasks.filter((t) => t.status === "todo");
+	const ongoingTasks = tasks.filter((t) => t.status === "in_progress");
+	const completedTasks = tasks.filter((t) => t.status === "complete");
+
+	const handleToggleTask = (taskId: string, currentStatus: string) => {
+		const newStatus = currentStatus === "complete" ? "todo" : "complete";
+		updateTaskStatus(taskId, newStatus);
 	};
 
-	// Enhanced Task Item Renderer
-	const renderTaskItem = (item: (typeof MOCK_TASKS)[0]) => {
-		const isDone = item.status === "complete";
-		const styles = getPriorityStyles(item.priority);
-
-		return (
-			<TaskCard
-				key={item.id}
-				borderLeftWidth={4}
-				borderLeftColor={isDone ? "$secondary" : styles.border}
-				opacity={isDone ? 0.65 : 1}
-				onPress={() =>
-					router.push(
-						`/(main)/(tabs)/tasks/${projectId}/task/${item.id}`,
-					)
-				}
-			>
-				{/* Top Row: Badges & Options */}
-				<XStack
-					justifyContent="space-between"
-					alignItems="flex-start"
-					marginBottom="$3"
-				>
-					<XStack gap="$2" alignItems="center">
-						{isDone && <CheckCircle2 size={16} color="#006c49" />}
-						<View
-							backgroundColor={styles.bg}
-							paddingHorizontal="$2"
-							paddingVertical="$1"
-							borderRadius="$2"
-						>
-							<Text
-								fontSize={10}
-								fontWeight="800"
-								textTransform="uppercase"
-								letterSpacing={0.5}
-								color={styles.text}
-							>
-								{item.priority} Priority
-							</Text>
-						</View>
-					</XStack>
-					<MoreVertical size={18} color="#727785" />
-				</XStack>
-
-				{/* Title and Description */}
-				<Text
-					fontWeight="700"
-					fontSize="$4"
-					color="$on_surface"
-					marginBottom="$2"
-					textDecorationLine={isDone ? "line-through" : "none"}
-				>
-					{item.title}
-				</Text>
-				{item.note && (
-					<Text
-						fontSize="$3"
-						color="$on_surface_variant"
-						numberOfLines={2}
-						marginBottom="$4"
-					>
-						{item.note}
-					</Text>
-				)}
-
-				{/* Bottom Row: Dates & Tags */}
-				<XStack
-					justifyContent="space-between"
-					alignItems="center"
-					marginTop="auto"
-				>
-					<XStack alignItems="center" gap="$1.5">
-						<Calendar size={14} color="#727785" />
-						<Text
-							fontSize={11}
-							fontWeight="600"
-							color="$on_surface_variant"
-						>
-							{item.due_date
-								? new Date(item.due_date).toLocaleDateString(
-										undefined,
-										{ month: "short", day: "numeric" },
-									)
-								: "No date"}
-						</Text>
-					</XStack>
-					{item.tag && item.tag.length > 0 && (
-						<View
-							backgroundColor="$surface_container"
-							paddingHorizontal="$2"
-							paddingVertical="$1"
-							borderRadius="$full"
-						>
-							<Text
-								fontSize={10}
-								fontWeight="700"
-								color="$on_surface_variant"
-								textTransform="uppercase"
-							>
-								#{item.tag[0]}
-							</Text>
-						</View>
-					)}
-				</XStack>
-			</TaskCard>
-		);
+	const handleEditTask = (task: Task) => {
+		setEditingTask(task);
+		setIsAddModalOpen(true);
 	};
 
-	const renderContent = () => (
-		<YStack flex={1}>
-			{/* Custom Header */}
-			<XStack
-				height={64}
-				alignItems="center"
-				justifyContent="space-between"
-				paddingHorizontal="$2"
-				borderBottomWidth={1}
-				borderBottomColor="$surface_variant"
-			>
-				<Button
-					circular
-					chromeless
-					icon={<ArrowLeft size={24} color="#0058be" />}
-					onPress={() => router.back()}
-				/>
-				<Text
-					fontSize="$5"
-					fontWeight="700"
-					color="$on_surface"
-					numberOfLines={1}
-					flex={1}
-					textAlign="center"
-					paddingHorizontal="$2"
-				>
-					{project.name}
-				</Text>
-				<Button
-					circular
-					chromeless
-					icon={<Info size={24} color="#0058be" />}
-					onPress={() =>
-						router.push(`/(main)/(tabs)/tasks/${projectId}/details`)
-					}
-				/>
-			</XStack>
+	const handleStatusUpdate = (taskId: string, newStatus: TaskStatus) => {
+		updateTaskStatus(taskId, newStatus);
+	};
 
-			{/* View Toggle (List vs Kanban) */}
-			<XStack padding="$4" gap="$2">
-				<Theme name={viewMode === "list" ? "active" : null}>
-					<Button
-						flex={1}
-						size="$3"
-						backgroundColor={
-							viewMode === "list"
-								? "$primary_container"
-								: "$surface_container_low"
-						}
-						icon={<List size={18} />}
-						onPress={() => setViewMode("list")}
-					>
-						List View
-					</Button>
-				</Theme>
-				<Theme name={viewMode === "kanban" ? "active" : null}>
-					<Button
-						flex={1}
-						size="$3"
-						backgroundColor={
-							viewMode === "kanban"
-								? "$primary_container"
-								: "$surface_container_low"
-						}
-						icon={<LayoutGrid size={18} />}
-						onPress={() => setViewMode("kanban")}
-					>
-						Kanban
-					</Button>
-				</Theme>
-			</XStack>
-
-			{/* Task List */}
-			{viewMode === "list" ? (
-				<FlatList
-					data={MOCK_TASKS}
-					keyExtractor={(item) => item.id}
-					contentContainerStyle={{ padding: 16 }}
-					ItemSeparatorComponent={() => <View height={12} />}
-					renderItem={({ item }) => renderTaskItem(item)}
-				/>
-			) : (
-				<ScrollView
-					horizontal
-					contentContainerStyle={{ padding: 16, gap: 24 }}
-				>
-					{/* Basic Kanban Placeholder */}
-					{KANBAN_COLUMNS.map((col) => {
-						const columnTasks = MOCK_TASKS.filter(
-							(t) => t.status === col.value,
-						);
-						return (
-							<YStack key={col.value} width={300} gap="$3">
-								{/* Column Header */}
-								<XStack
-									alignItems="center"
-									justifyContent="space-between"
-									paddingHorizontal="$2"
-									marginBottom="$2"
-								>
-									<XStack alignItems="center" gap="$2">
-										<Text
-											fontWeight="800"
-											fontSize="$3"
-											textTransform="uppercase"
-											color="$outline"
-											letterSpacing={1}
-										>
-											{col.label}
-										</Text>
-										<View
-											backgroundColor="$surface_container_highest"
-											paddingHorizontal="$2"
-											paddingVertical="$1"
-											borderRadius="$full"
-											minWidth={24}
-											alignItems="center"
-										>
-											<Text
-												fontSize={11}
-												fontWeight="800"
-												color="$on_surface_variant"
-											>
-												{columnTasks.length}
-											</Text>
-										</View>
-									</XStack>
-								</XStack>
-
-								{/* Column Cards */}
-								<YStack gap="$3">
-									{columnTasks.map((task) =>
-										renderTaskItem(task),
-									)}
-								</YStack>
-							</YStack>
-						);
-					})}
-				</ScrollView>
-			)}
-		</YStack>
-	);
+	const handleDeleteProject = () => {
+		setDeleteDialogOpen(true);
+	};
 
 	return (
 		<SafeAreaView
-			style={{ flex: 1, backgroundColor: "#f8f9fb" }}
+			style={{ flex: 1, backgroundColor: "#fdf7ff" }}
 			edges={["top"]}
 		>
-			{isWeb ? (
-				<XStack flex={1} backgroundColor="$background">
-					{/* Web Split View: Projects Left, Tasks Right */}
-					<YStack
-						width={320}
-						borderRightWidth={1}
-						borderRightColor="$surface_variant"
-						backgroundColor="$surface_container_lowest"
-					>
-						<XStack
-							height={64}
-							alignItems="center"
-							paddingHorizontal="$4"
-							borderBottomWidth={1}
-							borderBottomColor="$surface_variant"
-						>
-							<Text fontSize="$5" fontWeight="700">
-								Projects
-							</Text>
+			<YStack flex={1}>
+				<AppHeader
+					title={project?.name || "Project Tasks"}
+					showBackButton
+					onBack={() => router.replace("/(main)/(tabs)/tasks")}
+					rightElement={
+						<XStack gap="$1">
+							<Button
+								circular
+								size="$3"
+								chromeless
+								icon={<Edit3 size={18} color="white" />}
+								onPress={() => setIsEditProjectOpen(true)}
+								pressStyle={{ backgroundColor: "rgba(255, 255, 255, 0.1)" }}
+							/>
+							<Button
+								circular
+								size="$3"
+								chromeless
+								icon={<Trash2 size={18} color="#ffdad6" />}
+								onPress={handleDeleteProject}
+								pressStyle={{ backgroundColor: "rgba(255, 255, 255, 0.1)" }}
+							/>
 						</XStack>
-						<FlatList
-							data={MOCK_PROJECTS}
-							keyExtractor={(item) => item.id}
-							renderItem={({ item }) => (
-								<TouchableOpacity
-									onPress={() =>
-										router.replace(
-											`/(main)/(tabs)/tasks/${item.id}`,
-										)
-									}
-									style={{
-										padding: 16,
-										backgroundColor:
-											item.id === projectId
-												? "#f0f4ff"
-												: "transparent",
-									}}
-								>
-									<Text
-										fontWeight={
-											item.id === projectId
-												? "700"
-												: "500"
-										}
-										color={
-											item.id === projectId
-												? "$primary"
-												: "$on_surface"
-										}
-									>
-										{item.name}
-									</Text>
-								</TouchableOpacity>
-							)}
+					}
+				/>
+
+				{/* Tab Navigation */}
+				<XStack
+					paddingHorizontal="$4"
+					paddingVertical="$3"
+					gap="$2"
+					backgroundColor="white"
+					borderBottomWidth={1}
+					borderBottomColor="#f2ecf4"
+				>
+					<TabButton
+						active={activeTab === "tasks"}
+						onPress={() => setActiveTab("tasks")}
+					>
+						<Text
+							fontSize="$3"
+							fontWeight="700"
+							color={
+								activeTab === "tasks" ? "#6750A4" : "#7a7582"
+							}
+						>
+							Tasks
+						</Text>
+					</TabButton>
+					<TabButton
+						active={activeTab === "kanban"}
+						onPress={() => setActiveTab("kanban")}
+					>
+						<Layout
+							size={16}
+							color={
+								activeTab === "kanban" ? "#6750A4" : "#7a7582"
+							}
 						/>
-					</YStack>
-					<YStack flex={1}>{renderContent()}</YStack>
+						<Text
+							fontSize="$3"
+							fontWeight="700"
+							color={
+								activeTab === "kanban" ? "#6750A4" : "#7a7582"
+							}
+						>
+							Kanban
+						</Text>
+					</TabButton>
+					<TabButton
+						active={activeTab === "chat"}
+						onPress={() => setActiveTab("chat")}
+					>
+						<MessageSquare
+							size={16}
+							color={activeTab === "chat" ? "#6750A4" : "#7a7582"}
+						/>
+						<Text
+							fontSize="$3"
+							fontWeight="700"
+							color={activeTab === "chat" ? "#6750A4" : "#7a7582"}
+						>
+							Chat
+						</Text>
+					</TabButton>
+					<TabButton
+						active={activeTab === "log"}
+						onPress={() => setActiveTab("log")}
+					>
+						<History
+							size={16}
+							color={activeTab === "log" ? "#6750A4" : "#7a7582"}
+						/>
+						<Text
+							fontSize="$3"
+							fontWeight="700"
+							color={activeTab === "log" ? "#6750A4" : "#7a7582"}
+						>
+							Log
+						</Text>
+					</TabButton>
 				</XStack>
-			) : (
-				// Mobile Standard View
-				<YStack flex={1} backgroundColor="$background">
-					{renderContent()}
+
+				{/* Content */}
+				{activeTab === "tasks" ? (
+					<FlatList
+						data={[
+							{
+								type: "header",
+								title: "To-do",
+								count: todoTasks.length + ongoingTasks.length,
+							},
+							...todoTasks,
+							...ongoingTasks,
+							{
+								type: "header",
+								title: "Completed",
+								count: completedTasks.length,
+							},
+							...completedTasks,
+						]}
+						keyExtractor={(item: any, index) =>
+							item.id || `header-${index}`
+						}
+						contentContainerStyle={{
+							padding: 20,
+							paddingBottom: 100,
+						}}
+						renderItem={({ item }) => {
+							if (item.type === "header") {
+								if (
+									item.count === 0 &&
+									item.title === "Completed"
+								)
+									return null;
+								return (
+									<XStack
+										justifyContent="space-between"
+										alignItems="center"
+										marginTop="$4"
+										marginBottom="$3"
+										paddingHorizontal="$2"
+									>
+										<Text
+											fontSize="$5"
+											fontWeight="800"
+											color="#1d1b20"
+											letterSpacing={-0.5}
+										>
+											{item.title}
+										</Text>
+										<View
+											backgroundColor="#f2ecf4"
+											paddingHorizontal="$3"
+											paddingVertical="$1"
+											borderRadius={12}
+										>
+											<Text
+												fontSize={12}
+												fontWeight="700"
+												color="#6750A4"
+											>
+												{item.count}
+											</Text>
+										</View>
+									</XStack>
+								);
+							}
+							return (
+								<TaskItem
+									task={item}
+									projectId={projectId}
+									onToggle={handleToggleTask}
+									onEdit={handleEditTask}
+								/>
+							);
+						}}
+						ItemSeparatorComponent={(props) => {
+							const { leadingItem } = props as any;
+							if (leadingItem?.type === "header") return null;
+							return <View height={12} />;
+						}}
+					/>
+				) : activeTab === "kanban" ? (
+					<KanbanView
+						tasks={tasks}
+						projectId={projectId}
+						onToggleTask={handleToggleTask}
+						onEditTask={handleEditTask}
+						onStatusUpdate={handleStatusUpdate}
+					/>
+				) : (
+					<YStack
+						flex={1}
+						justifyContent="center"
+						alignItems="center"
+						padding="$10"
+					>
+						<View
+							backgroundColor="#f8f2fa"
+							padding="$6"
+							borderRadius={30}
+							marginBottom="$5"
+						>
+							{activeTab === "chat" ? (
+								<MessageSquare size={40} color="#6750A4" />
+							) : (
+								<History size={40} color="#6750A4" />
+							)}
+						</View>
+						<Text
+							fontSize="$6"
+							fontWeight="800"
+							color="#1d1b20"
+							textAlign="center"
+						>
+							Coming Soon
+						</Text>
+						<Text
+							fontSize="$3"
+							color="#7a7582"
+							textAlign="center"
+							marginTop="$2"
+						>
+							The {activeTab} feature is currently under
+							development.
+						</Text>
+					</YStack>
+				)}
+
+				{/* FAB */}
+				<YStack position="absolute" bottom={24} right={24} zIndex={100}>
+					<Button
+						unstyled
+						onPress={() => setIsAddModalOpen(true)}
+						pressStyle={{ scale: 0.95 }}
+					>
+						<LinearGradient
+							colors={["#6750A4", "#4F378A"]}
+							start={{ x: 0, y: 0 }}
+							end={{ x: 1, y: 1 }}
+							style={{
+								width: 64,
+								height: 64,
+								borderRadius: 24,
+								justifyContent: "center",
+								alignItems: "center",
+								shadowColor: "#6750A4",
+								shadowOffset: { width: 0, height: 8 },
+								shadowOpacity: 0.2,
+								shadowRadius: 16,
+								elevation: 8,
+							}}
+						>
+							<Plus color="white" size={32} />
+						</LinearGradient>
+					</Button>
 				</YStack>
-			)}
+			</YStack>
+
+			<TaskModal
+				visible={isAddModalOpen}
+				onClose={() => setIsAddModalOpen(false)}
+				projectId={projectId}
+				task={editingTask}
+			/>
+
+			<ProjectModal
+				isOpen={isEditProjectOpen}
+				onClose={() => setIsEditProjectOpen(false)}
+				project={project}
+				onUpdate={updateProject}
+			/>
+
+			<DeleteConfirmDialog
+				open={deleteDialogOpen}
+				onOpenChange={setDeleteDialogOpen}
+				onConfirm={async () => {
+					try {
+						await deleteProject(projectId);
+						router.replace("/(main)/(tabs)/tasks");
+					} catch (e) {
+						// Error handling could be improved with a toast or another dialog
+					}
+				}}
+				title="Delete Project"
+				description="Are you sure you want to delete this project and all its tasks? This action cannot be undone."
+			/>
 		</SafeAreaView>
 	);
 }

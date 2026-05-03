@@ -47,7 +47,6 @@ export default function TabLayout() {
 			<Tabs.Screen name="history/index" />
 			<Tabs.Screen name="rank/index" />
 			<Tabs.Screen name="setting" />
-			<Tabs.Screen name="mediapipe" />
 		</Tabs>
 	);
 }

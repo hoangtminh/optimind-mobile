@@ -1,7 +1,6 @@
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import {
 	BookOpen,
-	Camera,
 	Clock,
 	Home,
 	ListTodo,
@@ -10,26 +9,43 @@ import {
 	Trophy,
 } from "lucide-react-native";
 import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Text, View, XStack, YStack, styled } from "tamagui";
+
+const TabItem = styled(YStack, {
+	flex: 1,
+	alignItems: "center",
+	justifyContent: "center",
+	paddingVertical: "$2",
+	position: "relative",
+	pressStyle: { scale: 0.9, opacity: 0.8 },
+});
 
 const CustomTabBar: React.FC<BottomTabBarProps> = ({
 	state,
-	descriptors,
 	navigation,
 }) => {
 	const tabs = [
-		{ name: "home", icon: Home, label: "Home" },
-		{ name: "study", icon: BookOpen, label: "Study" },
-		{ name: "task", icon: ListTodo, label: "Task" },
-		{ name: "chat", icon: MessageCircle, label: "Chat" },
-		{ name: "history", icon: Clock, label: "History" },
-		{ name: "rank", icon: Trophy, label: "Rank" },
+		{ name: "home/index", icon: Home, label: "Home" },
+		{ name: "study/index", icon: BookOpen, label: "Study" },
+		{ name: "tasks", icon: ListTodo, label: "Task" },
+		{ name: "chat/index", icon: MessageCircle, label: "Chat" },
+		{ name: "history/index", icon: Clock, label: "History" },
+		{ name: "rank/index", icon: Trophy, label: "Rank" },
 		{ name: "setting", icon: Settings, label: "Setting" },
-		{ name: "mediapipe", icon: Camera, label: "Mediapipe" },
 	];
 
 	return (
-		<View style={styles.container}>
+		<XStack
+			backgroundColor="white"
+			borderTopWidth={1}
+			borderTopColor="#f1f5f9"
+			paddingBottom="$2"
+			paddingTop="$1"
+			elevation={5}
+			shadowColor="#000"
+			shadowRadius={10}
+			shadowOpacity={0.05}
+		>
 			{tabs.map((tab, index) => {
 				const isFocused = state.index === index;
 				const IconComponent = tab.icon;
@@ -47,77 +63,39 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
 				};
 
 				return (
-					<TouchableOpacity
+					<TabItem
 						key={tab.name}
 						onPress={onPress}
-						style={[styles.tab, isFocused && styles.activeTab]}
+						backgroundColor={isFocused ? "#fdf7ff" : "transparent"}
+						borderRadius={12}
 					>
 						<IconComponent
 							size={20}
-							color={isFocused ? "#0058be" : "#64748b"}
+							color={isFocused ? "#6750A4" : "#64748b"}
 						/>
 						<Text
-							style={[
-								styles.label,
-								isFocused && styles.activeLabel,
-							]}
+							fontSize={10}
+							fontWeight="600"
+							color={isFocused ? "#6750A4" : "#64748b"}
+							marginTop="$1"
 						>
 							{tab.label}
 						</Text>
-						{isFocused && <View style={styles.indicator} />}
-					</TouchableOpacity>
+						{isFocused && (
+							<View
+								position="absolute"
+								bottom={-2}
+								width="40%"
+								height={3}
+								backgroundColor="#6750A4"
+								borderRadius={2}
+							/>
+						)}
+					</TabItem>
 				);
 			})}
-		</View>
+		</XStack>
 	);
 };
-
-const styles = StyleSheet.create({
-	container: {
-		flexDirection: "row",
-		backgroundColor: "#ffffff",
-		borderTopWidth: 1,
-		borderTopColor: "#f1f5f9",
-		paddingBottom: 10,
-		paddingTop: 4,
-		shadowColor: "#000",
-		shadowOffset: {
-			width: 0,
-			height: -2,
-		},
-		shadowOpacity: 0.1,
-		shadowRadius: 3,
-		elevation: 5,
-	},
-	tab: {
-		flex: 1,
-		alignItems: "center",
-		justifyContent: "center",
-		paddingVertical: 8,
-		position: "relative",
-	},
-	activeTab: {
-		backgroundColor: "#f0f9ff",
-		borderRadius: 10,
-	},
-	label: {
-		fontSize: 10,
-		fontWeight: "600",
-		color: "#64748b",
-		marginTop: 4,
-		textAlign: "center",
-	},
-	activeLabel: {
-		color: "#0058be",
-	},
-	indicator: {
-		position: "absolute",
-		bottom: -3,
-		width: "60%",
-		height: 3,
-		backgroundColor: "#0058be",
-		borderRadius: 2,
-	},
-});
 
 export default CustomTabBar;
