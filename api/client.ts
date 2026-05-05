@@ -1,6 +1,6 @@
 import { getServerIp } from "@/utils/getServerIp";
 
-export const BASE_IP = `192.168.1.9`;
+export const BASE_IP = `127.0.0.1`;
 const API_BASE_URL = `http://${BASE_IP}:8080`;
 
 export interface ApiResponse<T> {

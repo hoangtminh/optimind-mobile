@@ -50,6 +50,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 				const response = await authActions.getMe();
 				if (response.success && response.data) {
 					setUser(response.data);
+					console.log("Load user", response.data);
 				} else {
 					setAuthToken(null);
 					setUser(null);

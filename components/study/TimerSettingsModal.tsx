@@ -1,364 +1,334 @@
-import { Check, X } from "lucide-react-native";
-import React, { useState } from "react";
+import { Brain, Check, Clock, Coffee, Repeat, X } from "lucide-react-native";
+import { useEffect, useState } from "react";
 import {
-	Modal,
-	ScrollView,
-	StyleSheet,
-	Text,
-	TextInput,
-	TouchableOpacity,
-	View,
-} from "react-native";
-import { TimerSettings } from "./TimerComponent";
+  Button,
+  Dialog,
+  Input,
+  Label,
+  ScrollView,
+  styled,
+  Text,
+  XStack,
+  YStack,
+} from "tamagui";
+
+export interface TimerSettings {
+  mode: "pomodoro" | "countdown";
+  focusDuration: number;
+  breakDuration: number;
+  longBreakDuration: number;
+  cyclesBeforeLongBreak: number;
+  totalCycles: number;
+}
 
 interface TimerSettingsModalProps {
-	visible: boolean;
-	settings: TimerSettings;
-	onSave: (settings: TimerSettings) => void;
-	onClose: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  settings: TimerSettings;
+  onSave: (settings: TimerSettings) => void;
 }
 
-export default function TimerSettingsModal({
-	visible,
-	settings,
-	onSave,
-	onClose,
-}: TimerSettingsModalProps) {
-	const [tempSettings, setTempSettings] = useState<TimerSettings>(settings);
-
-	const handleSave = () => {
-		onSave(tempSettings);
-		onClose();
-	};
-
-	const updateSetting = (key: keyof TimerSettings, value: any) => {
-		setTempSettings((prev) => ({
-			...prev,
-			[key]: value,
-		}));
-	};
-
-	return (
-		<Modal
-			visible={visible}
-			animationType="slide"
-			transparent={true}
-			onRequestClose={onClose}
-		>
-			<View style={styles.overlay}>
-				<View style={styles.modal}>
-					{/* Header */}
-					<View style={styles.header}>
-						<Text style={styles.title}>Timer Settings</Text>
-						<TouchableOpacity
-							onPress={onClose}
-							style={styles.closeButton}
-						>
-							<X size={24} color="#424754" />
-						</TouchableOpacity>
-					</View>
-
-					<ScrollView
-						style={styles.content}
-						showsVerticalScrollIndicator={false}
-					>
-						{/* Mode Selection */}
-						<View style={styles.section}>
-							<Text style={styles.sectionTitle}>Timer Mode</Text>
-							<View style={styles.modeContainer}>
-								<TouchableOpacity
-									style={[
-										styles.modeButton,
-										tempSettings.mode === "pomodoro" &&
-											styles.modeButtonActive,
-									]}
-									onPress={() =>
-										updateSetting("mode", "pomodoro")
-									}
-								>
-									<Text
-										style={[
-											styles.modeButtonText,
-											tempSettings.mode === "pomodoro" &&
-												styles.modeButtonTextActive,
-										]}
-									>
-										Pomodoro
-									</Text>
-								</TouchableOpacity>
-								<TouchableOpacity
-									style={[
-										styles.modeButton,
-										tempSettings.mode === "countdown" &&
-											styles.modeButtonActive,
-									]}
-									onPress={() =>
-										updateSetting("mode", "countdown")
-									}
-								>
-									<Text
-										style={[
-											styles.modeButtonText,
-											tempSettings.mode === "countdown" &&
-												styles.modeButtonTextActive,
-										]}
-									>
-										Countdown
-									</Text>
-								</TouchableOpacity>
-							</View>
-						</View>
-
-						{/* Time Settings */}
-						<View style={styles.section}>
-							<Text style={styles.sectionTitle}>
-								Time Settings (minutes)
-							</Text>
-
-							<View style={styles.inputGroup}>
-								<Text style={styles.inputLabel}>
-									Focus Duration
-								</Text>
-								<TextInput
-									style={styles.input}
-									value={tempSettings.focusDuration.toString()}
-									onChangeText={(text) =>
-										updateSetting(
-											"focusDuration",
-											parseInt(text) || 25,
-										)
-									}
-									keyboardType="numeric"
-									placeholder="25"
-								/>
-							</View>
-
-							<View style={styles.inputGroup}>
-								<Text style={styles.inputLabel}>
-									Break Duration
-								</Text>
-								<TextInput
-									style={styles.input}
-									value={tempSettings.breakDuration.toString()}
-									onChangeText={(text) =>
-										updateSetting(
-											"breakDuration",
-											parseInt(text) || 5,
-										)
-									}
-									keyboardType="numeric"
-									placeholder="5"
-								/>
-							</View>
-
-							{tempSettings.mode === "pomodoro" && (
-								<>
-									<View style={styles.inputGroup}>
-										<Text style={styles.inputLabel}>
-											Long Break Duration
-										</Text>
-										<TextInput
-											style={styles.input}
-											value={tempSettings.longBreakDuration.toString()}
-											onChangeText={(text) =>
-												updateSetting(
-													"longBreakDuration",
-													parseInt(text) || 15,
-												)
-											}
-											keyboardType="numeric"
-											placeholder="15"
-										/>
-									</View>
-
-									<View style={styles.inputGroup}>
-										<Text style={styles.inputLabel}>
-											Cycles Before Long Break
-										</Text>
-										<TextInput
-											style={styles.input}
-											value={tempSettings.cyclesBeforeLongBreak.toString()}
-											onChangeText={(text) =>
-												updateSetting(
-													"cyclesBeforeLongBreak",
-													parseInt(text) || 4,
-												)
-											}
-											keyboardType="numeric"
-											placeholder="4"
-										/>
-									</View>
-
-									<View style={styles.inputGroup}>
-										<Text style={styles.inputLabel}>
-											Total Cycles
-										</Text>
-										<TextInput
-											style={styles.input}
-											value={tempSettings.totalCycles.toString()}
-											onChangeText={(text) =>
-												updateSetting(
-													"totalCycles",
-													parseInt(text) || 4,
-												)
-											}
-											keyboardType="numeric"
-											placeholder="4"
-										/>
-									</View>
-								</>
-							)}
-						</View>
-					</ScrollView>
-
-					{/* Footer */}
-					<View style={styles.footer}>
-						<TouchableOpacity
-							onPress={onClose}
-							style={styles.cancelButton}
-						>
-							<Text style={styles.cancelButtonText}>Cancel</Text>
-						</TouchableOpacity>
-						<TouchableOpacity
-							onPress={handleSave}
-							style={styles.saveButton}
-						>
-							<Check size={20} color="white" />
-							<Text style={styles.saveButtonText}>
-								Save Settings
-							</Text>
-						</TouchableOpacity>
-					</View>
-				</View>
-			</View>
-		</Modal>
-	);
-}
-
-const styles = StyleSheet.create({
-	overlay: {
-		flex: 1,
-		backgroundColor: "rgba(0, 0, 0, 0.5)",
-		justifyContent: "center",
-		alignItems: "center",
-	},
-	modal: {
-		backgroundColor: "white",
-		borderRadius: 20,
-		width: "90%",
-		maxHeight: "80%",
-		shadowColor: "#000",
-		shadowOffset: {
-			width: 0,
-			height: 2,
-		},
-		shadowOpacity: 0.25,
-		shadowRadius: 3.84,
-		elevation: 5,
-	},
-	header: {
-		flexDirection: "row",
-		justifyContent: "space-between",
-		alignItems: "center",
-		padding: 20,
-		borderBottomWidth: 1,
-		borderBottomColor: "#f1f5f9",
-	},
-	title: {
-		fontSize: 20,
-		fontWeight: "bold",
-		color: "#1e293b",
-	},
-	closeButton: {
-		padding: 4,
-	},
-	content: {
-		padding: 20,
-	},
-	section: {
-		marginBottom: 24,
-	},
-	sectionTitle: {
-		fontSize: 16,
-		fontWeight: "600",
-		color: "#374151",
-		marginBottom: 12,
-	},
-	modeContainer: {
-		flexDirection: "row",
-		gap: 12,
-	},
-	modeButton: {
-		flex: 1,
-		paddingVertical: 12,
-		paddingHorizontal: 16,
-		borderRadius: 8,
-		borderWidth: 1,
-		borderColor: "#e2e8f0",
-		alignItems: "center",
-	},
-	modeButtonActive: {
-		backgroundColor: "#0058be",
-		borderColor: "#0058be",
-	},
-	modeButtonText: {
-		fontSize: 14,
-		fontWeight: "600",
-		color: "#64748b",
-	},
-	modeButtonTextActive: {
-		color: "white",
-	},
-	inputGroup: {
-		marginBottom: 16,
-	},
-	inputLabel: {
-		fontSize: 14,
-		fontWeight: "500",
-		color: "#374151",
-		marginBottom: 8,
-	},
-	input: {
-		borderWidth: 1,
-		borderColor: "#e2e8f0",
-		borderRadius: 8,
-		padding: 12,
-		fontSize: 16,
-		color: "#1e293b",
-	},
-	footer: {
-		flexDirection: "row",
-		padding: 20,
-		borderTopWidth: 1,
-		borderTopColor: "#f1f5f9",
-		gap: 12,
-	},
-	cancelButton: {
-		flex: 1,
-		paddingVertical: 12,
-		alignItems: "center",
-		borderRadius: 8,
-		borderWidth: 1,
-		borderColor: "#e2e8f0",
-	},
-	cancelButtonText: {
-		fontSize: 16,
-		fontWeight: "600",
-		color: "#64748b",
-	},
-	saveButton: {
-		flex: 2,
-		flexDirection: "row",
-		alignItems: "center",
-		justifyContent: "center",
-		paddingVertical: 12,
-		borderRadius: 8,
-		backgroundColor: "#0058be",
-		gap: 8,
-	},
-	saveButtonText: {
-		fontSize: 16,
-		fontWeight: "600",
-		color: "white",
-	},
+const SettingItem = styled(YStack, {
+  gap: "$2",
+  marginBottom: "$4",
 });
+
+const DEFAULT_SETTINGS: TimerSettings = {
+  mode: "pomodoro",
+  focusDuration: 25,
+  breakDuration: 5,
+  longBreakDuration: 15,
+  cyclesBeforeLongBreak: 4,
+  totalCycles: 4,
+};
+
+export const TimerSettingsModal = ({
+  open,
+  onOpenChange,
+  settings,
+  onSave,
+}: TimerSettingsModalProps) => {
+  const [tempSettings, setTempSettings] = useState<TimerSettings>(
+    settings ?? DEFAULT_SETTINGS,
+  );
+
+  useEffect(() => {
+    if (open && settings) {
+      setTempSettings(settings);
+    }
+  }, [open, settings]);
+
+  const handleSave = () => {
+    if (tempSettings && onSave) {
+      onSave(tempSettings);
+      onOpenChange?.(false);
+    }
+  };
+
+  const updateSetting = (key: keyof TimerSettings, value: any) => {
+    setTempSettings((prev) => {
+      if (!prev) return DEFAULT_SETTINGS;
+      return {
+        ...prev,
+        [key]: value,
+      };
+    });
+  };
+
+  return (
+    <Dialog modal open={open} onOpenChange={onOpenChange}>
+      <Dialog.Portal>
+        <Dialog.Overlay
+          key="overlay"
+          enterStyle={{ opacity: 0 }}
+          exitStyle={{ opacity: 0 }}
+          backgroundColor="rgba(0,0,0,0.5)"
+        />
+        <Dialog.Content
+          key="content"
+          bordered
+          x={0}
+          scale={1}
+          opacity={1}
+          y={0}
+          backgroundColor="white"
+          borderRadius={32}
+          padding="$6"
+          width="95%"
+          maxWidth={450}
+          alignSelf="center"
+        >
+          <YStack>
+            <XStack justifyContent="space-between" alignItems="center">
+              <Dialog.Title fontSize="$6" fontWeight="900" color="#1d1b20">
+                Timer Settings
+              </Dialog.Title>
+              <Dialog.Close asChild>
+                <Button
+                  circular
+                  size="$3"
+                  chromeless
+                  icon={<X size={20} color="#7a7582" />}
+                />
+              </Dialog.Close>
+            </XStack>
+
+            <ScrollView maxHeight={400} showsVerticalScrollIndicator={false}>
+              <YStack gap="$5">
+                <SettingItem>
+                  <Label fontSize="$3" fontWeight="700" color="#494551">
+                    Mode
+                  </Label>
+                  <XStack
+                    backgroundColor="#f2ecf4"
+                    padding="$1.5"
+                    borderRadius={16}
+                    gap="$1"
+                  >
+                    <Button
+                      flex={1}
+                      size="$3"
+                      borderRadius={12}
+                      backgroundColor={
+                        tempSettings?.mode === "pomodoro"
+                          ? "white"
+                          : "transparent"
+                      }
+                      onPress={() => updateSetting("mode", "pomodoro")}
+                      chromeless={tempSettings?.mode !== "pomodoro"}
+                    >
+                      <Text
+                        fontWeight="700"
+                        color={
+                          tempSettings?.mode === "pomodoro"
+                            ? "#6750A4"
+                            : "#7a7582"
+                        }
+                      >
+                        Pomodoro
+                      </Text>
+                    </Button>
+                    <Button
+                      flex={1}
+                      size="$3"
+                      borderRadius={12}
+                      backgroundColor={
+                        tempSettings?.mode === "countdown"
+                          ? "white"
+                          : "transparent"
+                      }
+                      onPress={() => updateSetting("mode", "countdown")}
+                      chromeless={tempSettings?.mode !== "countdown"}
+                    >
+                      <Text
+                        fontWeight="700"
+                        color={
+                          tempSettings?.mode === "countdown"
+                            ? "#6750A4"
+                            : "#7a7582"
+                        }
+                      >
+                        Countdown
+                      </Text>
+                    </Button>
+                  </XStack>
+                </SettingItem>
+
+                <XStack gap="$4">
+                  <SettingItem flex={1}>
+                    <XStack gap="$2" alignItems="center" marginBottom="$1">
+                      <Brain size={16} color="#6750A4" />
+                      <Label fontSize="$3" fontWeight="700" color="#494551">
+                        Focus
+                      </Label>
+                    </XStack>
+                    <Input
+                      keyboardType="numeric"
+                      value={tempSettings?.focusDuration?.toString() ?? "0"}
+                      onChangeText={(val) =>
+                        updateSetting("focusDuration", parseInt(val) || 0)
+                      }
+                      borderRadius={16}
+                      borderWidth={2}
+                      borderColor="#f2ecf4"
+                      focusStyle={{
+                        borderColor: "#6750A4",
+                      }}
+                    />
+                  </SettingItem>
+                  <SettingItem flex={1}>
+                    <XStack gap="$2" alignItems="center" marginBottom="$1">
+                      <Coffee size={16} color="#6750A4" />
+                      <Label fontSize="$3" fontWeight="700" color="#494551">
+                        Break
+                      </Label>
+                    </XStack>
+                    <Input
+                      keyboardType="numeric"
+                      value={tempSettings?.breakDuration?.toString() ?? "0"}
+                      onChangeText={(val) =>
+                        updateSetting("breakDuration", parseInt(val) || 0)
+                      }
+                      borderRadius={16}
+                      borderWidth={2}
+                      borderColor="#f2ecf4"
+                      focusStyle={{
+                        borderColor: "#6750A4",
+                      }}
+                    />
+                  </SettingItem>
+                </XStack>
+
+                {tempSettings?.mode === "pomodoro" && (
+                  <>
+                    <SettingItem>
+                      <XStack gap="$2" alignItems="center" marginBottom="$1">
+                        <Clock size={16} color="#6750A4" />
+                        <Label fontSize="$3" fontWeight="700" color="#494551">
+                          Long Break
+                        </Label>
+                      </XStack>
+                      <Input
+                        keyboardType="numeric"
+                        value={
+                          tempSettings?.longBreakDuration?.toString() ?? "0"
+                        }
+                        onChangeText={(val) =>
+                          updateSetting("longBreakDuration", parseInt(val) || 0)
+                        }
+                        borderRadius={16}
+                        borderWidth={2}
+                        borderColor="#f2ecf4"
+                        focusStyle={{
+                          borderColor: "#6750A4",
+                        }}
+                      />
+                    </SettingItem>
+
+                    <XStack gap="$4">
+                      <SettingItem flex={1}>
+                        <XStack gap="$2" alignItems="center" marginBottom="$1">
+                          <Repeat size={16} color="#6750A4" />
+                          <Label fontSize="$3" fontWeight="700" color="#494551">
+                            Cycles
+                          </Label>
+                        </XStack>
+                        <Input
+                          keyboardType="numeric"
+                          value={
+                            tempSettings?.cyclesBeforeLongBreak?.toString() ??
+                            "0"
+                          }
+                          onChangeText={(val) =>
+                            updateSetting(
+                              "cyclesBeforeLongBreak",
+                              parseInt(val) || 0,
+                            )
+                          }
+                          borderRadius={16}
+                          borderWidth={2}
+                          borderColor="#f2ecf4"
+                          focusStyle={{
+                            borderColor: "#6750A4",
+                          }}
+                        />
+                      </SettingItem>
+                      <SettingItem flex={1}>
+                        <XStack gap="$2" alignItems="center" marginBottom="$1">
+                          <Repeat size={16} color="#6750A4" />
+                          <Label fontSize="$3" fontWeight="700" color="#494551">
+                            Total
+                          </Label>
+                        </XStack>
+                        <Input
+                          keyboardType="numeric"
+                          value={tempSettings?.totalCycles?.toString() ?? "0"}
+                          onChangeText={(val) =>
+                            updateSetting("totalCycles", parseInt(val) || 0)
+                          }
+                          borderRadius={16}
+                          borderWidth={2}
+                          borderColor="#f2ecf4"
+                          focusStyle={{
+                            borderColor: "#6750A4",
+                          }}
+                        />
+                      </SettingItem>
+                    </XStack>
+                  </>
+                )}
+              </YStack>
+            </ScrollView>
+
+            <XStack gap="$3" marginTop="$2">
+              <Dialog.Close asChild>
+                <Button
+                  flex={1}
+                  borderRadius={16}
+                  backgroundColor="#f2ecf4"
+                  pressStyle={{ scale: 0.95 }}
+                >
+                  <Text fontWeight="700" color="#6750A4">
+                    Cancel
+                  </Text>
+                </Button>
+              </Dialog.Close>
+              <Button
+                flex={2}
+                borderRadius={16}
+                backgroundColor="#6750A4"
+                pressStyle={{ scale: 0.95 }}
+                onPress={handleSave}
+                icon={<Check size={18} color="white" />}
+              >
+                <Text fontWeight="700" color="white">
+                  Save Changes
+                </Text>
+              </Button>
+            </XStack>
+          </YStack>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog>
+  );
+};

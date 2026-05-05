@@ -1,14 +1,16 @@
 import { AppHeader } from "@/components/common/AppHeader";
-import ProductivityChart from "@/components/study/ProductivityChart";
-import TaskManager, { Task } from "@/components/study/TaskManager";
-import { PremiumPomodoro } from "@/components/study/PremiumPomodoro";
 import { FocusCamera } from "@/components/study/FocusCamera";
-import { TimerSettingsModal, TimerSettings } from "@/components/study/TimerSettingsModal";
-import { Brain, Camera, LayoutDashboard, ListTodo, Settings } from "lucide-react-native";
-import React, { useState } from "react";
+import TaskManager, { Task } from "@/components/study/TaskManager";
+import {
+	TimerSettings,
+	TimerSettingsModal,
+} from "@/components/study/TimerSettingsModal";
+import { UnifiedStudyView } from "@/components/study/UnifiedStudyView";
+import { Brain, Camera, ListTodo, Settings } from "lucide-react-native";
+import { useState } from "react";
 import { ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { YStack, XStack, Text, Button, View, styled, AnimatePresence } from "tamagui";
+import { AnimatePresence, Button, Text, XStack, YStack, styled } from "tamagui";
 
 const TabButton = styled(YStack, {
 	paddingVertical: "$2",
@@ -32,13 +34,15 @@ const TabButton = styled(YStack, {
 });
 
 export default function StudyScreen() {
-	const [activeTab, setActiveTab] = useState<"pomodoro" | "camera" | "tasks">("pomodoro");
+	const [activeTab, setActiveTab] = useState<"pomodoro" | "camera" | "tasks">(
+		"pomodoro",
+	);
 	const [tasks, setTasks] = useState<Task[]>([]);
 	const [timerRunning, setTimerRunning] = useState(false);
 	const [timerTimeElapsed, setTimerTimeElapsed] = useState(0);
 	const [settingsModalOpen, setSettingsModalOpen] = useState(false);
-    
-    const [timerSettings, setTimerSettings] = useState<TimerSettings>({
+
+	const [timerSettings, setTimerSettings] = useState<TimerSettings>({
 		mode: "pomodoro",
 		focusDuration: 25,
 		breakDuration: 5,
@@ -71,13 +75,13 @@ export default function StudyScreen() {
 			<AppHeader
 				title="Study Center"
 				rightElement={
-					<Button 
-                        circular 
-                        size="$3" 
-                        chromeless 
-                        icon={<Settings size={20} color="white" />} 
-                        onPress={() => setSettingsModalOpen(true)}
-                    />
+					<Button
+						circular
+						size="$3"
+						chromeless
+						icon={<Settings size={20} color="white" />}
+						onPress={() => setSettingsModalOpen(true)}
+					/>
 				}
 			/>
 
@@ -95,11 +99,18 @@ export default function StudyScreen() {
 						active={activeTab === "pomodoro"}
 						onPress={() => setActiveTab("pomodoro")}
 					>
-						<Brain size={16} color={activeTab === "pomodoro" ? "#6750A4" : "#7a7582"} />
+						<Brain
+							size={16}
+							color={
+								activeTab === "pomodoro" ? "#6750A4" : "#7a7582"
+							}
+						/>
 						<Text
 							fontSize="$3"
 							fontWeight="700"
-							color={activeTab === "pomodoro" ? "#6750A4" : "#7a7582"}
+							color={
+								activeTab === "pomodoro" ? "#6750A4" : "#7a7582"
+							}
 						>
 							Timer
 						</Text>
@@ -108,11 +119,18 @@ export default function StudyScreen() {
 						active={activeTab === "camera"}
 						onPress={() => setActiveTab("camera")}
 					>
-						<Camera size={16} color={activeTab === "camera" ? "#6750A4" : "#7a7582"} />
+						<Camera
+							size={16}
+							color={
+								activeTab === "camera" ? "#6750A4" : "#7a7582"
+							}
+						/>
 						<Text
 							fontSize="$3"
 							fontWeight="700"
-							color={activeTab === "camera" ? "#6750A4" : "#7a7582"}
+							color={
+								activeTab === "camera" ? "#6750A4" : "#7a7582"
+							}
 						>
 							Camera
 						</Text>
@@ -121,11 +139,18 @@ export default function StudyScreen() {
 						active={activeTab === "tasks"}
 						onPress={() => setActiveTab("tasks")}
 					>
-						<ListTodo size={16} color={activeTab === "tasks" ? "#6750A4" : "#7a7582"} />
+						<ListTodo
+							size={16}
+							color={
+								activeTab === "tasks" ? "#6750A4" : "#7a7582"
+							}
+						/>
 						<Text
 							fontSize="$3"
 							fontWeight="700"
-							color={activeTab === "tasks" ? "#6750A4" : "#7a7582"}
+							color={
+								activeTab === "tasks" ? "#6750A4" : "#7a7582"
+							}
 						>
 							Tasks
 						</Text>
@@ -138,25 +163,24 @@ export default function StudyScreen() {
 					showsVerticalScrollIndicator={false}
 				>
 					<AnimatePresence mode="wait">
-						<YStack key={activeTab} animation="quick" enterStyle={{ opacity: 0, y: 10 }} exitStyle={{ opacity: 0, y: -10 }}>
+						<YStack
+							key={activeTab}
+							enterStyle={{ opacity: 0, y: 10 }}
+							exitStyle={{ opacity: 0, y: -10 }}
+						>
 							{activeTab === "pomodoro" && (
-								<YStack gap="$6">
-									<PremiumPomodoro
-										focusDuration={timerSettings.focusDuration}
-										breakDuration={timerSettings.breakDuration}
-										onStateChange={handleTimerStateChange}
-                                        onSettingsPress={() => setSettingsModalOpen(true)}
-									/>
-									<ProductivityChart
-										isRunning={timerRunning}
-										timeElapsed={timerTimeElapsed}
-									/>
-								</YStack>
+								<UnifiedStudyView
+									timerSettings={timerSettings}
+									timerRunning={timerRunning}
+									timerTimeElapsed={timerTimeElapsed}
+									onTimerStateChange={handleTimerStateChange}
+									onSettingsPress={() =>
+										setSettingsModalOpen(true)
+									}
+								/>
 							)}
 
-							{activeTab === "camera" && (
-								<FocusCamera />
-							)}
+							{activeTab === "camera" && <FocusCamera />}
 
 							{activeTab === "tasks" && (
 								<TaskManager
@@ -170,12 +194,12 @@ export default function StudyScreen() {
 				</ScrollView>
 			</YStack>
 
-            <TimerSettingsModal 
-                open={settingsModalOpen}
-                onOpenChange={setSettingsModalOpen}
-                settings={timerSettings}
-                onSave={setTimerSettings}
-            />
+			<TimerSettingsModal
+				open={settingsModalOpen}
+				onOpenChange={setSettingsModalOpen}
+				settings={timerSettings}
+				onSave={setTimerSettings}
+			/>
 		</SafeAreaView>
 	);
 }
