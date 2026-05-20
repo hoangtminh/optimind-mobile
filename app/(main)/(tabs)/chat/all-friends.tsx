@@ -1,45 +1,12 @@
+import { FriendListItem } from "@/components/chat/FriendListItem";
+import { SearchInput } from "@/components/chat/SearchInput";
+import { AppHeader } from "@/components/common/AppHeader";
 import { useRouter } from "expo-router";
-import { ArrowLeft, MessageSquare, Search } from "lucide-react-native";
-import React, { useState } from "react";
-import { FlatList, Platform, TouchableOpacity } from "react-native";
+import { Users } from "lucide-react-native";
+import { useState } from "react";
+import { FlatList } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-	Avatar,
-	Button,
-	Circle,
-	Input,
-	Text,
-	View,
-	XStack,
-	YStack,
-	styled,
-} from "tamagui";
-
-// --- Styled Components: Academic Sanctuary Design System ---
-
-const GlassHeader = styled(XStack, {
-	height: 64,
-	alignItems: "center",
-	paddingHorizontal: "$4",
-	backgroundColor: "rgba(248, 249, 251, 0.8)", // Glassmorphism base
-	zIndex: 100,
-});
-
-const SanctuaryCard = styled(TouchableOpacity, {
-	padding: "$4",
-	borderRadius: 16, // rounded_lg
-	alignItems: "center",
-	gap: "$4",
-	backgroundColor: "$surface_container_lowest", // Action layer
-	flexDirection: "row",
-	pressStyle: { scale: 0.98, backgroundColor: "$surface_container_low" },
-	transition: "quick",
-	// Ambient Shadow: diffused, tinted
-	shadowColor: "$on_surface",
-	shadowRadius: 24,
-	shadowOpacity: 0.04,
-	shadowOffset: { width: 0, height: 4 },
-});
+import { Button, Text, View, YStack } from "tamagui";
 
 // --- Extended Mock Data ---
 const MOCK_ALL_FRIENDS = [
@@ -95,58 +62,30 @@ export default function AllFriendsScreen() {
 			style={{ flex: 1, backgroundColor: "#f8f9fb" }}
 			edges={["top"]}
 		>
-			<YStack flex={1} backgroundColor="$background">
-				{/* Editorial Header */}
-				<GlassHeader
-					style={
-						Platform.OS === "web"
-							? ({ backdropFilter: "blur(20px)" } as any)
-							: {}
+			<YStack flex={1} backgroundColor="#fdf7ff">
+				<AppHeader
+					title="Academic Network"
+					showBackButton
+					onBack={() => {
+						router.replace("/(main)/(tabs)/chat/friends");
+					}}
+					rightElement={
+						<Button
+							icon={<Users size={20} color="white" />}
+							circular
+							chromeless
+							pressStyle={{
+								backgroundColor: "rgba(255, 255, 255, 0.1)",
+							}}
+						/>
 					}
-				>
-					<Button
-						circular
-						chromeless
-						icon={<ArrowLeft size={24} color="#0058be" />}
-						onPress={() => router.back()}
-						marginLeft="$-2"
-					/>
-					<Text
-						fontSize="$6"
-						fontWeight="700"
-						color="$on_surface"
-						marginLeft="$2"
-					>
-						Academic Network
-					</Text>
-				</GlassHeader>
+				/>
 
-				{/* Search Field - "No Box" Approach */}
-				<YStack
-					paddingHorizontal="$4"
-					paddingTop="$4"
-					paddingBottom="$4"
-					position="relative"
-				>
-					<View position="absolute" left={32} top={30} zIndex={10}>
-						<Search size={20} color="#94a3b8" />
-					</View>
-					<Input
-						backgroundColor="$surface_container_high"
-						borderWidth={0}
-						paddingLeft={48}
-						height={52}
-						borderRadius={12} // rounded_md
-						placeholder="Search scholars and peers..."
-						placeholderTextColor="$on_surface_variant"
-						value={search}
-						onChangeText={setSearch}
-						// Bottom-only active indicator
-						borderBottomWidth={2}
-						borderBottomColor="transparent"
-						focusStyle={{ borderBottomColor: "#0058be" }}
-					/>
-				</YStack>
+				<SearchInput
+					value={search}
+					onChangeText={setSearch}
+					placeholder="Search scholars and peers..."
+				/>
 
 				{/* Breathable List (No dividers, generous spacing) */}
 				<FlatList
@@ -155,58 +94,15 @@ export default function AllFriendsScreen() {
 					contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
 					ItemSeparatorComponent={() => <View height={16} />}
 					renderItem={({ item }) => (
-						<SanctuaryCard
+						<FriendListItem
+							friend={item}
 							onPress={() =>
 								console.log("Open profile:", item.id)
 							}
-						>
-							<View>
-								<Avatar circular size="$5">
-									<Avatar.Image
-										src={`https://ui-avatars.com/api/?name=${encodeURIComponent(item.name)}&background=0058be&color=fff`}
-									/>
-									<Avatar.Fallback backgroundColor="$surface_variant" />
-								</Avatar>
-								{item.isOnline && (
-									<Circle
-										size={14}
-										backgroundColor="$secondary"
-										position="absolute"
-										bottom={-2}
-										right={-2}
-										borderWidth={2}
-										borderColor="$surface_container_lowest"
-									/>
-								)}
-							</View>
-							<YStack flex={1} gap="$1">
-								<Text
-									fontWeight="800"
-									fontSize="$4"
-									color="$on_surface"
-									letterSpacing={-0.5}
-								>
-									{item.name}
-								</Text>
-								<Text
-									fontSize={13}
-									color="$on_surface_variant"
-									fontWeight="500"
-								>
-									{item.role}
-								</Text>
-							</YStack>
-							<Button
-								icon={
-									<MessageSquare size={20} color="#0058be" />
-								}
-								circular
-								backgroundColor="$primary_fixed"
-								pressStyle={{
-									backgroundColor: "$primary_container",
-								}}
-							/>
-						</SanctuaryCard>
+							onMessagePress={() =>
+								console.log("Open chat:", item.id)
+							}
+						/>
 					)}
 					ListEmptyComponent={
 						<View

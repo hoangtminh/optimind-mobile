@@ -1,4 +1,5 @@
 import { projectActions } from "@/api/project-actions";
+import { useAuth } from "@/hooks/useAuth";
 import { ProjectResponse } from "@/lib/types/project";
 import React, {
 	createContext,
@@ -8,13 +9,8 @@ import React, {
 	useState,
 } from "react";
 
-export interface Project {
-	id: string;
-	name: string;
-	description: string;
-	taskCount: number;
-	completedTasks: number;
-	lastModified: string;
+export interface Project extends ProjectResponse {
+	// Add any frontend-only fields here if needed
 }
 
 interface ProjectContextType {
@@ -47,13 +43,18 @@ export const useProject = () => {
 export const ProjectProvider: React.FC<{ children: ReactNode }> = ({
 	children,
 }) => {
+	const { user } = useAuth();
 	const [projects, setProjects] = useState<Project[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
-		fetchProjects();
-	}, []);
+		if (user?.id) {
+			fetchProjects();
+		} else {
+			setProjects([]);
+		}
+	}, [user]);
 
 	const fetchProjects = async () => {
 		setLoading(true);
@@ -61,23 +62,7 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({
 		try {
 			const response = await projectActions.getAllProjects();
 			if (response.success && response.data) {
-				const mappedProjects: Project[] = response.data.map(
-					(
-						project: ProjectResponse & {
-							color?: string;
-							completed_tasks?: number;
-						},
-					) => ({
-						id: project.id,
-						name: project.name,
-						description: project.description || "",
-						color: project.color || "#0058be",
-						taskCount: project.task_count || 0,
-						completedTasks: project.completed_tasks || 0,
-						lastModified: project.updated_at || project.created_at,
-					}),
-				);
-				setProjects(mappedProjects);
+				setProjects(response.data.reverse());
 			} else {
 				setError(response.error || "Failed to fetch projects");
 			}
@@ -97,15 +82,7 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({
 		try {
 			const response = await projectActions.createProject(data);
 			if (response.success && response.data) {
-				const newProject: Project = {
-					id: response.data.id,
-					name: response.data.name,
-					description: response.data.description || "",
-					taskCount: 0,
-					completedTasks: 0,
-					lastModified: response.data.created_at,
-				};
-				setProjects((prev) => [...prev, newProject]);
+				setProjects((prev) => [...prev, response.data as Project]);
 			} else {
 				throw new Error(response.error || "Failed to create project");
 			}
@@ -121,11 +98,46 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({
 		projectId: string,
 		updates: Partial<Project>,
 	) => {
-		// Add update implementation here similarly via projectActions...
+		setLoading(true);
+		setError(null);
+		try {
+			const response = await projectActions.updateProject(
+				projectId,
+				updates as any,
+			);
+			if (response.success && response.data) {
+				setProjects((prev) =>
+					prev.map((p) =>
+						p.id === projectId ? (response.data as Project) : p,
+					),
+				);
+			} else {
+				throw new Error(response.error || "Failed to update project");
+			}
+		} catch (err) {
+			setError(err instanceof Error ? err.message : "An error occurred");
+			throw err;
+		} finally {
+			setLoading(false);
+		}
 	};
 
 	const deleteProject = async (projectId: string) => {
-		// Add delete implementation here similarly via projectActions...
+		setLoading(true);
+		setError(null);
+		try {
+			const response = await projectActions.deleteProject(projectId);
+			if (response.success) {
+				setProjects((prev) => prev.filter((p) => p.id !== projectId));
+			} else {
+				throw new Error(response.error || "Failed to delete project");
+			}
+		} catch (err) {
+			setError(err instanceof Error ? err.message : "An error occurred");
+			throw err;
+		} finally {
+			setLoading(false);
+		}
 	};
 
 	const getProject = (id: string) =>

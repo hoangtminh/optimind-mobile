@@ -2,18 +2,8 @@ import { taskActions } from "@/api/task-actions";
 import { TaskResponse } from "@/lib/types/task";
 import React, { createContext, ReactNode, useContext, useState } from "react";
 
-export interface Task {
-	id: string;
-	title: string;
-	description?: string;
-	completed: boolean;
-	priority: "low" | "medium" | "high";
-	dueDate?: string;
-	createdAt: string;
-	projectId?: string;
-	status: "todo" | "in_progress" | "review" | "complete";
-	tag?: string[];
-	repeated?: string;
+export interface Task extends TaskResponse {
+	// Add any frontend-only fields here if needed
 }
 
 interface TaskContextType {
@@ -28,7 +18,7 @@ interface TaskContextType {
 		title: string;
 		note?: string;
 		priority: "low" | "medium" | "high";
-		due_date?: string;
+		dueDate?: string;
 		status: "todo" | "in_progress" | "review" | "complete";
 		projectId: string;
 		tag?: string[];
@@ -45,6 +35,7 @@ interface TaskContextType {
 	// Data fetching
 	fetchTasks: (projectId?: string) => Promise<void>;
 	fetchAllTasks: () => Promise<void>;
+	fetchTaskById: (taskId: string) => Promise<Task | null>;
 
 	// UI state
 	isAddModalOpen: boolean;
@@ -83,26 +74,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({
 			}
 
 			if (response.success && response.data) {
-				const mappedTasks: Task[] = response.data.map(
-					(task: TaskResponse) => ({
-						id: task.id,
-						title: task.title,
-						description: task.note,
-						completed: task.is_completed,
-						priority: task.priority as "low" | "medium" | "high",
-						dueDate: task.due_date,
-						createdAt: task.created_at,
-						projectId: task.project_id,
-						status: task.status as
-							| "todo"
-							| "in_progress"
-							| "review"
-							| "complete",
-						tag: task.tag,
-						repeated: task.repeated,
-					}),
-				);
-				setTasks(mappedTasks);
+				setTasks(response.data as Task[]);
 			} else {
 				setError(response.error || "Failed to fetch tasks");
 			}
@@ -117,11 +89,42 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({
 		await fetchTasks();
 	};
 
+	const fetchTaskById = async (taskId: string): Promise<Task | null> => {
+		setLoading(true);
+		setError(null);
+
+		try {
+			const response = await taskActions.getTaskById(taskId);
+			if (response.success && response.data) {
+				const task = response.data as Task;
+				// Update existing task in state if it exists
+				setTasks((prev) => {
+					const index = prev.findIndex((t) => t.id === taskId);
+					if (index !== -1) {
+						const next = [...prev];
+						next[index] = task;
+						return next;
+					}
+					return [...prev, task];
+				});
+				return task;
+			} else {
+				setError(response.error || "Failed to fetch task");
+				return null;
+			}
+		} catch (err) {
+			setError(err instanceof Error ? err.message : "An error occurred");
+			return null;
+		} finally {
+			setLoading(false);
+		}
+	};
+
 	const createTask = async (data: {
 		title: string;
 		note?: string;
 		priority: "low" | "medium" | "high";
-		due_date?: string;
+		dueDate?: string;
 		status: "todo" | "in_progress" | "review" | "complete";
 		projectId: string;
 		tag?: string[];
@@ -134,28 +137,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({
 			const response = await taskActions.createTask(data);
 
 			if (response.success && response.data) {
-				const newTask: Task = {
-					id: response.data.id,
-					title: response.data.title,
-					description: response.data.note,
-					completed: response.data.is_completed,
-					priority: response.data.priority as
-						| "low"
-						| "medium"
-						| "high",
-					dueDate: response.data.due_date,
-					createdAt: response.data.created_at,
-					projectId: response.data.project_id,
-					status: response.data.status as
-						| "todo"
-						| "in_progress"
-						| "review"
-						| "complete",
-					tag: response.data.tag,
-					repeated: response.data.repeated,
-				};
-
-				setTasks((prev) => [...prev, newTask]);
+				setTasks((prev) => [...prev, response.data as Task]);
 			} else {
 				throw new Error(response.error || "Failed to create task");
 			}
@@ -174,9 +156,9 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({
 		try {
 			const updateData = {
 				title: updates.title,
-				note: updates.description,
+				note: updates.note,
 				priority: updates.priority,
-				due_date: updates.dueDate,
+				dueDate: updates.dueDate,
 				status: updates.status,
 				tag: updates.tag,
 				repeated: updates.repeated,
@@ -191,8 +173,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({
 							? {
 									...task,
 									...updates,
-									description:
-										updates.description || task.description,
+									note: updates.note || task.note,
 									dueDate: updates.dueDate || task.dueDate,
 								}
 							: task,
@@ -226,7 +207,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({
 							? {
 									...task,
 									status,
-									completed: status === "complete",
+									isCompleted: status === "complete",
 								}
 							: task,
 					),
@@ -276,6 +257,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({
 		deleteTask,
 		fetchTasks,
 		fetchAllTasks,
+		fetchTaskById,
 		isAddModalOpen,
 		setIsAddModalOpen,
 	};

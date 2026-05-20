@@ -1,0 +1,1 @@
+timestamp,ear_ratio,mar_ratio,yaw,pitch,roll,head_movement_total,pitch_delta_squared,yaw_delta_squared,gaze_x,gaze_y,probability,score,weighted_score

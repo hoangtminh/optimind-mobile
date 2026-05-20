@@ -5,7 +5,7 @@ export interface CreateTaskRequest {
 	title: string;
 	note?: string;
 	priority: "low" | "medium" | "high";
-	due_date?: string;
+	dueDate?: string;
 	status: "todo" | "in_progress" | "review" | "complete";
 	tag?: string[];
 	repeated?: string;
@@ -16,7 +16,7 @@ export interface UpdateTaskRequest {
 	title?: string;
 	note?: string;
 	priority?: "low" | "medium" | "high";
-	due_date?: string;
+	dueDate?: string;
 	status?: "todo" | "in_progress" | "review" | "complete";
 	tag?: string[];
 	repeated?: string;
@@ -33,11 +33,11 @@ export const taskActions = {
 			title: data.title,
 			note: data.note || "",
 			priority: data.priority,
-			due_date: data.due_date,
+			dueDate: data.dueDate,
 			status: data.status,
 			tag: data.tag || [],
 			repeated: data.repeated || "none",
-			project_id: data.projectId,
+			projectId: data.projectId,
 		};
 
 		return apiPost<TaskResponse>("/api/tasks", payload);
@@ -49,7 +49,7 @@ export const taskActions = {
 	async getTasksByProject(
 		projectId: string,
 	): Promise<ApiResponse<TaskResponse[]>> {
-		return apiGet<TaskResponse[]>(`/api/projects/${projectId}/tasks`);
+		return apiGet<TaskResponse[]>(`/api/tasks/project/${projectId}`);
 	},
 
 	/**

@@ -1,5 +1,5 @@
 import * as SecureStore from "expo-secure-store";
-import React, {
+import {
 	createContext,
 	ReactNode,
 	useCallback,
@@ -8,7 +8,7 @@ import React, {
 } from "react";
 import { Platform } from "react-native";
 import { authActions, User } from "../api/auth-actions";
-import { setAuthToken } from "../api/client";
+import { setAuthToken, setOnUnauthorized } from "../api/client";
 
 interface AuthContextType {
 	user: User | null;
@@ -35,10 +35,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 	const [user, setUser] = useState<User | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 
-	useEffect(() => {
-		loadUser();
-	}, []);
-
 	const getToken = async (key: string) => {
 		if (Platform.OS === "web") {
 			return localStorage.getItem(key);
@@ -54,6 +50,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 				const response = await authActions.getMe();
 				if (response.success && response.data) {
 					setUser(response.data);
+					console.log("Load user", response.data);
 				} else {
 					setAuthToken(null);
 					setUser(null);
@@ -67,6 +64,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 			setIsLoading(false);
 		}
 	}, []);
+
+	useEffect(() => {
+		loadUser();
+		setOnUnauthorized(async () => {
+			setUser(null);
+			setAuthToken(null);
+			if (Platform.OS === "web") {
+				localStorage.removeItem("accessToken");
+				localStorage.removeItem("refreshToken");
+			} else {
+				await SecureStore.deleteItemAsync("accessToken");
+				await SecureStore.deleteItemAsync("refreshToken");
+			}
+		});
+	}, [loadUser]);
 
 	const signIn = async (
 		email: string,
