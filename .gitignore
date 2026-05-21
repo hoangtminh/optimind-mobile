@@ -42,3 +42,5 @@ yarn-error.*
 /android
 
 my-release-key.keystore
+
+/.agent

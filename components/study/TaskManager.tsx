@@ -24,11 +24,11 @@ interface TaskManagerProps {
 	onDeleteTask: (id: string) => void;
 }
 
-export default function TaskManager({
+const TaskManagerComponent = ({
 	tasks,
 	onAddTask,
 	onDeleteTask,
-}: TaskManagerProps) {
+}: TaskManagerProps) => {
 	const [modalVisible, setModalVisible] = useState(false);
 	const [title, setTitle] = useState("");
 	const [note, setNote] = useState("");
@@ -272,4 +272,6 @@ export default function TaskManager({
 			</Modal>
 		</View>
 	);
-}
+};
+
+export const TaskManager = React.memo(TaskManagerComponent);

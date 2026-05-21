@@ -1,15 +1,36 @@
+import { useStudySessions } from "@/contexts/StudySessionContext";
 import { FocusFeatureExtractor } from "@/utils/FocusFeatureExtractor";
 import { Point3D, PoseState } from "@/utils/landmarkFeatures";
 import { LinearGradient } from "expo-linear-gradient";
 import { CameraOff, RefreshCw, Scan, ShieldCheck } from "lucide-react-native";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Modal, useWindowDimensions, Alert } from "react-native";
+import { ActivityIndicator, Modal, useWindowDimensions } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 import { useCameraPermission } from "react-native-vision-camera";
-import { Button, Circle, Text, View, XStack, YStack, ZStack } from "tamagui";
+import {
+  AlertDialog,
+  Button,
+  Circle,
+  Text,
+  View,
+  XStack,
+  YStack,
+  ZStack,
+} from "tamagui";
 import { useFaceLandmarkDetection } from "../faceLandmarkDetection";
 import { MediapipeCamera } from "../faceLandmarkDetection/mediapipeCamera";
 import { RunningMode } from "../faceLandmarkDetection/types";
+import { PauseAlertDialog } from "./PauseAlert";
+
+export interface SessionStats {
+  startTime: string;
+  endTime: string;
+  totalTime: number;
+  focusTime: number;
+  breakTime: number;
+  cycles: number;
+  sessionType: string;
+}
 
 interface FocusCameraProps {
   timerRunning: boolean;
@@ -17,6 +38,9 @@ interface FocusCameraProps {
   isActive: boolean;
   setIsActive: (active: boolean) => void;
   sessionKey: number;
+  isSessionEnded?: boolean;
+  onCloseSaveDialog?: () => void;
+  sessionStats?: SessionStats;
 }
 
 const formatLabelTime = (seconds: number) => {
@@ -31,6 +55,9 @@ const FocusCameraComponent = ({
   isActive,
   setIsActive,
   sessionKey,
+  isSessionEnded,
+  onCloseSaveDialog,
+  sessionStats,
 }: FocusCameraProps) => {
   const { hasPermission, requestPermission } = useCameraPermission();
   const [facing, setFacing] = useState<"front" | "back">("front");
@@ -47,8 +74,56 @@ const FocusCameraComponent = ({
   const calculateFocusScoreRFRef = useRef<
     ((inputFeatures: number[]) => number) | null
   >(null);
-  const [focusHistory, setFocusHistory] = useState<{ score: number; timeElapsed: number }[]>([]);
+  const [focusHistory, setFocusHistory] = useState<
+    { score: number; timeElapsed: number }[]
+  >([]);
+  const [showPauseDialog, setShowPauseDialog] = useState(false);
   const lastFaceDetectedTimeRef = useRef<number | null>(null);
+
+  const { saveDetailedSession } = useStudySessions();
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [focusHistorySnapshot, setFocusHistorySnapshot] = useState<
+    { score: number; timeElapsed: number }[]
+  >([]);
+
+  useEffect(() => {
+    if (isSessionEnded && !showSaveDialog) {
+      setFocusHistorySnapshot(focusHistory);
+      setShowSaveDialog(true);
+    }
+  }, [isSessionEnded]);
+
+  const handleSaveSession = async () => {
+    if (!sessionStats) return;
+
+    const historyToUse =
+      focusHistorySnapshot.length > 0 ? focusHistorySnapshot : focusHistory;
+
+    const averageFocus =
+      historyToUse.length > 0
+        ? historyToUse.reduce((acc, curr) => acc + curr.score, 0) /
+          historyToUse.length
+        : 0;
+
+    const focusData = historyToUse.map((item) => {
+      const startTimeMs = new Date(sessionStats.startTime).getTime();
+      const ts = new Date(startTimeMs + item.timeElapsed * 1000);
+      return {
+        timestamp: ts.toISOString(),
+        focusPoint: item.score,
+      };
+    });
+
+    const sessionData = {
+      ...sessionStats,
+      averageFocus,
+      focusData,
+    };
+
+    await saveDetailedSession(sessionData);
+    setShowSaveDialog(false);
+    onCloseSaveDialog?.();
+  };
 
   const { width } = useWindowDimensions();
   const cameraHeight = 320;
@@ -64,8 +139,7 @@ const FocusCameraComponent = ({
       try {
         const dummyInput = new Array(10).fill(0);
         calculateFocusScoreRF(dummyInput);
-      } catch (e) {
-      }
+      } catch (e) {}
 
       calculateFocusScoreRFRef.current = calculateFocusScoreRF;
       setModelLoaded(true);
@@ -76,8 +150,29 @@ const FocusCameraComponent = ({
     }
   };
 
-  const currentScoresRef = useRef({ focus: null as number | null, weighted: null as number | null });
+  const currentScoresRef = useRef({
+    focus: null as number | null,
+    weighted: null as number | null,
+  });
   const localTimeElapsedRef = useRef(0);
+
+  const onKeepStudying = useCallback(() => {
+    setIsActive(true);
+    setTimerRunning?.(true);
+    setShowPauseDialog(false);
+  }, [setIsActive, setTimerRunning]);
+
+  const onTurnOffCameraAndContinue = useCallback(() => {
+    setIsActive(false);
+    setTimerRunning?.(true);
+    setShowPauseDialog(false);
+  }, [setIsActive, setTimerRunning]);
+
+  const onPauseSession = useCallback(() => {
+    setIsActive(false);
+    setTimerRunning?.(false);
+    setShowPauseDialog(false);
+  }, [setIsActive, setTimerRunning]);
 
   useEffect(() => {
     currentScoresRef.current = { focus: focusScore, weighted: weightedScore };
@@ -100,23 +195,7 @@ const FocusCameraComponent = ({
           if (elapsed > 5000) {
             setTimerRunning?.(false);
             setIsActive(false);
-            Alert.alert(
-              "Bạn còn ở đó không?",
-              "Không phát hiện khuôn mặt trong 5 giây. Hệ thống đã tạm dừng học tập.",
-              [
-                {
-                  text: "Tôi vẫn đang học",
-                  onPress: () => {
-                    setIsActive(true);
-                    setTimerRunning?.(true);
-                  },
-                },
-                {
-                  text: "Tạm dừng",
-                  style: "cancel",
-                },
-              ]
-            );
+            setShowPauseDialog(true);
           }
         }
       }, 1000);
@@ -407,7 +486,7 @@ const FocusCameraComponent = ({
           alignItems="center"
           gap="$2"
           backgroundColor="#E8F5E9"
-          padding="$2.5"
+          padding={10}
           borderRadius={100}
           alignSelf="center"
         >
@@ -592,6 +671,97 @@ const FocusCameraComponent = ({
           }}
         />
       </YStack>
+
+      <PauseAlertDialog
+        open={showPauseDialog}
+        onOpenChange={setShowPauseDialog}
+        onKeepStudying={onKeepStudying}
+        onTurnOffCameraAndContinue={onTurnOffCameraAndContinue}
+        onPauseSession={onPauseSession}
+      />
+
+      <AlertDialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+        <AlertDialog.Portal>
+          <AlertDialog.Overlay
+            key="overlay"
+            opacity={0.5}
+            backgroundColor="#1d1b20"
+            enterStyle={{ opacity: 0 }}
+            exitStyle={{ opacity: 0 }}
+          />
+          <AlertDialog.Content
+            bordered
+            elevate
+            key="content"
+            enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
+            exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
+            x={0}
+            y={0}
+            scale={1}
+            opacity={1}
+            backgroundColor="white"
+            borderRadius={32}
+            padding="$6"
+            width="90%"
+            maxWidth={400}
+            alignSelf="center"
+            justifyContent="center"
+          >
+            <YStack gap="$4" alignItems="center">
+              <YStack gap="$2" alignItems="center">
+                <AlertDialog.Title
+                  fontSize="$6"
+                  fontWeight="800"
+                  color="#1d1b20"
+                  textAlign="center"
+                >
+                  Lưu phiên học
+                </AlertDialog.Title>
+                <AlertDialog.Description
+                  color="#494551"
+                  textAlign="center"
+                  fontSize={14}
+                  lineHeight={20}
+                >
+                  Phiên học của bạn đã kết thúc. Bạn có muốn lưu lại dữ liệu tập
+                  trung không?
+                </AlertDialog.Description>
+              </YStack>
+
+              <XStack gap="$3" width="100%" marginTop="$4">
+                <Button
+                  flex={1}
+                  height={48}
+                  borderRadius={16}
+                  backgroundColor="#f2ecf4"
+                  onPress={() => {
+                    setShowSaveDialog(false);
+                    onCloseSaveDialog?.();
+                  }}
+                  pressStyle={{ backgroundColor: "#e9ddff" }}
+                >
+                  <Text fontWeight="700" color="#6750A4">
+                    Bỏ qua
+                  </Text>
+                </Button>
+
+                <Button
+                  flex={1}
+                  height={48}
+                  borderRadius={16}
+                  backgroundColor="#6750A4"
+                  onPress={handleSaveSession}
+                  pressStyle={{ opacity: 0.8 }}
+                >
+                  <Text fontWeight="700" color="white">
+                    Lưu lại
+                  </Text>
+                </Button>
+              </XStack>
+            </YStack>
+          </AlertDialog.Content>
+        </AlertDialog.Portal>
+      </AlertDialog>
     </YStack>
   );
 };
