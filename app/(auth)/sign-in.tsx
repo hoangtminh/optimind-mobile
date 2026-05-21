@@ -1,243 +1,244 @@
+import { PremiumAlertDialog } from "@/components/common/PremiumAlertDialog";
 import { AntDesign } from "@expo/vector-icons";
 import { Link } from "@react-navigation/native";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
-	ActivityIndicator,
-	Alert,
-	Dimensions,
-	ScrollView,
-	Text,
-	TextInput,
-	TouchableOpacity,
-	View,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { Checkbox } from "tamagui";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../hooks/useAuth";
 
-const { width } = Dimensions.get("window");
+// ── Separated sub-components (better re-render isolation) ──────────────────
+import AuthHeader from "@/components/auth/AuthHeader";
+import AuthInput from "@/components/auth/AuthInput";
+import { AuthCheckbox, AuthDivider } from "@/components/auth/AuthUtils";
+import { AuthPrimaryButton, AuthSocialButton } from "@/components/auth/AuthButtons";
+
+// ─── Design tokens (StudyFlow / Focused Academic System) ──────────────────────
+const T = {
+  surface: "#fdf7ff",
+  surfaceContainerLow: "#f8f2fa",
+  surfaceContainerHighest: "#e6e0e9",
+  primary: "#4f378a",
+  onSurface: "#1d1b20",
+  onSurfaceVariant: "#494551",
+  outline: "#7a7582",
+  outlineVariant: "#cbc4d2",
+} as const;
+
+// Google icon (inline SVG path rendered via AntDesign fallback)
+function GoogleIcon() {
+  return <AntDesign name="google" size={18} color="#1d1b20" />;
+}
 
 export default function SignInScreen() {
-	const [email, setEmail] = useState("");
-	const [password, setPassword] = useState("");
-	const [remember, setRemember] = useState(false);
-	const [loading, setLoading] = useState(false);
-	const { signIn } = useAuth();
-	const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [remember, setRemember] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { signIn } = useAuth();
+  const router = useRouter();
 
-	const handleSignIn = async () => {
-		try {
-			setLoading(true);
-			await signIn(email, password, remember);
-			router.replace("/study/index");
-		} catch (error: any) {
-			Alert.alert("Sign In Failed", error.message);
-		} finally {
-			setLoading(false);
-		}
-	};
+  const [dialog, setDialog] = useState({
+    open: false,
+    title: "",
+    description: "",
+    type: "error" as const,
+  });
 
-	return (
-		<View className="flex-1 bg-[#f8f9fb]">
-			<ScrollView
-				contentContainerStyle={{
-					flexGrow: 1,
-					justifyContent: "center",
-					padding: 20,
-				}}
-			>
-				{/* Branding Header (Mobile optimized) */}
-				<View className="items-center mb-8 flex-row justify-center gap-2">
-					<Text className="text-xl font-extrabold tracking-tighter text-[#0058be]">
-						Optimind App
-					</Text>
-				</View>
+  const handleSignIn = async () => {
+    try {
+      setLoading(true);
+      await signIn(email, password, remember);
+      router.replace("/(main)/(tabs)/study");
+    } catch (error: any) {
+      setDialog({
+        open: true,
+        title: "Sign In Failed",
+        description: error.message,
+        type: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-				<View className="w-full max-w-[1100px] self-center bg-white rounded-[32px] overflow-hidden shadow-sm border border-[#c2c6d6]/20">
-					<View className="flex-row">
-						{/* Left Side: Branding/Visual (Hidden on small screens like the HTML) */}
-						{width > 768 && (
-							<View className="flex-1 bg-[#f3f4f6] p-12 justify-between">
-								<View>
-									<Text className="text-4xl font-extrabold tracking-tighter text-[#0058be] leading-tight mb-4">
-										Focus on your{"\n"}academic growth.
-									</Text>
-									<Text className="text-[#424754] text-lg max-w-xs leading-relaxed">
-										Join a sanctuary designed for focused
-										research, quiet study, and elite
-										collaboration.
-									</Text>
-								</View>
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* ── Header ────────────────────────────────────────────────────── */}
+          <AuthHeader
+            title="Welcome back"
+            subtitle="Sign in to continue to Optimind"
+          />
 
-								{/* Resource Card */}
-								<View className="bg-white/60 p-6 rounded-2xl border border-white/40">
-									<View className="flex-row items-center gap-4 mb-3">
-										<View className="w-10 h-10 rounded-full bg-[#6cf8bb] items-center justify-center">
-											<Text style={{ color: "#00714d" }}>
-												verified
-											</Text>
-										</View>
-										<View>
-											<Text className="text-sm font-bold text-[#191c1e]">
-												Curated Resources
-											</Text>
-											<Text className="text-xs text-[#424754]">
-												Access 2M+ peer-reviewed
-												journals
-											</Text>
-										</View>
-									</View>
-									<View className="w-full bg-[#e1e2e4] h-2 rounded-full overflow-hidden">
-										<View className="bg-[#006c49] h-full w-3/4" />
-									</View>
-								</View>
-							</View>
-						)}
+          {/* ── Form card ────────────────────────────────────────────────── */}
+          <View style={styles.card}>
+            {/* Email */}
+            <AuthInput
+              label="Email Address"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoComplete="email"
+              textContentType="emailAddress"
+            />
 
-						{/* Right Side: Form Section */}
-						<View
-							className={`flex-1 p-8 ${width > 768 ? "md:p-16" : "p-8"}`}
-						>
-							<View className="mb-10">
-								<Text className="text-2xl font-bold text-[#191c1e] mb-2">
-									Welcome Back
-								</Text>
-								<Text className="text-[#424754]">
-									Continue your journey in the sanctuary.
-								</Text>
-							</View>
+            {/* Password */}
+            <View style={styles.passwordGroup}>
+              <AuthInput
+                label="Password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                autoComplete="password"
+                textContentType="password"
+              />
+              {/* Forgot password — positioned below input label row */}
+              <Link screen="forgot-password" params={{}}>
+                <Text style={styles.forgotLink}>Forgot password?</Text>
+              </Link>
+            </View>
 
-							<View className="space-y-4">
-								{/* Email */}
-								<View>
-									<Text className="text-sm font-medium text-[#424754] ml-1 mb-2">
-										Email Address
-									</Text>
-									<TextInput
-										className="w-full px-4 py-4 bg-[#e7e8ea] rounded-xl text-[#191c1e]"
-										placeholder="name@university.edu"
-										placeholderTextColor="#727785"
-										value={email}
-										onChangeText={setEmail}
-										autoCapitalize="none"
-										keyboardType="email-address"
-									/>
-								</View>
+            {/* Remember me */}
+            <View style={styles.rememberRow}>
+              <AuthCheckbox
+                checked={remember}
+                onToggle={() => setRemember((v) => !v)}
+              >
+                <Text style={styles.rememberLabel}>Remember me</Text>
+              </AuthCheckbox>
+            </View>
 
-								{/* Password */}
-								<View>
-									<View className="flex-row justify-between items-center px-1 mb-2">
-										<Text className="text-sm font-medium text-[#424754]">
-											Password
-										</Text>
-										<Link
-											screen={"forgot-password"}
-											params={{}}
-										>
-											<Text className="text-xs font-semibold text-[#0058be]">
-												Forgot Password?
-											</Text>
-										</Link>
-									</View>
-									<TextInput
-										className="w-full px-4 py-4 bg-[#e7e8ea] rounded-xl text-[#191c1e]"
-										placeholder="••••••••"
-										placeholderTextColor="#727785"
-										value={password}
-										onChangeText={setPassword}
-										secureTextEntry
-									/>
-								</View>
-								{/* Remember me */}
-								<View>
-									<Text className="text-sm font-medium text-[#424754] ml-1 mb-2">
-										Remember for later sign-in
-									</Text>
-									<Checkbox />
-								</View>
+            {/* CTA */}
+            <View style={styles.cta}>
+              <AuthPrimaryButton
+                label="Sign In"
+                loading={loading}
+                onPress={handleSignIn}
+              />
+            </View>
 
-								{/* Sign In Button */}
-								<TouchableOpacity
-									className="w-full py-4 bg-[#0058be] items-center justify-center rounded-xl shadow-lg shadow-blue-900/20 mt-4"
-									onPress={handleSignIn}
-									disabled={loading}
-								>
-									{loading ? (
-										<ActivityIndicator color="#fff" />
-									) : (
-										<Text className="text-white font-bold text-lg">
-											Sign In
-										</Text>
-									)}
-								</TouchableOpacity>
-							</View>
+            {/* Divider */}
+            <AuthDivider />
 
-							{/* Divider */}
-							<View className="relative my-8 items-center justify-center">
-								<View className="absolute w-full border-t border-[#c2c6d6]/30" />
-								<Text className="bg-white px-4 text-[#727785] text-xs font-medium tracking-widest uppercase">
-									Or continue with
-								</Text>
-							</View>
+            {/* Social */}
+            <AuthSocialButton
+              label="Continue with Google"
+              icon={<GoogleIcon />}
+            />
+          </View>
 
-							{/* Social Buttons */}
-							<View className="flex-row ">
-								<TouchableOpacity
-									style={{
-										flex: 1,
-										flexDirection: "row",
-										height: 50,
-										borderWidth: 1,
-										borderColor: "#c2c6d6",
-										borderRadius: 16,
-										justifyContent: "center",
-										alignItems: "center",
-										backgroundColor: "#fff",
-									}}
-								>
-									<AntDesign
-										name="google"
-										size={18}
-										color="#191c1e"
-									/>
-									<Text
-										style={{
-											marginLeft: 8,
-											fontSize: 14,
-											fontWeight: "600",
-											color: "#191c1e",
-										}}
-									>
-										Google
-									</Text>
-								</TouchableOpacity>
-							</View>
+          {/* ── Footer link ──────────────────────────────────────────────── */}
+          <View style={styles.footerRow}>
+            <Text style={styles.footerText}>Don't have an account?</Text>
+            <TouchableOpacity
+              onPress={() => router.replace("/(auth)/sign-up")}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Text style={styles.footerLink}> Sign Up</Text>
+            </TouchableOpacity>
+          </View>
 
-							<View className="flex flex-row justify-center mt-16">
-								<Text className="text-neural-600 text-base">
-									Don't have an account?
-								</Text>
-								<TouchableOpacity
-									onPress={() =>
-										router.replace("/(auth)/sign-up")
-									}
-								>
-									<Text className="text-blue-700 font-bold text-base">
-										{" "}
-										Sign Up
-									</Text>
-								</TouchableOpacity>
-							</View>
-						</View>
-					</View>
-				</View>
+          {/* Copyright */}
+          <Text style={styles.copyright}>Optimind © 2026</Text>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
-				<View className="mt-8 items-center opacity-40">
-					<Text className="text-[10px] text-[#727785] font-medium tracking-widest uppercase">
-						Optimind © 2026
-					</Text>
-				</View>
-			</ScrollView>
-		</View>
-	);
+      <PremiumAlertDialog
+        open={dialog.open}
+        onOpenChange={(open) => setDialog((prev) => ({ ...prev, open }))}
+        title={dialog.title}
+        description={dialog.description}
+        type={dialog.type}
+      />
+    </SafeAreaView>
+  );
 }
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: T.surface,
+  },
+  flex: { flex: 1 },
+  scroll: {
+    flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 40,
+  },
+  // Form card — surface-container-low tonal lift
+  card: {
+    backgroundColor: T.surfaceContainerLow,
+    borderRadius: 20,
+    padding: 24,
+    // Ambient shadow
+    shadowColor: "#1d1b20",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+    elevation: 3,
+    gap: 16,
+  },
+  passwordGroup: { gap: 6 },
+  forgotLink: {
+    fontFamily: "Manrope_600SemiBold",
+    fontSize: 13,
+    letterSpacing: 0.1,
+    color: T.primary,
+    textAlign: "right",
+  },
+  rememberRow: {
+    paddingHorizontal: 2,
+  },
+  rememberLabel: {
+    fontFamily: "Manrope_400Regular",
+    fontSize: 14,
+    lineHeight: 20,
+    color: T.onSurfaceVariant,
+  },
+  cta: { marginTop: 4 },
+  // Footer
+  footerRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 28,
+  },
+  footerText: {
+    fontFamily: "Manrope_400Regular",
+    fontSize: 14,
+    color: T.onSurfaceVariant,
+  },
+  footerLink: {
+    fontFamily: "Manrope_700Bold",
+    fontSize: 14,
+    color: T.primary,
+  },
+  copyright: {
+    fontFamily: "Manrope_500Medium",
+    fontSize: 10,
+    letterSpacing: 1.5,
+    color: T.outline,
+    textAlign: "center",
+    marginTop: 32,
+    opacity: 0.5,
+    textTransform: "uppercase",
+  },
+});
