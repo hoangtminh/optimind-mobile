@@ -1,9 +1,33 @@
 import { StudySession } from "../lib/types/study";
 import { apiDelete, apiGet, apiPost, apiPut, ApiResponse } from "./client";
 
+export interface SessionLogResponse {
+	id: string;
+	focus: number;
+	timestamp: string;
+	createdAt: string;
+}
+
+export interface SessionTaskResponse {
+	id: string;
+	taskId: string;
+	completed: boolean;
+}
+
+export interface StudySessionDetailsResponse {
+	session: StudySession;
+	logs: SessionLogResponse[];
+	tasks: SessionTaskResponse[];
+}
+
 export const studyActions = {
 	getSessions: (): Promise<ApiResponse<StudySession[]>> =>
 		apiGet<StudySession[]>("/api/study-sessions"),
+
+	getSessionDetails: (
+		id: string,
+	): Promise<ApiResponse<StudySessionDetailsResponse>> =>
+		apiGet<StudySessionDetailsResponse>(`/api/study-sessions/${id}`),
 
 	createSession: (
 		data: Partial<StudySession>,
