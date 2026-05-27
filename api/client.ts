@@ -69,7 +69,6 @@ async function apiRequest<T>(
       data = null;
     }
 
-    console.log(data);
     if (response.ok) {
       return {
         success: true,

@@ -16,7 +16,6 @@ export const prepareFocusModelInput = (
 ): { modelInput: number[]; newState: PoseState } => {
   // 1. Trích xuất toàn bộ các đặc trưng và trạng thái mới
   const { features, newState } = extractFeatures(landmarks, prevState);
-  console.log("Trich xuat: ", features, landmarks.length);
 
   // 2. Map dữ liệu vào mảng theo đúng thứ tự Index của features_rf
   const modelInput: number[] = [

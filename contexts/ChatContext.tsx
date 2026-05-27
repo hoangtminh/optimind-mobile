@@ -103,8 +103,6 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
           // Adding for stompjs to connect from Android
           forceBinaryWSFrames: true,
           appendMissingNULLonIncoming: true,
-          //
-          // debug: (str) => console.log("STOMP Debug:", str),
           reconnectDelay: 5000,
           onConnect: () => {
             setIsConnected(true);
@@ -234,9 +232,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
   const createChat = async (name: string, members: string[]) => {
     try {
-      console.log(members);
       const res = await chatActions.createChat(name, members, true);
-      console.log(res);
       if (res.success && res.data) {
         return res.data;
       }
@@ -261,7 +257,6 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       const messageData = {
         text: text,
       };
-      console.log(activeChatIdRef.current);
       stompClientRef.current.publish({
         destination: `/app/chat/${activeChatIdRef.current}/send`, // Khớp với @MessageMapping("/chat/{chatId}/send")
         body: JSON.stringify(messageData),
