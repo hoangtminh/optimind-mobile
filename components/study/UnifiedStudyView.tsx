@@ -18,7 +18,7 @@ interface UnifiedStudyViewProps {
   setTimerTimeLeft: React.Dispatch<React.SetStateAction<number>>;
   setTimerRunning: (running: boolean) => void;
   setTimerMode: (mode: TimerMode) => void;
-  onTimerReset: () => void;
+  onTimerReset: (shouldSave?: boolean) => Promise<void> | void;
   onCycleComplete: () => void;
   onLongBreakComplete: () => void;
   onSettingsPress: () => void;

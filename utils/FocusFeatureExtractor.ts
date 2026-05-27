@@ -25,9 +25,9 @@ const SCALER_CONFIG = {
 const LR_COEFFICIENTS = [
   0.7576, // 0: EAR (Tăng tập trung +)
   -0.1697, // 1: EAR_sq (Xao nhãng -)
-  -0.3961, // 2: Yaw_sq (Xao nhãng -)
+  -0.2961, // 2: Yaw_sq (Xao nhãng -)
   -0.1931, // 3: Pitch_sq (Xao nhãng -)
-  -0.5559, // 4: HM_Yaw (Xao nhãng -)
+  -0.3559, // 4: HM_Yaw (Xao nhãng -)
   -0.2996, // 5: HM_Pitch (Xao nhãng -)
   0.1267, // 6: Roll (Tăng tập trung +)
   0.0751, // 7: Gaze_X (Tăng tập trung +)

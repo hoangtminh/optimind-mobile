@@ -1,18 +1,26 @@
 import { playLongBreakTing, playTing } from "@/utils/tingSound";
 import { LinearGradient } from "expo-linear-gradient";
 import {
-	Brain,
-	Coffee,
-	Moon,
-	Pause,
-	Play,
-	RotateCcw,
-	Settings2,
+  Brain,
+  Coffee,
+  Moon,
+  Pause,
+  Play,
+  RotateCcw,
+  Settings2,
 } from "lucide-react-native";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { View as RNView, StyleSheet } from "react-native";
 import Svg, { Circle as SvgCircle } from "react-native-svg";
-import { Button, Progress, Text, View, XStack, YStack } from "tamagui";
+import {
+  AlertDialog,
+  Button,
+  Progress,
+  Text,
+  View,
+  XStack,
+  YStack,
+} from "tamagui";
 
 // ─── Design Tokens ─────────────────────────────────────────────────────────────
 const C = {
@@ -46,7 +54,7 @@ export interface PomodoroProps {
   setIsRunning: (running: boolean) => void;
   setMode: (mode: TimerMode) => void;
   onFinish?: () => void;
-  onReset?: () => void;
+  onReset?: (shouldSave?: boolean) => void;
   onSettingsPress?: () => void;
   onCycleComplete?: () => void;
   /** Called when a full set (all cycles + long break) completes, so the parent can reset currentCycle to 1. */
@@ -360,6 +368,7 @@ const PremiumPomodoroComponent = ({
   onLongBreakComplete,
 }: PomodoroProps) => {
   const sessionEndedRef = useRef(false);
+  const [showResetDialog, setShowResetDialog] = useState(false);
 
   // Reset the "already fired" guard whenever a new session starts
   useEffect(() => {
@@ -420,6 +429,16 @@ const PremiumPomodoroComponent = ({
   ]);
 
   const progress = ((totalTime - timeLeft) / totalTime) * 100;
+  const isSessionStarted = currentCycle > 1 || timeLeft < totalTime;
+
+  const handleResetPress = () => {
+    if (isSessionStarted) {
+      setIsRunning(false);
+      setShowResetDialog(true);
+    } else {
+      onReset?.(false);
+    }
+  };
 
   return (
     <YStack
@@ -497,7 +516,7 @@ const PremiumPomodoroComponent = ({
       <TimerControls
         isRunning={isRunning}
         onToggle={() => setIsRunning(!isRunning)}
-        onReset={onReset}
+        onReset={handleResetPress}
         onSettingsPress={onSettingsPress}
       />
 
@@ -508,6 +527,92 @@ const PremiumPomodoroComponent = ({
         currentCycle={currentCycle}
         totalCycles={totalCycles}
       />
+
+      <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+        <AlertDialog.Portal>
+          <AlertDialog.Overlay
+            key="overlay"
+            opacity={0.5}
+            backgroundColor="#1d1b20"
+            enterStyle={{ opacity: 0 }}
+            exitStyle={{ opacity: 0 }}
+          />
+          <AlertDialog.Content
+            bordered
+            elevate
+            key="content"
+            enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
+            exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
+            x={0}
+            y={0}
+            scale={1}
+            opacity={1}
+            backgroundColor="white"
+            borderRadius={32}
+            padding="$6"
+            width="90%"
+            maxWidth={400}
+            alignSelf="center"
+            justifyContent="center"
+          >
+            <YStack gap="$4" alignItems="center">
+              <YStack gap="$2" alignItems="center">
+                <AlertDialog.Title
+                  fontSize="$6"
+                  fontWeight="800"
+                  color="#1d1b20"
+                  textAlign="center"
+                >
+                  Khôi phục bộ đếm?
+                </AlertDialog.Title>
+                <AlertDialog.Description
+                  color="#494551"
+                  textAlign="center"
+                  fontSize={14}
+                  lineHeight={20}
+                >
+                  Bạn đang trong một phiên học. Bạn có muốn lưu lại kết quả của
+                  phiên học này trước khi khôi phục không?
+                </AlertDialog.Description>
+              </YStack>
+
+              <XStack gap="$3" width="100%" marginTop="$4">
+                <Button
+                  flex={1}
+                  height={48}
+                  borderRadius={16}
+                  backgroundColor="#f2ecf4"
+                  onPress={() => {
+                    setShowResetDialog(false);
+                    onReset?.(false);
+                  }}
+                  pressStyle={{ backgroundColor: "#e9ddff" }}
+                >
+                  <Text fontWeight="700" color="#6750A4">
+                    Không lưu
+                  </Text>
+                </Button>
+
+                <Button
+                  flex={1}
+                  height={48}
+                  borderRadius={16}
+                  backgroundColor="#6750A4"
+                  onPress={() => {
+                    setShowResetDialog(false);
+                    onReset?.(true);
+                  }}
+                  pressStyle={{ opacity: 0.8 }}
+                >
+                  <Text fontWeight="700" color="white">
+                    Lưu lại
+                  </Text>
+                </Button>
+              </XStack>
+            </YStack>
+          </AlertDialog.Content>
+        </AlertDialog.Portal>
+      </AlertDialog>
     </YStack>
   );
 };

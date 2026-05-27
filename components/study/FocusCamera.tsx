@@ -1,4 +1,3 @@
-import { useStudySessions } from "@/contexts/StudySessionContext";
 import { FocusFeatureExtractor } from "@/utils/FocusFeatureExtractor";
 import { Point3D, PoseState } from "@/utils/landmarkFeatures";
 import { LinearGradient } from "expo-linear-gradient";
@@ -7,16 +6,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Modal, useWindowDimensions } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 import { useCameraPermission } from "react-native-vision-camera";
-import {
-  AlertDialog,
-  Button,
-  Circle,
-  Text,
-  View,
-  XStack,
-  YStack,
-  ZStack,
-} from "tamagui";
+import { Button, Circle, Text, View, XStack, YStack, ZStack } from "tamagui";
 import { useFaceLandmarkDetection } from "../faceLandmarkDetection";
 import { MediapipeCamera } from "../faceLandmarkDetection/mediapipeCamera";
 import { RunningMode } from "../faceLandmarkDetection/types";
@@ -38,9 +28,8 @@ interface FocusCameraProps {
   isActive: boolean;
   setIsActive: (active: boolean) => void;
   sessionKey: number;
-  isSessionEnded?: boolean;
-  onCloseSaveDialog?: () => void;
-  sessionStats?: SessionStats;
+  onFocusScoreChange: (score: number) => void;
+  focusHistory: any[];
 }
 
 const formatLabelTime = (seconds: number) => {
@@ -55,9 +44,8 @@ const FocusCameraComponent = ({
   isActive,
   setIsActive,
   sessionKey,
-  isSessionEnded,
-  onCloseSaveDialog,
-  sessionStats,
+  onFocusScoreChange,
+  focusHistory = [],
 }: FocusCameraProps) => {
   const { hasPermission, requestPermission } = useCameraPermission();
   const [facing, setFacing] = useState<"front" | "back">("front");
@@ -74,56 +62,8 @@ const FocusCameraComponent = ({
   const calculateFocusScoreRFRef = useRef<
     ((inputFeatures: number[]) => number) | null
   >(null);
-  const [focusHistory, setFocusHistory] = useState<
-    { score: number; timeElapsed: number }[]
-  >([]);
   const [showPauseDialog, setShowPauseDialog] = useState(false);
   const lastFaceDetectedTimeRef = useRef<number | null>(null);
-
-  const { saveDetailedSession } = useStudySessions();
-  const [showSaveDialog, setShowSaveDialog] = useState(false);
-  const [focusHistorySnapshot, setFocusHistorySnapshot] = useState<
-    { score: number; timeElapsed: number }[]
-  >([]);
-
-  useEffect(() => {
-    if (isSessionEnded && !showSaveDialog) {
-      setFocusHistorySnapshot(focusHistory);
-      setShowSaveDialog(true);
-    }
-  }, [isSessionEnded]);
-
-  const handleSaveSession = async () => {
-    if (!sessionStats) return;
-
-    const historyToUse =
-      focusHistorySnapshot.length > 0 ? focusHistorySnapshot : focusHistory;
-
-    const averageFocus =
-      historyToUse.length > 0
-        ? historyToUse.reduce((acc, curr) => acc + curr.score, 0) /
-          historyToUse.length
-        : 0;
-
-    const focusData = historyToUse.map((item) => {
-      const startTimeMs = new Date(sessionStats.startTime).getTime();
-      const ts = new Date(startTimeMs + item.timeElapsed * 1000);
-      return {
-        timestamp: ts.toISOString(),
-        focusPoint: item.score,
-      };
-    });
-
-    const sessionData = {
-      ...sessionStats,
-      averageFocus,
-      focusData,
-    };
-
-    await saveDetailedSession(sessionData);
-    setShowSaveDialog(false);
-    onCloseSaveDialog?.();
-  };
 
   const { width } = useWindowDimensions();
   const cameraHeight = 320;
@@ -221,23 +161,12 @@ const FocusCameraComponent = ({
             currentScore = score;
           }
         }
-        setFocusHistory((prev) => {
-          const next = [
-            ...prev,
-            { score: currentScore, timeElapsed: localTimeElapsedRef.current },
-          ];
-          if (next.length > 40) {
-            next.shift();
-          }
-          return next;
-        });
       }, 1000);
     }
     return () => clearInterval(interval);
   }, [timerRunning, modelLoaded, isActive]);
 
   useEffect(() => {
-    setFocusHistory([]);
     localTimeElapsedRef.current = 0;
   }, [sessionKey]);
 
@@ -255,7 +184,9 @@ const FocusCameraComponent = ({
 
         if (modelLoaded && calculateFocusScoreRFRef.current) {
           const focusProbability = calculateFocusScoreRFRef.current(featuresRF);
-          setFocusScore(focusProbability * 100);
+          const score = focusProbability * 100;
+          setFocusScore(score);
+          onFocusScoreChange?.(score);
         } else {
           setFocusScore(null);
         }
@@ -267,14 +198,18 @@ const FocusCameraComponent = ({
         const sigmoidScore = 1 / (1 + Math.exp(-wScore));
         const finalPercentage = sigmoidScore * 100;
         setWeightedScore(finalPercentage);
+        if (!modelLoaded) {
+          onFocusScoreChange?.(finalPercentage);
+        }
       } else {
         setIsCalibrating((prev) => {
           if (!prev) return true;
           return prev;
         });
       }
+      onFocusScoreChange?.(0);
     },
-    [modelLoaded],
+    [modelLoaded, onFocusScoreChange],
   );
 
   const onResults = useCallback(
@@ -598,78 +533,83 @@ const FocusCameraComponent = ({
             Theo dõi mức độ tương tác nhận thức của bạn
           </Text>
         </YStack>
-        <LineChart
-          data={{
-            labels: focusHistory.map((item, index) => {
-              if (
-                index === 0 ||
-                index === focusHistory.length - 1 ||
-                index % 10 === 0
-              ) {
-                return formatLabelTime(item.timeElapsed);
-              }
-              return "";
-            }),
-            datasets: [
-              {
-                data: focusHistory.map((item) => item.score),
+        {(() => {
+          const chartHistory = focusHistory.slice(-40);
+          return (
+            <LineChart
+              data={{
+                labels: chartHistory.map((item, index) => {
+                  if (
+                    index === 0 ||
+                    index === chartHistory.length - 1 ||
+                    index % 10 === 0
+                  ) {
+                    return formatLabelTime(item.timeElapsed);
+                  }
+                  return "";
+                }),
+                datasets: [
+                  {
+                    data: chartHistory.map((item) => item.score),
+                    color: (opacity = 1) => `rgba(103, 80, 164, ${opacity})`,
+                    strokeWidth: 2,
+                  },
+                  {
+                    data: [100],
+                    withDots: false,
+                    color: () => "transparent",
+                    strokeWidth: 0,
+                  },
+                ],
+              }}
+              yAxisSuffix="%"
+              width={width - 60}
+              height={200}
+              withDots={false}
+              fromZero={true}
+              segments={4}
+              withVerticalLines={false}
+              withHorizontalLines={true}
+              chartConfig={{
+                backgroundColor: "#eeee",
+                backgroundGradientFrom: "#f8f2fa",
+                backgroundGradientTo: "#f8f2fa",
+                decimalPlaces: 0,
                 color: (opacity = 1) => `rgba(103, 80, 164, ${opacity})`,
-                strokeWidth: 2,
-              },
-              {
-                data: [100],
-                withDots: false,
-                color: () => "transparent",
-                strokeWidth: 0,
-              },
-            ],
-          }}
-          yAxisSuffix="%"
-          width={width - 60}
-          height={200}
-          withDots={false}
-          fromZero={true}
-          segments={4}
-          withVerticalLines={false}
-          withHorizontalLines={true}
-          chartConfig={{
-            backgroundColor: "#eeee",
-            backgroundGradientFrom: "#f8f2fa",
-            backgroundGradientTo: "#f8f2fa",
-            decimalPlaces: 0,
-            color: (opacity = 1) => `rgba(103, 80, 164, ${opacity})`,
-            labelColor: (opacity = 1) => `rgba(73, 69, 81, ${opacity})`,
-            propsForLabels: {
-              fontSize: 9,
-              fontFamily: "System",
-            },
-            propsForBackgroundLines: {
-              stroke: "rgba(203, 196, 210, 0.2)",
-              strokeDasharray: "",
-            },
-            fillShadowGradient: "#6750a4",
-            fillShadowGradientOpacity: 0.2,
-            fillShadowGradientTo: "#6750a4",
-            fillShadowGradientToOpacity: 0,
-            useShadowColorFromDataset: false,
-            style: {
-              padding: 0,
-              borderRadius: 16,
-            },
-          }}
-          bezier
-          style={{
-            borderRadius: 12,
-            marginTop: 16,
-            marginBottom: 2,
-            marginLeft: -10,
-            marginRight: -10,
-            paddingLeft: 0,
-            paddingRight: 40,
-            paddingTop: 10,
-            paddingBottom: 5,
-          }}
-        />
+                labelColor: (opacity = 1) => `rgba(73, 69, 81, ${opacity})`,
+                propsForLabels: {
+                  fontSize: 9,
+                  fontFamily: "System",
+                },
+                propsForBackgroundLines: {
+                  stroke: "rgba(203, 196, 210, 0.2)",
+                  strokeDasharray: "",
+                },
+                fillShadowGradient: "#6750a4",
+                fillShadowGradientOpacity: 0.2,
+                fillShadowGradientTo: "#6750a4",
+                fillShadowGradientToOpacity: 0,
+                useShadowColorFromDataset: false,
+                style: {
+                  padding: 0,
+                  borderRadius: 16,
+                },
+              }}
+              bezier
+              style={{
+                borderRadius: 12,
+                marginTop: 16,
+                marginBottom: 2,
+                marginLeft: -10,
+                marginRight: -10,
+                paddingLeft: 0,
+                paddingRight: 40,
+                paddingTop: 10,
+                paddingBottom: 5,
+              }}
+            />
+          );
+        })()}
       </YStack>
 
       <PauseAlertDialog
@@ -679,89 +619,6 @@ const FocusCameraComponent = ({
         onTurnOffCameraAndContinue={onTurnOffCameraAndContinue}
         onPauseSession={onPauseSession}
       />
-
-      <AlertDialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
-        <AlertDialog.Portal>
-          <AlertDialog.Overlay
-            key="overlay"
-            opacity={0.5}
-            backgroundColor="#1d1b20"
-            enterStyle={{ opacity: 0 }}
-            exitStyle={{ opacity: 0 }}
-          />
-          <AlertDialog.Content
-            bordered
-            elevate
-            key="content"
-            enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
-            exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
-            x={0}
-            y={0}
-            scale={1}
-            opacity={1}
-            backgroundColor="white"
-            borderRadius={32}
-            padding="$6"
-            width="90%"
-            maxWidth={400}
-            alignSelf="center"
-            justifyContent="center"
-          >
-            <YStack gap="$4" alignItems="center">
-              <YStack gap="$2" alignItems="center">
-                <AlertDialog.Title
-                  fontSize="$6"
-                  fontWeight="800"
-                  color="#1d1b20"
-                  textAlign="center"
-                >
-                  Lưu phiên học
-                </AlertDialog.Title>
-                <AlertDialog.Description
-                  color="#494551"
-                  textAlign="center"
-                  fontSize={14}
-                  lineHeight={20}
-                >
-                  Phiên học của bạn đã kết thúc. Bạn có muốn lưu lại dữ liệu tập
-                  trung không?
-                </AlertDialog.Description>
-              </YStack>
-
-              <XStack gap="$3" width="100%" marginTop="$4">
-                <Button
-                  flex={1}
-                  height={48}
-                  borderRadius={16}
-                  backgroundColor="#f2ecf4"
-                  onPress={() => {
-                    setShowSaveDialog(false);
-                    onCloseSaveDialog?.();
-                  }}
-                  pressStyle={{ backgroundColor: "#e9ddff" }}
-                >
-                  <Text fontWeight="700" color="#6750A4">
-                    Bỏ qua
-                  </Text>
-                </Button>
-
-                <Button
-                  flex={1}
-                  height={48}
-                  borderRadius={16}
-                  backgroundColor="#6750A4"
-                  onPress={handleSaveSession}
-                  pressStyle={{ opacity: 0.8 }}
-                >
-                  <Text fontWeight="700" color="white">
-                    Lưu lại
-                  </Text>
-                </Button>
-              </XStack>
-            </YStack>
-          </AlertDialog.Content>
-        </AlertDialog.Portal>
-      </AlertDialog>
     </YStack>
   );
 };
