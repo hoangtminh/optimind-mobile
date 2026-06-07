@@ -185,7 +185,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const startGoogleLogin = async () => {
     const clientId = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID;
-    const redirectUri = "http://localhost:3000/auth/callback";
+    const redirectUri =
+      Platform.OS === "web"
+        ? window.location.origin + "/auth/callback"
+        : process.env.EXPO_PUBLIC_API_URL + "/api/auth/oauth2/callback";
     const scope = "openid email profile";
     const responseType = "code";
     const prompt = "select_account";
