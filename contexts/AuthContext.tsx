@@ -9,6 +9,8 @@ import {
 import { Platform } from "react-native";
 import { authActions, User } from "../api/auth-actions";
 import { setAuthToken, setOnUnauthorized } from "../api/client";
+import * as Linking from "expo-linking";
+import * as WebBrowser from "expo-web-browser";
 
 interface AuthContextType {
   user: User | null;
@@ -16,7 +18,8 @@ interface AuthContextType {
   signIn: (email: string, password: string, remember: boolean) => Promise<void>;
   signUp: (username: string, email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
-  signInWithGoogle: (code: string) => Promise<void>;
+  signInWithGoogle: (code: string, redirectUri?: string) => Promise<void>;
+  startGoogleLogin: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(
@@ -36,7 +39,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const loadUser = useCallback(async () => {
     try {
-      const token = await getToken("accessToken"); // Dùng helper ở đây
+      let token = await getToken("accessToken");
+      const refreshToken = await getToken("refreshToken");
+
+      if (!token && refreshToken) {
+        console.log("Access token missing but refresh token exists. Fetching new access token...");
+        const refreshResponse = await authActions.refresh({ refreshToken });
+        if (refreshResponse.success && refreshResponse.data) {
+          const { accessToken: newAccessToken, refreshToken: newRefreshToken } = refreshResponse.data;
+          
+          if (Platform.OS === "web") {
+            localStorage.setItem("accessToken", newAccessToken);
+            if (newRefreshToken) localStorage.setItem("refreshToken", newRefreshToken);
+          } else {
+            await SecureStore.setItemAsync("accessToken", newAccessToken);
+            if (newRefreshToken) await SecureStore.setItemAsync("refreshToken", newRefreshToken);
+          }
+          token = newAccessToken;
+        }
+      }
+
       if (token) {
         setAuthToken(token);
         const response = await authActions.getMe();
@@ -45,8 +67,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } else {
           setAuthToken(null);
           setUser(null);
-          await SecureStore.deleteItemAsync("accessToken");
-          await SecureStore.deleteItemAsync("refreshToken");
+          if (Platform.OS === "web") {
+            localStorage.removeItem("accessToken");
+            localStorage.removeItem("refreshToken");
+          } else {
+            await SecureStore.deleteItemAsync("accessToken");
+            await SecureStore.deleteItemAsync("refreshToken");
+          }
         }
       }
     } catch (error) {
@@ -72,7 +99,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [loadUser]);
 
   const signIn = async (email: string, password: string, remember: boolean) => {
-    const response = await authActions.login(email, password, true);
+    const response = await authActions.login(email, password, remember);
     if (!response.success || !response.data) {
       throw new Error(response.error || "Failed to sign in");
     }
@@ -81,11 +108,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     if (Platform.OS === "web") {
       localStorage.setItem("accessToken", accessToken);
-      if (remember) localStorage.setItem("refreshToken", refreshToken);
+      if (remember && refreshToken) {
+        localStorage.setItem("refreshToken", refreshToken);
+      } else {
+        localStorage.removeItem("refreshToken");
+      }
     } else {
       await SecureStore.setItemAsync("accessToken", accessToken);
-      if (remember)
+      if (remember && refreshToken) {
         await SecureStore.setItemAsync("refreshToken", refreshToken);
+      } else {
+        await SecureStore.deleteItemAsync("refreshToken");
+      }
     }
 
     setAuthToken(accessToken);
@@ -127,20 +161,63 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const signInWithGoogle = async (code: string) => {
-    const response = await authActions.googleLogin({ code });
+  const signInWithGoogle = async (code: string, redirectUri?: string) => {
+    const response = await authActions.googleLogin({ code, redirectUri });
     if (!response.success || !response.data) {
       throw new Error(response.error || "Google sign in failed");
     }
 
     const { accessToken, refreshToken } = response.data.token;
-    await SecureStore.setItemAsync("accessToken", accessToken);
-    await SecureStore.setItemAsync("refreshToken", refreshToken);
+    if (Platform.OS === "web") {
+      localStorage.setItem("accessToken", accessToken);
+      localStorage.setItem("refreshToken", refreshToken);
+    } else {
+      await SecureStore.setItemAsync("accessToken", accessToken);
+      await SecureStore.setItemAsync("refreshToken", refreshToken);
+    }
     setAuthToken(accessToken);
 
     const meResponse = await authActions.getMe();
     if (meResponse.success && meResponse.data) {
       setUser(meResponse.data);
+    }
+  };
+
+  const startGoogleLogin = async () => {
+    const clientId = "225511301288-ivp3vt9l4kc17dmflvraj18hjdmcrht3.apps.googleusercontent.com";
+    const redirectUri = "http://localhost:3000/auth/callback";
+    const scope = "openid email profile";
+    const responseType = "code";
+    const prompt = "select_account";
+
+    // Build the deep link redirect URL that the web app should redirect back to if running on mobile
+    const state = Platform.OS === "web" ? "" : Linking.createURL("/auth/callback");
+
+    const googleUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(
+      redirectUri
+    )}&response_type=${responseType}&scope=${encodeURIComponent(
+      scope
+    )}&prompt=${prompt}&state=${encodeURIComponent(state)}`;
+
+    if (Platform.OS === "web") {
+      window.location.href = googleUrl;
+    } else {
+      // On mobile, use WebBrowser to open the URL and listen for the deep link redirect
+      const result = await WebBrowser.openAuthSessionAsync(
+        googleUrl,
+        Linking.createURL("/auth/callback")
+      );
+
+      if (result.type === "success" && result.url) {
+        // Parse the code from the redirected URL
+        const parsed = Linking.parse(result.url);
+        const code = parsed.queryParams?.code;
+        if (typeof code === "string") {
+          await signInWithGoogle(code, redirectUri);
+        } else {
+          throw new Error("No authorization code returned from Google");
+        }
+      }
     }
   };
 
@@ -153,6 +230,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         signUp,
         signOut,
         signInWithGoogle,
+        startGoogleLogin,
       }}
     >
       {children}

@@ -21,6 +21,7 @@ export const authActions = {
 		apiPost("/api/auth/refresh", data),
 	googleLogin: (data: {
 		code: string;
+		redirectUri?: string;
 	}): Promise<ApiResponse<{ token: TokenResponse }>> =>
 		apiPost("/api/auth/oauth2/google", data),
 	getMe: () => apiGet<User>("/api/auth/me"),

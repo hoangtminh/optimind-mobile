@@ -3,10 +3,10 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
-    "start": "node update-ip.js && npx expo start",
-    "android": "node update-ip.js && npx expo run:android",
-    "ios": "expo run:ios",
-    "web": "expo start --web"
+    "start": "node update-ip.js && npx expo start --port 3000",
+    "android": "node update-ip.js && npx expo run:android --port 3000",
+    "ios": "expo run:ios --port 3000",
+    "web": "expo start --web --port 3000"
   },
   "dependencies": {
     "@expo-google-fonts/roboto": "^0.4.3",
@@ -30,7 +30,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "expo": "~55.0.8",
-    "expo-av": "^16.0.8",
+    "expo-audio": "~55.0.14",
     "expo-camera": "~55.0.16",
     "expo-constants": "~55.0.9",
     "expo-dev-client": "~55.0.32",
@@ -66,6 +66,7 @@
     "react-native-teleport": "^1.1.4",
     "react-native-vector-icons": "^10.3.0",
     "react-native-web": "^0.21.0",
+    "sonner-native": "^0.26.0",
     "tailwind-merge": "^3.5.0",
     "tailwindcss": "^3.4.0",
     "tamagui": "^2.0.0-rc.33",

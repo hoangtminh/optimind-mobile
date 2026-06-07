@@ -1,4 +1,6 @@
 import { getServerIp } from "@/utils/getServerIp";
+import * as SecureStore from "expo-secure-store";
+import { Platform } from "react-native";
 
 export const BASE_IP = `192.168.1.22`;
 // const API_BASE_URL = `http://${BASE_IP}:8080`;
@@ -78,6 +80,65 @@ async function apiRequest<T>(
     }
 
     if (response.status === 401) {
+      if (
+        endpoint !== "/api/auth/refresh" &&
+        endpoint !== "/api/auth/login" &&
+        endpoint !== "/api/auth/oauth2/google"
+      ) {
+        try {
+          const refreshToken =
+            Platform.OS === "web"
+              ? localStorage.getItem("refreshToken")
+              : await SecureStore.getItemAsync("refreshToken");
+
+          if (refreshToken) {
+            console.log("Token expired. Attempting silent refresh...");
+            const refreshUrl = API_BASE_URL + "/api/auth/refresh";
+            const refreshResponse = await fetch(refreshUrl, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ refreshToken }),
+            });
+
+            if (refreshResponse.ok) {
+              const refreshData = await refreshResponse.json();
+              const newAccessToken = refreshData.accessToken;
+              const newRefreshToken = refreshData.refreshToken;
+
+              if (newAccessToken) {
+                if (Platform.OS === "web") {
+                  localStorage.setItem("accessToken", newAccessToken);
+                  if (newRefreshToken) {
+                    localStorage.setItem("refreshToken", newRefreshToken);
+                  }
+                } else {
+                  await SecureStore.setItemAsync("accessToken", newAccessToken);
+                  if (newRefreshToken) {
+                    await SecureStore.setItemAsync("refreshToken", newRefreshToken);
+                  }
+                }
+
+                setAuthToken(newAccessToken);
+                console.log("Silent refresh succeeded. Retrying request...");
+
+                const retriedHeaders = {
+                  ...headers,
+                  Authorization: `Bearer ${newAccessToken}`,
+                };
+                return apiRequest<T>(endpoint, {
+                  ...options,
+                  headers: retriedHeaders,
+                });
+              }
+            }
+          }
+        } catch (refreshErr) {
+          console.error("Silent token refresh error:", refreshErr);
+        }
+      }
+
       onUnauthorized?.();
     }
 
