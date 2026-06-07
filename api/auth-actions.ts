@@ -17,8 +17,10 @@ export const authActions = {
 	register: (data: any) => apiPost("/api/auth/register", data),
 	logout: (data: { refreshToken: string }) =>
 		apiPost("/api/auth/logout", data),
-	refresh: (data: { refreshToken: string }) =>
-		apiPost("/api/auth/refresh", data),
+	refresh: (data: {
+		refreshToken: string;
+	}): Promise<ApiResponse<TokenResponse>> =>
+		apiPost<TokenResponse>("/api/auth/refresh", data),
 	googleLogin: (data: {
 		code: string;
 		redirectUri?: string;
