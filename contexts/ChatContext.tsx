@@ -92,7 +92,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
     const setupClient = async () => {
       const token = await getToken("accessToken");
-      const socketUrl = `ws://optimind-server.onrender.com/chat/websocket`;
+      const socketUrl = ((process.env.EXPO_PUBLIC_API_URL || "http://localhost:8080").replace("http://", "ws://").replace("https://", "wss://") + "/chat/websocket");
 
       try {
         const client = new Client({
