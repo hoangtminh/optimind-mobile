@@ -13,6 +13,7 @@ import {
 	View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Theme } from "@/constants/Theme";
 
 export default function Profile() {
 	const navigation = useNavigation();
@@ -47,12 +48,11 @@ export default function Profile() {
 					<View style={styles.avatarContainer}>
 						<View style={styles.avatar}>
 							<Text style={styles.avatarText}>
-								User
 								{user.username?.charAt(0).toUpperCase()}
 							</Text>
 						</View>
 						<TouchableOpacity style={styles.cameraButton}>
-							<Camera size={16} color="#ffffff" />
+							<Camera size={14} color="#ffffff" />
 						</TouchableOpacity>
 					</View>
 
@@ -67,7 +67,7 @@ export default function Profile() {
 					</View>
 
 					<TouchableOpacity style={styles.editButton}>
-						<Edit size={20} color="#0058be" />
+						<Edit size={18} color={Theme.text} />
 					</TouchableOpacity>
 				</View>
 
@@ -105,7 +105,7 @@ export default function Profile() {
 				{/* Stats Grid */}
 				<View style={styles.statsGrid}>
 					<View style={styles.statCard}>
-						<Flame size={24} color="#f59e0b" />
+						<Flame size={20} color={Theme.accentRedText} />
 						<Text style={styles.statNumber}>
 							{user.currentStreak}
 						</Text>
@@ -113,7 +113,7 @@ export default function Profile() {
 					</View>
 
 					<View style={styles.statCard}>
-						<Target size={24} color="#10b981" />
+						<Target size={20} color={Theme.accentGreenText} />
 						<Text style={styles.statNumber}>
 							{user.longestStreak}
 						</Text>
@@ -121,7 +121,7 @@ export default function Profile() {
 					</View>
 
 					<View style={styles.statCard}>
-						<User size={24} color="#8b5cf6" />
+						<User size={20} color={Theme.accentBlueText} />
 						<Text style={styles.statNumber}>
 							{formatDuration(user.studyTime)}
 						</Text>
@@ -129,9 +129,9 @@ export default function Profile() {
 					</View>
 
 					<View style={styles.statCard}>
-						<Trophy size={24} color="#f97316" />
+						<Trophy size={20} color={Theme.accentYellowText} />
 						<Text style={styles.statNumber}>
-							{/* {unlockedAchievements.length} */}
+							0
 						</Text>
 						<Text style={styles.statLabel}>Achievements</Text>
 					</View>
@@ -162,23 +162,23 @@ export default function Profile() {
 					<Text style={styles.sectionTitle}>Account Settings</Text>
 
 					<TouchableOpacity style={styles.actionItem}>
-						<User size={20} color="#0058be" />
+						<User size={18} color={Theme.text} />
 						<Text style={styles.actionText}>Edit Profile</Text>
-						<Edit size={16} color="#cbd5e1" />
+						<ChevronRightIcon />
 					</TouchableOpacity>
 
 					<TouchableOpacity style={styles.actionItem}>
-						<Trophy size={20} color="#f59e0b" />
+						<Trophy size={18} color={Theme.text} />
 						<Text style={styles.actionText}>
 							View All Achievements
 						</Text>
-						<Edit size={16} color="#cbd5e1" />
+						<ChevronRightIcon />
 					</TouchableOpacity>
 
 					<TouchableOpacity style={styles.actionItem}>
-						<Target size={20} color="#10b981" />
+						<Target size={18} color={Theme.text} />
 						<Text style={styles.actionText}>Study Statistics</Text>
-						<Edit size={16} color="#cbd5e1" />
+						<ChevronRightIcon />
 					</TouchableOpacity>
 				</View>
 			</ScrollView>
@@ -186,83 +186,86 @@ export default function Profile() {
 	);
 }
 
+function ChevronRightIcon() {
+	return (
+		<Text style={{ fontSize: 16, color: Theme.textMuted }}>→</Text>
+	);
+}
+
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: "#f8f9fb",
+		backgroundColor: Theme.background,
 	},
 	content: {
 		flex: 1,
 		padding: 16,
 	},
 	profileHeader: {
-		backgroundColor: "#ffffff",
-		borderRadius: 16,
-		padding: 24,
+		backgroundColor: Theme.surface,
+		borderRadius: 8, // Crisp corner radius
+		borderWidth: 1,
+		borderColor: Theme.border,
+		padding: 20,
 		marginBottom: 16,
 		flexDirection: "row",
 		alignItems: "center",
-		shadowColor: "#000",
-		shadowOffset: { width: 0, height: 2 },
-		shadowOpacity: 0.1,
-		shadowRadius: 4,
-		elevation: 4,
 	},
 	avatarContainer: {
 		position: "relative",
 		marginRight: 16,
 	},
 	avatar: {
-		width: 80,
-		height: 80,
-		borderRadius: 40,
-		backgroundColor: "#0058be",
+		width: 72,
+		height: 72,
+		borderRadius: 36,
+		backgroundColor: Theme.primary,
 		alignItems: "center",
 		justifyContent: "center",
 	},
 	avatarText: {
-		fontSize: 32,
+		fontSize: 28,
 		fontWeight: "bold",
-		color: "#ffffff",
+		color: Theme.primaryText,
 	},
 	cameraButton: {
 		position: "absolute",
 		bottom: 0,
 		right: 0,
-		width: 28,
-		height: 28,
-		borderRadius: 14,
-		backgroundColor: "#10b981",
+		width: 24,
+		height: 24,
+		borderRadius: 12,
+		backgroundColor: Theme.primary,
 		alignItems: "center",
 		justifyContent: "center",
-		borderWidth: 2,
-		borderColor: "#ffffff",
+		borderWidth: 1.5,
+		borderColor: Theme.surface,
 	},
 	profileInfo: {
 		flex: 1,
 	},
 	name: {
-		fontSize: 24,
-		fontWeight: "bold",
-		color: "#1e293b",
-		marginBottom: 4,
+		fontSize: 20,
+		fontWeight: "700",
+		color: Theme.text,
+		marginBottom: 2,
 	},
 	email: {
-		fontSize: 16,
-		color: "#64748b",
+		fontSize: 14,
+		color: Theme.textMuted,
 		marginBottom: 8,
 	},
 	levelBadge: {
-		backgroundColor: "#f0f9ff",
-		paddingHorizontal: 12,
-		paddingVertical: 4,
-		borderRadius: 16,
+		backgroundColor: Theme.primaryPastel,
+		paddingHorizontal: 10,
+		paddingVertical: 3,
+		borderRadius: 4, // Crisp tag corners
 		alignSelf: "flex-start",
 	},
 	levelText: {
-		fontSize: 14,
+		fontSize: 12,
 		fontWeight: "600",
-		color: "#0058be",
+		color: Theme.primaryPastelText,
 	},
 	editButton: {
 		padding: 8,
@@ -271,165 +274,118 @@ const styles = StyleSheet.create({
 		marginBottom: 16,
 	},
 	sectionTitle: {
-		fontSize: 18,
+		fontSize: 16,
 		fontWeight: "600",
-		color: "#1e293b",
-		marginBottom: 12,
+		color: Theme.text,
+		marginBottom: 10,
 	},
 	progressCard: {
-		backgroundColor: "#ffffff",
-		borderRadius: 12,
+		backgroundColor: Theme.surface,
+		borderRadius: 8,
+		borderWidth: 1,
+		borderColor: Theme.border,
 		padding: 16,
-		shadowColor: "#000",
-		shadowOffset: { width: 0, height: 1 },
-		shadowOpacity: 0.05,
-		shadowRadius: 2,
-		elevation: 2,
 	},
 	progressHeader: {
 		flexDirection: "row",
 		justifyContent: "space-between",
 		alignItems: "center",
-		marginBottom: 12,
+		marginBottom: 10,
 	},
 	progressTitle: {
-		fontSize: 16,
+		fontSize: 15,
 		fontWeight: "600",
-		color: "#1e293b",
+		color: Theme.text,
 	},
 	progressSubtitle: {
-		fontSize: 14,
-		color: "#64748b",
+		fontSize: 13,
+		color: Theme.textMuted,
 	},
 	progressBar: {
-		height: 8,
-		backgroundColor: "#e2e8f0",
-		borderRadius: 4,
+		height: 6,
+		backgroundColor: Theme.primaryPastel,
+		borderRadius: 3,
 		marginBottom: 8,
 	},
 	progressFill: {
 		height: "100%",
-		backgroundColor: "#0058be",
-		borderRadius: 4,
+		backgroundColor: Theme.primary,
+		borderRadius: 3,
 	},
 	progressText: {
-		fontSize: 12,
-		color: "#64748b",
+		fontSize: 11,
+		color: Theme.textMuted,
 		textAlign: "center",
 	},
 	statsGrid: {
 		flexDirection: "row",
 		flexWrap: "wrap",
-		gap: 12,
+		gap: 10,
 		marginBottom: 16,
 	},
 	statCard: {
 		flex: 1,
 		minWidth: "45%",
-		backgroundColor: "#ffffff",
-		borderRadius: 12,
+		backgroundColor: Theme.surface,
+		borderRadius: 8,
+		borderWidth: 1,
+		borderColor: Theme.border,
 		padding: 16,
 		alignItems: "center",
-		shadowColor: "#000",
-		shadowOffset: { width: 0, height: 1 },
-		shadowOpacity: 0.05,
-		shadowRadius: 2,
-		elevation: 2,
 	},
 	statNumber: {
-		fontSize: 24,
-		fontWeight: "bold",
-		color: "#1e293b",
-		marginTop: 8,
-		marginBottom: 4,
+		fontSize: 22,
+		fontWeight: "700",
+		color: Theme.text,
+		marginTop: 6,
+		marginBottom: 2,
 	},
 	statLabel: {
 		fontSize: 12,
-		color: "#64748b",
+		color: Theme.textMuted,
 		textAlign: "center",
 	},
 	activityCard: {
-		backgroundColor: "#ffffff",
-		borderRadius: 12,
+		backgroundColor: Theme.surface,
+		borderRadius: 8,
+		borderWidth: 1,
+		borderColor: Theme.border,
 		padding: 16,
 		flexDirection: "row",
-		shadowColor: "#000",
-		shadowOffset: { width: 0, height: 1 },
-		shadowOpacity: 0.05,
-		shadowRadius: 2,
-		elevation: 2,
 	},
 	activityItem: {
 		flex: 1,
 		alignItems: "center",
 	},
 	activityLabel: {
-		fontSize: 14,
-		color: "#64748b",
+		fontSize: 13,
+		color: Theme.textMuted,
 		marginBottom: 4,
 	},
 	activityValue: {
-		fontSize: 20,
-		fontWeight: "bold",
-		color: "#1e293b",
+		fontSize: 18,
+		fontWeight: "700",
+		color: Theme.text,
 	},
 	activityDivider: {
 		width: 1,
-		height: 40,
-		backgroundColor: "#e2e8f0",
+		height: 36,
+		backgroundColor: Theme.border,
 		marginHorizontal: 16,
 	},
-	achievementCard: {
-		backgroundColor: "#ffffff",
-		borderRadius: 12,
-		padding: 16,
-		marginBottom: 8,
-		flexDirection: "row",
-		alignItems: "center",
-		shadowColor: "#000",
-		shadowOffset: { width: 0, height: 1 },
-		shadowOpacity: 0.05,
-		shadowRadius: 2,
-		elevation: 2,
-	},
-	achievementIcon: {
-		fontSize: 24,
-		marginRight: 12,
-	},
-	achievementContent: {
-		flex: 1,
-	},
-	achievementTitle: {
-		fontSize: 16,
-		fontWeight: "600",
-		color: "#1e293b",
-		marginBottom: 2,
-	},
-	achievementDescription: {
-		fontSize: 14,
-		color: "#64748b",
-		marginBottom: 4,
-	},
-	achievementDate: {
-		fontSize: 12,
-		color: "#94a3b8",
-	},
 	actionItem: {
-		backgroundColor: "#ffffff",
-		borderRadius: 12,
+		backgroundColor: Theme.surface,
+		borderRadius: 8,
+		borderWidth: 1,
+		borderColor: Theme.border,
 		padding: 16,
 		marginBottom: 8,
 		flexDirection: "row",
 		alignItems: "center",
-		shadowColor: "#000",
-		shadowOffset: { width: 0, height: 1 },
-		shadowOpacity: 0.05,
-		shadowRadius: 2,
-		elevation: 2,
 	},
 	actionText: {
-		fontSize: 16,
-		color: "#1e293b",
+		fontSize: 15,
+		color: Theme.text,
 		marginLeft: 12,
 		flex: 1,
 	},

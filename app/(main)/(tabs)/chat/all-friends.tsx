@@ -1,60 +1,53 @@
+import { friendActions, FriendResponse } from "@/api/friend-actions";
+import { chatActions } from "@/api/chat-actions";
 import { FriendListItem } from "@/components/chat/FriendListItem";
 import { SearchInput } from "@/components/chat/SearchInput";
 import { AppHeader } from "@/components/common/AppHeader";
 import { useRouter } from "expo-router";
 import { Users } from "lucide-react-native";
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FlatList } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, Text, View, YStack } from "tamagui";
 
-// --- Extended Mock Data ---
-const MOCK_ALL_FRIENDS = [
-  {
-    id: "u2",
-    name: "Emily Carter",
-    isOnline: true,
-    role: "Ph.D. Architecture",
-  },
-  {
-    id: "u3",
-    name: "David Chen",
-    isOnline: false,
-    role: "M.Sc. Data Ethics",
-  },
-  {
-    id: "u4",
-    name: "Sophia Rodriguez",
-    isOnline: true,
-    role: "Digital Humanities",
-  },
-  {
-    id: "u5",
-    name: "Michael Johnson",
-    isOnline: false,
-    role: "B.A. Urban Planning",
-  },
-  {
-    id: "u6",
-    name: "Olivia Williams",
-    isOnline: true,
-    role: "Computer Science",
-  },
-  { id: "u7", name: "Daniel Brown", isOnline: false, role: "Physics" },
-  { id: "u8", name: "Ava Garcia", isOnline: true, role: "Mathematics" },
-  { id: "u9", name: "James Miller", isOnline: false, role: "Biology" },
-  { id: "u10", name: "Isabella Davis", isOnline: true, role: "Chemistry" },
-  { id: "u11", name: "Liam Wilson", isOnline: false, role: "Literature" },
-  { id: "u12", name: "Noah Martinez", isOnline: true, role: "Economics" },
-  { id: "u13", name: "Emma Taylor", isOnline: false, role: "Psychology" },
-];
-
 export default function AllFriendsScreen() {
   const router = useRouter();
   const [search, setSearch] = useState("");
+  const [friends, setFriends] = useState<FriendResponse[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const filteredFriends = MOCK_ALL_FRIENDS.filter((f) =>
-    f.name.toLowerCase().includes(search.toLowerCase()),
+  const fetchFriends = async () => {
+    setIsLoading(true);
+    try {
+      const res = await friendActions.getFriends();
+      if (res.success && res.data) {
+        setFriends(res.data);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFriends();
+  }, []);
+
+  const handleStartChat = async (email: string, username: string) => {
+    try {
+      const res = await chatActions.createChat(`Chat with ${username}`, [email], false);
+      if (res.success && res.data) {
+        router.push(`/(main)/(tabs)/chat/${res.data.id}`);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const filteredFriends = friends.filter((f) =>
+    f.friend.username.toLowerCase().includes(search.toLowerCase()) ||
+    f.friend.email.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -64,7 +57,7 @@ export default function AllFriendsScreen() {
     >
       <YStack flex={1} backgroundColor="#fdf7ff">
         <AppHeader
-          title="Academic Network"
+          title="All Friends"
           showBackButton
           onBack={() => {
             router.replace("/(main)/(tabs)/chat/friends");
@@ -84,20 +77,23 @@ export default function AllFriendsScreen() {
         <SearchInput
           value={search}
           onChangeText={setSearch}
-          placeholder="Search scholars and peers..."
+          placeholder="Search friends by name or email..."
         />
 
-        {/* Breathable List (No dividers, generous spacing) */}
         <FlatList
           data={filteredFriends}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item.friendshipId}
           contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
           ItemSeparatorComponent={() => <View height={16} />}
           renderItem={({ item }) => (
             <FriendListItem
-              friend={item}
-              onPress={() => console.log("Open profile:", item.id)}
-              onMessagePress={() => console.log("Open chat:", item.id)}
+              friend={{
+                id: item.friend.id,
+                name: item.friend.username,
+                isOnline: false,
+              }}
+              onPress={() => handleStartChat(item.friend.email, item.friend.username)}
+              onMessagePress={() => handleStartChat(item.friend.email, item.friend.username)}
             />
           )}
           ListEmptyComponent={
@@ -108,7 +104,7 @@ export default function AllFriendsScreen() {
               marginTop="$10"
             >
               <Text color="$on_surface_variant" fontWeight="500">
-                No peers found matching your criteria.
+                {isLoading ? "Loading..." : "No friends found matching your criteria."}
               </Text>
             </View>
           }

@@ -10,7 +10,7 @@ import {
   formatSecondsDuration,
   getChartLabels,
   getSecondsChartLabels,
-} from "../utils/historyUtils";
+} from "../_utils/historyUtils";
 
 export interface SessionMetrics {
   focusTime: number;

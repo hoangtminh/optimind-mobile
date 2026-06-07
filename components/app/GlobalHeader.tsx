@@ -1,4 +1,6 @@
+import { Theme } from "@/constants/Theme";
 import { MaterialIcons } from "@expo/vector-icons";
+import { ExpoStatusBar } from "expo-status-bar";
 import React from "react";
 import {
 	Platform,
@@ -22,44 +24,47 @@ export default function GlobalHeader({
 	actionIconName,
 }: GlobalHeaderProps) {
 	return (
-		<View
-			style={{
-				paddingTop:
-					Platform.OS === "android" ? StatusBar.currentHeight : 0,
-				backgroundColor: "#071b2e",
-				paddingHorizontal: 16,
-				paddingBottom: 12,
-				flexDirection: "row",
-				alignItems: "center",
-				justifyContent: "space-between",
-			}}
-		>
-			<TouchableOpacity onPress={onMenu} style={{ padding: 8 }}>
-				<MaterialIcons name="menu" size={26} color="#f5f7fa" />
-			</TouchableOpacity>
-
-			<Text
+		<>
+			<View
 				style={{
-					color: "#f5f7fa",
-					fontSize: 20,
-					fontWeight: "700",
-					letterSpacing: 0.5,
+					paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+					backgroundColor: Theme.surface,
+					borderBottomWidth: 1,
+					borderBottomColor: Theme.border,
+					paddingHorizontal: 16,
+					height: 56,
+					flexDirection: "row",
+					alignItems: "center",
+					justifyContent: "space-between",
 				}}
 			>
-				{title}
-			</Text>
-
-			{onAction && actionIconName ? (
-				<TouchableOpacity onPress={onAction} style={{ padding: 8 }}>
-					<MaterialIcons
-						name={actionIconName}
-						size={24}
-						color="#f5f7fa"
-					/>
+				<TouchableOpacity onPress={onMenu} style={{ padding: 8 }}>
+					<MaterialIcons name="menu" size={24} color={Theme.text} />
 				</TouchableOpacity>
-			) : (
-				<View style={{ width: 32 }} />
-			)}
-		</View>
+
+				<Text
+					style={{
+						color: Theme.text,
+						fontSize: 18,
+						fontWeight: "700",
+						letterSpacing: -0.2,
+					}}
+				>
+					{title}
+				</Text>
+
+				{onAction && actionIconName ? (
+					<TouchableOpacity onPress={onAction} style={{ padding: 8 }}>
+						<MaterialIcons
+							name={actionIconName}
+							size={24}
+							color={Theme.text}
+						/>
+					</TouchableOpacity>
+				) : (
+					<View style={{ width: 40 }} />
+				)}
+			</View>
+		</>
 	);
 }

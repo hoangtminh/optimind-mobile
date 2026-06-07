@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../hooks/useAuth";
+import { Theme } from "@/constants/Theme";
 
 // ── Separated sub-components (better re-render isolation) ──────────────────
 import AuthHeader from "@/components/auth/AuthHeader";
@@ -21,21 +22,8 @@ import AuthInput from "@/components/auth/AuthInput";
 import { AuthCheckbox, AuthDivider } from "@/components/auth/AuthUtils";
 import { AuthPrimaryButton, AuthSocialButton } from "@/components/auth/AuthButtons";
 
-// ─── Design tokens (StudyFlow / Focused Academic System) ──────────────────────
-const T = {
-  surface: "#fdf7ff",
-  surfaceContainerLow: "#f8f2fa",
-  surfaceContainerHighest: "#e6e0e9",
-  primary: "#4f378a",
-  onSurface: "#1d1b20",
-  onSurfaceVariant: "#494551",
-  outline: "#7a7582",
-  outlineVariant: "#cbc4d2",
-} as const;
-
-// Google icon (inline SVG path rendered via AntDesign fallback)
 function GoogleIcon() {
-  return <AntDesign name="google" size={18} color="#1d1b20" />;
+  return <AntDesign name="google" size={18} color={Theme.text} />;
 }
 
 export default function SignInScreen() {
@@ -43,7 +31,7 @@ export default function SignInScreen() {
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { signIn } = useAuth();
+  const { signIn, startGoogleLogin } = useAuth();
   const router = useRouter();
 
   const [dialog, setDialog] = useState({
@@ -62,6 +50,22 @@ export default function SignInScreen() {
       setDialog({
         open: true,
         title: "Sign In Failed",
+        description: error.message,
+        type: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setLoading(true);
+      await startGoogleLogin();
+    } catch (error: any) {
+      setDialog({
+        open: true,
+        title: "Google Sign In Failed",
         description: error.message,
         type: "error",
       });
@@ -110,7 +114,7 @@ export default function SignInScreen() {
                 autoComplete="password"
                 textContentType="password"
               />
-              {/* Forgot password — positioned below input label row */}
+              {/* Forgot password */}
               <Link screen="forgot-password" params={{}}>
                 <Text style={styles.forgotLink}>Forgot password?</Text>
               </Link>
@@ -140,8 +144,10 @@ export default function SignInScreen() {
 
             {/* Social */}
             <AuthSocialButton
-              label="Continue with Google"
+              label={loading ? "Connecting..." : "Continue with Google"}
               icon={<GoogleIcon />}
+              onPress={handleGoogleSignIn}
+              disabled={loading}
             />
           </View>
 
@@ -175,34 +181,29 @@ export default function SignInScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: T.surface,
+    backgroundColor: Theme.background,
   },
   flex: { flex: 1 },
   scroll: {
     flexGrow: 1,
     paddingHorizontal: 20,
-    paddingTop: 24,
+    paddingTop: 36,
     paddingBottom: 40,
   },
-  // Form card — surface-container-low tonal lift
+  // Card
   card: {
-    backgroundColor: T.surfaceContainerLow,
-    borderRadius: 20,
+    backgroundColor: Theme.surface,
+    borderRadius: 8, // Crisp minimalist corners
+    borderWidth: 1,
+    borderColor: Theme.border,
     padding: 24,
-    // Ambient shadow
-    shadowColor: "#1d1b20",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 16,
-    elevation: 3,
     gap: 16,
   },
   passwordGroup: { gap: 6 },
   forgotLink: {
     fontFamily: "Manrope_600SemiBold",
     fontSize: 13,
-    letterSpacing: 0.1,
-    color: T.primary,
+    color: Theme.textMuted,
     textAlign: "right",
   },
   rememberRow: {
@@ -212,7 +213,7 @@ const styles = StyleSheet.create({
     fontFamily: "Manrope_400Regular",
     fontSize: 14,
     lineHeight: 20,
-    color: T.onSurfaceVariant,
+    color: Theme.textMuted,
   },
   cta: { marginTop: 4 },
   // Footer
@@ -224,18 +225,18 @@ const styles = StyleSheet.create({
   footerText: {
     fontFamily: "Manrope_400Regular",
     fontSize: 14,
-    color: T.onSurfaceVariant,
+    color: Theme.textMuted,
   },
   footerLink: {
     fontFamily: "Manrope_700Bold",
     fontSize: 14,
-    color: T.primary,
+    color: Theme.text,
   },
   copyright: {
     fontFamily: "Manrope_500Medium",
     fontSize: 10,
     letterSpacing: 1.5,
-    color: T.outline,
+    color: Theme.textMuted,
     textAlign: "center",
     marginTop: 32,
     opacity: 0.5,

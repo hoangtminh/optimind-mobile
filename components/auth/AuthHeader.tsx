@@ -1,14 +1,7 @@
 import React from "react";
 import { Text, View } from "react-native";
 import { StyleSheet } from "react-native";
-
-// ─── Design tokens (StudyFlow / Focused Academic System) ──────────────────────
-const T = {
-  primary: "#4f378a",
-  onSurface: "#1d1b20",
-  onSurfaceVariant: "#494551",
-  surface: "#fdf7ff",
-} as const;
+import { Theme } from "@/constants/Theme";
 
 interface AuthHeaderProps {
   title: string;
@@ -40,29 +33,28 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    marginBottom: 32,
+    marginBottom: 24,
   },
   brandName: {
     fontFamily: "Manrope_700Bold",
-    fontSize: 20,
-    letterSpacing: -0.4,
-    color: T.primary,
+    fontSize: 22,
+    letterSpacing: -0.5,
+    color: Theme.primary,
   },
   title: {
     fontFamily: "Manrope_700Bold",
     fontSize: 32,
     lineHeight: 40,
     letterSpacing: -0.64,
-    color: T.onSurface,
+    color: Theme.text,
     marginBottom: 8,
     textAlign: "center",
   },
   subtitle: {
     fontFamily: "Manrope_400Regular",
-    fontSize: 16,
-    lineHeight: 24,
-    letterSpacing: 0.15,
-    color: T.onSurfaceVariant,
+    fontSize: 15,
+    lineHeight: 22,
+    color: Theme.textMuted,
     textAlign: "center",
   },
 });

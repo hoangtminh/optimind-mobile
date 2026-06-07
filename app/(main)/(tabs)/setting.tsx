@@ -19,6 +19,7 @@ import {
 import React, { useState } from "react";
 import { ScrollView, Switch, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Theme } from "@/constants/Theme";
 
 interface SettingItemProps {
   title: string;
@@ -39,20 +40,37 @@ const SettingItem: React.FC<SettingItemProps> = ({
 }) => (
   <TouchableOpacity
     onPress={onPress}
-    className="flex-row items-center p-4 bg-white rounded-xl shadow-sm mb-3"
+    style={{
+      flexDirection: "row",
+      alignItems: "center",
+      padding: 16,
+      backgroundColor: Theme.surface,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: Theme.border,
+      marginBottom: 10,
+    }}
     disabled={!onPress}
   >
-    <View className="w-10 h-10 bg-slate-100 rounded-full items-center justify-center mr-4">
+    <View style={{
+      width: 36,
+      height: 36,
+      backgroundColor: Theme.background,
+      borderRadius: 4,
+      alignItems: "center",
+      justifyContent: "center",
+      marginRight: 12,
+    }}>
       {icon}
     </View>
-    <View className="flex-1">
-      <Text className="text-slate-900 font-medium text-base">{title}</Text>
+    <View style={{ flex: 1 }}>
+      <Text style={{ color: Theme.text, fontWeight: "500", fontSize: 15 }}>{title}</Text>
       {subtitle && (
-        <Text className="text-slate-600 text-sm mt-1">{subtitle}</Text>
+        <Text style={{ color: Theme.textMuted, fontSize: 13, marginTop: 2 }}>{subtitle}</Text>
       )}
     </View>
     {rightComponent}
-    {showChevron && onPress && <ChevronRight size={20} color="#cbd5e1" />}
+    {showChevron && onPress && <ChevronRight size={16} color={Theme.textMuted} />}
   </TouchableOpacity>
 );
 
@@ -70,7 +88,6 @@ export default function Setting() {
   };
 
   const onConfirmLogout = () => {
-    // Handle logout logic here
     console.log("User logged out");
     setShowLogoutDialog(false);
   };
@@ -82,19 +99,19 @@ export default function Setting() {
         {
           title: "Profile",
           subtitle: user?.username || "Update your profile information",
-          icon: <User size={20} color="#0058be" />,
+          icon: <User size={18} color={Theme.text} />,
           onPress: () => router.push("/(main)/(tabs)/profile"),
         },
         {
           title: "Notifications",
           subtitle: "Manage notification preferences",
-          icon: <Bell size={20} color="#10b981" />,
+          icon: <Bell size={18} color={Theme.text} />,
           rightComponent: (
             <Switch
               value={notifications}
               onValueChange={setNotifications}
-              trackColor={{ false: "#cbd5e1", true: "#10b981" }}
-              thumbColor={notifications ? "#ffffff" : "#f4f3f4"}
+              trackColor={{ false: Theme.border, true: Theme.primary }}
+              thumbColor={Theme.surface}
             />
           ),
           showChevron: false,
@@ -108,16 +125,16 @@ export default function Setting() {
           title: "Dark Mode",
           subtitle: "Toggle dark theme",
           icon: darkMode ? (
-            <Moon size={20} color="#8b5cf6" />
+            <Moon size={18} color={Theme.text} />
           ) : (
-            <Sun size={20} color="#f59e0b" />
+            <Sun size={18} color={Theme.text} />
           ),
           rightComponent: (
             <Switch
               value={darkMode}
               onValueChange={setDarkMode}
-              trackColor={{ false: "#cbd5e1", true: "#8b5cf6" }}
-              thumbColor={darkMode ? "#ffffff" : "#f4f3f4"}
+              trackColor={{ false: Theme.border, true: Theme.primary }}
+              thumbColor={Theme.surface}
             />
           ),
           showChevron: false,
@@ -125,7 +142,7 @@ export default function Setting() {
         {
           title: "Theme",
           subtitle: "Choose your preferred theme",
-          icon: <Palette size={20} color="#f59e0b" />,
+          icon: <Palette size={18} color={Theme.text} />,
           onPress: () => console.log("Navigate to theme settings"),
         },
       ],
@@ -136,25 +153,25 @@ export default function Setting() {
         {
           title: "Timer Preferences",
           subtitle: "Customize Pomodoro settings",
-          icon: <Timer size={20} color="#ef4444" />,
+          icon: <Timer size={18} color={Theme.text} />,
           onPress: () => console.log("Navigate to timer settings"),
         },
         {
           title: "Goals & Targets",
           subtitle: "Set daily and weekly goals",
-          icon: <Target size={20} color="#8b5cf6" />,
+          icon: <Target size={18} color={Theme.text} />,
           onPress: () => console.log("Navigate to goals settings"),
         },
         {
           title: "Sound Effects",
           subtitle: "Enable/disable timer sounds",
-          icon: <Bell size={20} color="#06b6d4" />,
+          icon: <Bell size={18} color={Theme.text} />,
           rightComponent: (
             <Switch
               value={soundEnabled}
               onValueChange={setSoundEnabled}
-              trackColor={{ false: "#cbd5e1", true: "#06b6d4" }}
-              thumbColor={soundEnabled ? "#ffffff" : "#f4f3f4"}
+              trackColor={{ false: Theme.border, true: Theme.primary }}
+              thumbColor={Theme.surface}
             />
           ),
           showChevron: false,
@@ -162,13 +179,13 @@ export default function Setting() {
         {
           title: "Auto Break",
           subtitle: "Automatically start break after session",
-          icon: <Timer size={20} color="#10b981" />,
+          icon: <Timer size={18} color={Theme.text} />,
           rightComponent: (
             <Switch
               value={autoBreak}
               onValueChange={setAutoBreak}
-              trackColor={{ false: "#cbd5e1", true: "#10b981" }}
-              thumbColor={autoBreak ? "#ffffff" : "#f4f3f4"}
+              trackColor={{ false: Theme.border, true: Theme.primary }}
+              thumbColor={Theme.surface}
             />
           ),
           showChevron: false,
@@ -181,13 +198,13 @@ export default function Setting() {
         {
           title: "Help & FAQ",
           subtitle: "Get help and find answers",
-          icon: <HelpCircle size={20} color="#64748b" />,
+          icon: <HelpCircle size={18} color={Theme.text} />,
           onPress: () => console.log("Navigate to help"),
         },
         {
           title: "Privacy Policy",
           subtitle: "Read our privacy policy",
-          icon: <Shield size={20} color="#64748b" />,
+          icon: <Shield size={18} color={Theme.text} />,
           onPress: () => console.log("Navigate to privacy policy"),
         },
       ],
@@ -196,7 +213,7 @@ export default function Setting() {
 
   return (
     <SafeAreaView
-      style={{ flex: 1, backgroundColor: "#f8f9fb" }}
+      style={{ flex: 1, backgroundColor: Theme.background }}
       edges={["top"]}
     >
       <GlobalHeader
@@ -210,32 +227,41 @@ export default function Setting() {
         showsVerticalScrollIndicator={false}
       >
         {/* User Info Card */}
-        <View className="bg-white p-6 rounded-xl shadow-sm mb-6">
-          <View className="items-center">
-            <View className="w-16 h-16 bg-blue-500 rounded-full items-center justify-center mb-3">
-              <Text className="text-white text-2xl font-bold">
+        <View style={{
+          backgroundColor: Theme.surface,
+          padding: 20,
+          borderRadius: 8,
+          borderWidth: 1,
+          borderColor: Theme.border,
+          marginBottom: 20,
+        }}>
+          <View style={{ alignItems: "center" }}>
+            <View style={{
+              width: 56,
+              height: 56,
+              backgroundColor: Theme.primary,
+              borderRadius: 28,
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: 12,
+            }}>
+              <Text style={{ color: Theme.primaryText, fontSize: 20, fontWeight: "bold" }}>
                 {user?.username?.charAt(0).toUpperCase() || "U"}
               </Text>
             </View>
-            <Text className="text-xl font-semibold text-slate-900 mb-1">
+            <Text style={{ fontSize: 18, fontWeight: "600", color: Theme.text, marginBottom: 2 }}>
               {user?.username || "User"}
             </Text>
-            <Text className="text-slate-600 mb-2">
+            <Text style={{ color: Theme.textMuted, fontSize: 14, marginBottom: 2 }}>
               {user?.email || "user@example.com"}
             </Text>
-            <View className="flex-row items-center">
-              <Text className="text-sm text-slate-500">
-                {/* Level {user?.level || 1} • {user?.exp || 0} XP */}
-                30 XP
-              </Text>
-            </View>
           </View>
         </View>
 
         {/* Settings Sections */}
         {settingSections.map((section, sectionIndex) => (
-          <View key={sectionIndex} className="mb-6">
-            <Text className="text-lg font-semibold text-slate-900 mb-3 px-1">
+          <View key={sectionIndex} style={{ marginBottom: 20 }}>
+            <Text style={{ fontSize: 15, fontWeight: "600", color: Theme.text, marginBottom: 8, paddingHorizontal: 4 }}>
               {section.title}
             </Text>
             {section.items.map((item, itemIndex) => (
@@ -244,15 +270,23 @@ export default function Setting() {
           </View>
         ))}
 
-        {/* Logout Button */}
-        <View className="mt-6">
+        {/* Logout Button — flat pale red aesthetic */}
+        <View style={{ marginTop: 10 }}>
           <TouchableOpacity
             onPress={handleLogout}
-            className="bg-red-500 p-4 rounded-xl shadow-sm items-center"
+            style={{
+              backgroundColor: Theme.accentRed,
+              padding: 14,
+              borderRadius: 8,
+              borderWidth: 1,
+              borderColor: Theme.border,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
           >
-            <View className="flex-row items-center">
-              <LogOut size={20} color="white" />
-              <Text className="text-white font-semibold text-base ml-3">
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <LogOut size={18} color={Theme.accentRedText} />
+              <Text style={{ color: Theme.accentRedText, fontWeight: "600", fontSize: 15, marginLeft: 8 }}>
                 Logout
               </Text>
             </View>
@@ -260,8 +294,8 @@ export default function Setting() {
         </View>
 
         {/* App Version */}
-        <View className="items-center mt-8">
-          <Text className="text-slate-500 text-sm">Optimind v1.0.0</Text>
+        <View style={{ alignItems: "center", marginTop: 32 }}>
+          <Text style={{ color: Theme.textMuted, fontSize: 12 }}>Optimind v1.0.0</Text>
         </View>
       </ScrollView>
 

@@ -11,18 +11,18 @@ import {
 	YStack,
 	styled,
 } from "tamagui";
+import { Theme } from "@/constants/Theme";
 
 const StyledCard = styled(XStack, {
 	padding: "$4",
-	borderRadius: 24,
+	borderRadius: 8, // Crisp corners
 	alignItems: "center",
 	gap: "$4",
-	backgroundColor: "#ffffff",
-	pressStyle: { scale: 0.98, backgroundColor: "#f8f2fa" },
-	shadowColor: "#6750A4",
-	shadowRadius: 15,
-	shadowOpacity: 0.04,
-	shadowOffset: { width: 0, height: 4 },
+	backgroundColor: Theme.surface,
+	borderWidth: 1,
+	borderColor: Theme.border,
+	elevation: 0,
+	pressStyle: { scale: 0.98, backgroundColor: Theme.primaryPastel },
 });
 
 interface ChatListItemProps {
@@ -48,21 +48,21 @@ export const ChatListItem = ({
 		<StyledCard
 			onPress={() => router.push(`/(main)/(tabs)/chat/${chat.id}`)}
 			borderLeftWidth={hasUnread ? 4 : 0}
-			borderLeftColor="#6750A4"
+			borderLeftColor={Theme.primary}
 		>
 			<Avatar circular size="$5">
 				<Avatar.Image
-					src={`https://ui-avatars.com/api/?name=${encodeURIComponent(chat.name)}&background=6750A4&color=fff&bold=true`}
+					src={`https://ui-avatars.com/api/?name=${encodeURIComponent(chat.name)}&background=F2EDFA&color=4F378A&bold=true`}
 				/>
-				<Avatar.Fallback backgroundColor="#e9ddff" />
+				<Avatar.Fallback backgroundColor={Theme.primaryPastel} />
 			</Avatar>
 
 			<YStack flex={1} gap="$1">
 				<XStack justifyContent="space-between" alignItems="center">
 					<Text
-						fontWeight={hasUnread ? "800" : "700"}
+						fontWeight={hasUnread ? "700" : "600"}
 						fontSize="$4"
-						color="#1d1b20"
+						color={Theme.text}
 						numberOfLines={1}
 						flex={1}
 					>
@@ -71,7 +71,7 @@ export const ChatListItem = ({
 					<Text
 						fontSize={11}
 						fontWeight={hasUnread ? "700" : "500"}
-						color={hasUnread ? "#6750A4" : "#7a7582"}
+						color={hasUnread ? Theme.primary : Theme.textMuted}
 					>
 						{chat.lastMessage?.createdAt
 							? new Date(
@@ -86,7 +86,7 @@ export const ChatListItem = ({
 
 				<XStack justifyContent="space-between" alignItems="center">
 					<Text
-						color={hasUnread ? "#1d1b20" : "#494551"}
+						color={hasUnread ? Theme.text : Theme.textMuted}
 						fontSize="$3"
 						numberOfLines={1}
 						flex={1}
@@ -96,8 +96,8 @@ export const ChatListItem = ({
 					</Text>
 					{hasUnread && (
 						<Circle
-							size={10}
-							backgroundColor="#6750A4"
+							size={8}
+							backgroundColor={Theme.primary}
 							marginLeft="$2"
 						/>
 					)}
@@ -107,27 +107,28 @@ export const ChatListItem = ({
 			<Popover size="$5" allowFlip placement="bottom-end">
 				<Popover.Trigger asChild>
 					<Button
-						icon={<MoreVertical size={20} color="#7a7582" />}
+						icon={<MoreVertical size={18} color={Theme.textMuted} />}
 						circular
 						chromeless
 						onPress={(e) => {
 							e.stopPropagation();
 						}}
-						pressStyle={{ backgroundColor: "#f2ecf4" }}
+						pressStyle={{ backgroundColor: Theme.background }}
 					/>
 				</Popover.Trigger>
 
 				<Popover.Content
 					borderWidth={1}
-					borderColor="#f2ecf4"
-					enterStyle={{ y: -10, opacity: 0 }}
-					exitStyle={{ y: -10, opacity: 0 }}
+					borderColor={Theme.border}
+					enterStyle={{ y: -5, opacity: 0 }}
+					exitStyle={{ y: -5, opacity: 0 }}
 					padding="$0"
-					borderRadius={16}
+					borderRadius={6} // Crisp corners
 					overflow="hidden"
-					backgroundColor="white"
+					backgroundColor={Theme.surface}
+					elevation={0}
 				>
-					<YStack width={180}>
+					<YStack width={160}>
 						<Button
 							chromeless
 							borderRadius={0}
@@ -138,12 +139,11 @@ export const ChatListItem = ({
 								await leaveChat(chat.id);
 								await fetchChats();
 							}}
-							hoverStyle={{ backgroundColor: "#fffbfa" }}
-							pressStyle={{ backgroundColor: "#ffdad6" }}
+							pressStyle={{ backgroundColor: Theme.accentRed }}
 						>
 							<XStack gap="$3" alignItems="center">
-								<LogOut size={18} color="#ba1a1a" />
-								<Text color="#ba1a1a" fontWeight="700">
+								<LogOut size={16} color={Theme.accentRedText} />
+								<Text color={Theme.accentRedText} fontWeight="700">
 									Leave Chat
 								</Text>
 							</XStack>
@@ -154,3 +154,4 @@ export const ChatListItem = ({
 		</StyledCard>
 	);
 };
+export default ChatListItem;

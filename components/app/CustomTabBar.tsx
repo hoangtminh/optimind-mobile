@@ -1,3 +1,4 @@
+import { Theme } from "@/constants/Theme";
 import { activeSessionTracker } from "@/utils/activeSession";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import {
@@ -18,7 +19,7 @@ const TabItem = styled(YStack, {
   justifyContent: "center",
   paddingVertical: "$2",
   position: "relative",
-  pressStyle: { scale: 0.9, opacity: 0.8 },
+  pressStyle: { scale: 0.98, opacity: 0.9 },
 });
 
 const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
@@ -29,7 +30,7 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
   const tabs = [
     { name: "study/index", icon: BookOpen, label: "Study" },
     { name: "tasks", icon: ListTodo, label: "Task" },
-    { name: "chat/index", icon: MessageCircle, label: "Chat" },
+    { name: "chat", icon: MessageCircle, label: "Chat" },
     { name: "history/index", icon: Clock, label: "History" },
     { name: "rank/index", icon: Trophy, label: "Rank" },
     { name: "setting", icon: Settings, label: "Setting" },
@@ -38,15 +39,12 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
   return (
     <>
       <XStack
-        backgroundColor="white"
+        backgroundColor={Theme.surface}
         borderTopWidth={1}
-        borderTopColor="#f1f5f9"
+        borderTopColor={Theme.border}
         paddingBottom="$2"
         paddingTop="$1"
-        elevation={5}
-        shadowColor="#000"
-        shadowRadius={10}
-        shadowOpacity={0.05}
+        elevation={0} // Remove shadow for flat minimalist aesthetic
       >
         {tabs.map((tab, index) => {
           const isFocused = state.index === index;
@@ -77,17 +75,19 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
             <TabItem
               key={tab.name}
               onPress={onPress}
-              backgroundColor={isFocused ? "#fdf7ff" : "transparent"}
-              borderRadius={12}
+              backgroundColor={isFocused ? Theme.primaryPastel : "transparent"}
+              borderRadius={6} // Crisp minimalist corner radius
+              marginHorizontal="$1"
             >
               <IconComponent
-                size={20}
-                color={isFocused ? "#6750A4" : "#64748b"}
+                size={18}
+                color={isFocused ? Theme.primary : Theme.textMuted}
+                strokeWidth={isFocused ? 2.5 : 1.8}
               />
               <Text
                 fontSize={10}
-                fontWeight="600"
-                color={isFocused ? "#6750A4" : "#64748b"}
+                fontWeight={isFocused ? "700" : "500"}
+                color={isFocused ? Theme.primary : Theme.textMuted}
                 marginTop="$1"
               >
                 {tab.label}
@@ -96,10 +96,10 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
                 <View
                   position="absolute"
                   bottom={-2}
-                  width="40%"
-                  height={3}
-                  backgroundColor="#6750A4"
-                  borderRadius={2}
+                  width="30%"
+                  height={2}
+                  backgroundColor={Theme.primary}
+                  borderRadius={1}
                 />
               )}
             </TabItem>

@@ -1,7 +1,7 @@
-import { LinearGradient } from "expo-linear-gradient";
 import { FolderPlus, X, Edit3 } from "lucide-react-native";
 import React, { useState, useEffect } from "react";
 import { KeyboardAvoidingView, Modal, Platform } from "react-native";
+import { Theme } from "@/constants/Theme";
 import {
 	Button,
 	Input,
@@ -22,27 +22,29 @@ interface ProjectModalProps {
 }
 
 const StyledInput = styled(Input, {
-	backgroundColor: "#f8f2fa",
-	borderWidth: 1.5,
-	borderColor: "#f2ecf4",
-	height: 52,
-	borderRadius: 16,
+	backgroundColor: Theme.surface,
+	borderWidth: 1,
+	borderColor: Theme.border,
+	height: 48,
+	borderRadius: 6,
 	fontSize: "$4",
+	color: Theme.text,
 	focusStyle: {
-		borderColor: "#6750A4",
-		backgroundColor: "#ffffff",
+		borderColor: Theme.primary,
+		backgroundColor: Theme.surface,
 	},
 });
 
 const StyledTextArea = styled(TextArea, {
-	backgroundColor: "#f8f2fa",
-	borderWidth: 1.5,
-	borderColor: "#f2ecf4",
-	borderRadius: 16,
+	backgroundColor: Theme.surface,
+	borderWidth: 1,
+	borderColor: Theme.border,
+	borderRadius: 6,
 	fontSize: "$4",
+	color: Theme.text,
 	focusStyle: {
-		borderColor: "#6750A4",
-		backgroundColor: "#ffffff",
+		borderColor: Theme.primary,
+		backgroundColor: Theme.surface,
 	},
 });
 
@@ -91,33 +93,32 @@ export default function ProjectModal({
 				<View
 					flex={1}
 					justifyContent="flex-end"
-					backgroundColor="rgba(29, 27, 32, 0.6)"
+					backgroundColor="rgba(29, 27, 32, 0.4)"
 					style={
 						Platform.OS === "web"
-							? ({ backdropFilter: "blur(12px)" } as any)
+							? ({ backdropFilter: "blur(4px)" } as any)
 							: {}
 					}
 				>
 					<YStack
-						backgroundColor="white"
+						backgroundColor={Theme.surface}
 						width="100%"
-						borderTopLeftRadius={32}
-						borderTopRightRadius={32}
-						padding="$6"
-						paddingBottom="$10"
-						shadowColor="#000"
-						shadowRadius={30}
-						shadowOpacity={0.2}
-						gap="$5"
+						borderTopLeftRadius={12}
+						borderTopRightRadius={12}
+						borderWidth={1}
+						borderColor={Theme.border}
+						padding="$5"
+						paddingBottom="$8"
+						gap="$4"
 					>
 						{/* Handle bar for visual cue */}
 						<View
-							width={40}
+							width={32}
 							height={4}
-							backgroundColor="#e0e0e0"
+							backgroundColor={Theme.border}
 							borderRadius={2}
 							alignSelf="center"
-							marginBottom="$2"
+							marginBottom="$1"
 						/>
 
 						<XStack
@@ -126,21 +127,21 @@ export default function ProjectModal({
 						>
 							<XStack gap="$3" alignItems="center">
 								<View
-									backgroundColor="#e9ddff"
-									padding="$2"
-									borderRadius={12}
+									backgroundColor={Theme.primaryPastel}
+									padding="$2.5"
+									borderRadius={6}
 								>
-									{project ? <Edit3 size={24} color="#6750A4" /> : <FolderPlus size={24} color="#6750A4" />}
+									{project ? <Edit3 size={18} color={Theme.primary} /> : <FolderPlus size={18} color={Theme.primary} />}
 								</View>
 								<YStack>
 									<Text
-										fontSize="$6"
-										fontWeight="800"
-										color="#1d1b20"
+										fontSize="$5"
+										fontWeight="700"
+										color={Theme.text}
 									>
 										{project ? "Edit Project" : "Create Project"}
 									</Text>
-									<Text fontSize="$2" color="#7a7582">
+									<Text fontSize="$2" color={Theme.textMuted}>
 										{project ? "Update your workspace details" : "Set up your new academic module"}
 									</Text>
 								</YStack>
@@ -149,42 +150,44 @@ export default function ProjectModal({
 								circular
 								size="$3"
 								chromeless
-								icon={<X size={20} color="#494551" />}
+								icon={<X size={18} color={Theme.textMuted} />}
 								onPress={onClose}
-								pressStyle={{ backgroundColor: "#f2ecf4" }}
+								pressStyle={{ backgroundColor: Theme.background }}
 							/>
 						</XStack>
 
-						<YStack gap="$4">
-							<YStack gap="$2">
+						<YStack gap="$3" marginTop="$2">
+							<YStack gap="$1">
 								<Text
 									fontSize="$3"
-									color="#494551"
-									fontWeight="700"
+									color={Theme.text}
+									fontWeight="600"
 									marginLeft="$1"
 								>
 									Project Title
 								</Text>
 								<StyledInput
 									placeholder="e.g., Computer Science 101"
+									placeholderTextColor={Theme.textMuted as any}
 									value={name}
 									onChangeText={setName}
 								/>
 							</YStack>
 
-							<YStack gap="$2">
+							<YStack gap="$1">
 								<Text
 									fontSize="$3"
-									color="#494551"
-									fontWeight="700"
+									color={Theme.text}
+									fontWeight="600"
 									marginLeft="$1"
 								>
 									Description (Optional)
 								</Text>
 								<StyledTextArea
 									placeholder="What is this project about?"
+									placeholderTextColor={Theme.textMuted as any}
 									numberOfLines={4}
-									height={120}
+									height={100}
 									textAlignVertical="top"
 									paddingTop="$3"
 									value={description}
@@ -193,55 +196,49 @@ export default function ProjectModal({
 							</YStack>
 						</YStack>
 
-						<XStack gap="$3" marginTop="$2">
+						<XStack gap="$3" marginTop="$3">
 							<Button
 								flex={1}
-								height={56}
-								borderRadius={16}
-								backgroundColor="#f2ecf4"
+								height={48}
+								borderRadius={6}
+								backgroundColor={Theme.background}
 								onPress={onClose}
 								pressStyle={{
-									backgroundColor: "#e9ddff",
+									backgroundColor: Theme.border,
 									scale: 0.98,
 								}}
 							>
 								<Text
-									color="#6750A4"
-									fontWeight="700"
+									color={Theme.textMuted}
+									fontWeight="600"
 									fontSize="$4"
 								>
 									Cancel
 								</Text>
 							</Button>
 
-							<YStack flex={2}>
-								<Button
-									unstyled
-									onPress={handleSave}
-									disabled={!name.trim()}
-									opacity={!name.trim() ? 0.5 : 1}
+							<Button
+								flex={2}
+								height={48}
+								borderRadius={6}
+								backgroundColor={Theme.primary}
+								onPress={handleSave}
+								disabled={!name.trim()}
+								opacity={!name.trim() ? 0.55 : 1}
+								pressStyle={{
+									backgroundColor: Theme.primary,
+									opacity: 0.9,
+									scale: 0.98,
+								}}
+							>
+								<Text
+									color={Theme.primaryText}
+									fontWeight="700"
+									fontSize="$4"
 								>
-									<LinearGradient
-										colors={["#6750A4", "#4F378A"]}
-										start={{ x: 0, y: 0 }}
-										end={{ x: 1, y: 1 }}
-										style={{
-											height: 56,
-											borderRadius: 16,
-											justifyContent: "center",
-											alignItems: "center",
-										}}
-									>
-										<Text
-											color="white"
-											fontWeight="800"
-											fontSize="$4"
-										>
-											{project ? "Update Project" : "Create Project"}
-										</Text>
-									</LinearGradient>
-								</Button>
-							</YStack>
+									{project ? "Update Project" : "Create Project"}
+								</Text>
+							</Button>
 						</XStack>
 					</YStack>
 				</View>

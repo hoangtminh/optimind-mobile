@@ -1,4 +1,5 @@
 import { Avatar, Text, View, XStack, YStack } from "tamagui";
+import { Theme } from "@/constants/Theme";
 
 interface MessageBubbleProps {
 	message: {
@@ -43,7 +44,7 @@ export const MessageBubble = ({
 
 	const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(
 		message.author?.username || "U",
-	)}&background=e9ddff&color=6750A4`;
+	)}&background=F2EDFA&color=4F378A`;
 
 	return (
 		<XStack
@@ -60,10 +61,11 @@ export const MessageBubble = ({
 				{/* Sender Name */}
 				{!isSelf && isFirstInGroup && (
 					<Text
-						fontSize={12}
+						fontSize={11}
 						fontWeight="700"
-						color="#494551"
+						color={Theme.textMuted}
 						marginLeft="$10"
+						marginBottom="$1"
 					>
 						{message.author?.username}
 					</Text>
@@ -89,33 +91,33 @@ export const MessageBubble = ({
 										fallbackAvatar,
 								}}
 							/>
-							<Avatar.Fallback backgroundColor="#f2ecf4" />
+							<Avatar.Fallback backgroundColor={Theme.primaryPastel} />
 						</Avatar>
 					)}
 					<YStack width={"100%"} gap={0}>
 						<View
-							backgroundColor={isSelf ? "#6750A4" : "#f2ecf4"}
-							paddingHorizontal="$4"
-							paddingVertical="$2.5"
-							borderRadius={20}
+							backgroundColor={isSelf ? Theme.primary : Theme.primaryPastel}
+							paddingHorizontal="$3.5"
+							paddingVertical="$2"
+							borderRadius={8}
 							borderBottomRightRadius={
-								isSelf && !isLastInGroup ? 4 : 20
+								isSelf && !isLastInGroup ? 2 : 8
 							}
 							borderBottomLeftRadius={
-								!isSelf && !isLastInGroup ? 4 : 20
+								!isSelf && !isLastInGroup ? 2 : 8
 							}
 							borderTopRightRadius={
-								isSelf && !isFirstInGroup ? 4 : 20
+								isSelf && !isFirstInGroup ? 2 : 8
 							}
 							borderTopLeftRadius={
-								!isSelf && !isFirstInGroup ? 4 : 20
+								!isSelf && !isFirstInGroup ? 2 : 8
 							}
 							alignSelf={isSelf ? "flex-end" : "flex-start"}
 						>
 							<Text
-								color={isSelf ? "white" : "#1d1b20"}
+								color={isSelf ? Theme.primaryText : Theme.text}
 								fontSize="$4"
-								lineHeight={22}
+								lineHeight={20}
 								style={{ wordBreak: "break-word" }}
 							>
 								{content}
@@ -127,7 +129,7 @@ export const MessageBubble = ({
 				{isLastInGroup && (
 					<Text
 						fontSize={10}
-						color="#7a7582"
+						color={Theme.textMuted}
 						marginTop="$1"
 						marginLeft={"$10"}
 					>
@@ -138,3 +140,4 @@ export const MessageBubble = ({
 		</XStack>
 	);
 };
+export default MessageBubble;

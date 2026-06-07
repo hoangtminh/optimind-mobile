@@ -28,6 +28,7 @@ import { UserProvider } from "@/contexts/UserContext";
 import { useAuth } from "@/hooks/useAuth";
 import { config } from "@/tamagui.config";
 import { KeyboardProvider } from "react-native-keyboard-controller";
+import { Theme } from "@/constants/Theme";
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -40,6 +41,9 @@ export const unstable_settings = {
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
+
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { ToastContainer } from "@/components/common/Toast";
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
@@ -65,18 +69,33 @@ export default function RootLayout() {
   }
 
   return (
-    <KeyboardProvider>
-      <TamaguiProvider config={config} defaultTheme="light">
-        <PortalProvider>
-          <AuthProvider>
-            <RootLayoutNav />
-            <PortalHost name="" />
-          </AuthProvider>
-        </PortalProvider>
-      </TamaguiProvider>
-    </KeyboardProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <KeyboardProvider>
+        <TamaguiProvider config={config} defaultTheme="light">
+          <PortalProvider>
+            <AuthProvider>
+              <RootLayoutNav />
+              <PortalHost name="" />
+              <ToastContainer />
+            </AuthProvider>
+          </PortalProvider>
+        </TamaguiProvider>
+      </KeyboardProvider>
+    </GestureHandlerRootView>
   );
 }
+
+const CustomNavigationTheme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    background: Theme.background,
+    card: Theme.surface,
+    text: Theme.text,
+    border: Theme.border,
+    notification: Theme.accentRedText,
+  },
+};
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
@@ -89,7 +108,7 @@ function RootLayoutNav() {
     if (isLoading) return;
 
     // Check if the user is in the authentication-related routes.
-    const inAuthGroup = segments[0] === "(auth)";
+    const inAuthGroup = segments[0] === "(auth)" || segments[0] === "auth";
     if (!user && !inAuthGroup) {
       router.replace("/(auth)/sign-in");
     } else if (user && inAuthGroup) {
@@ -98,7 +117,7 @@ function RootLayoutNav() {
   }, [user, segments, isLoading, router]);
 
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : CustomNavigationTheme}>
       <UserProvider>
         <ProjectProvider>
           <TaskProvider>

@@ -7,21 +7,8 @@ import {
   TouchableOpacityProps,
   View,
 } from "react-native";
+import { Theme } from "@/constants/Theme";
 
-// ─── Design tokens ────────────────────────────────────────────────────────────
-const T = {
-  primary: "#4f378a",
-  surfaceTint: "#6750a4",
-  onPrimary: "#ffffff",
-  surface: "#fdf7ff",
-  onSurface: "#1d1b20",
-  outlineVariant: "#cbc4d2",
-  surfaceContainerHighest: "#e6e0e9",
-} as const;
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Primary CTA button (pill-shaped, filled with primary)
-// ─────────────────────────────────────────────────────────────────────────────
 interface AuthPrimaryButtonProps extends Omit<TouchableOpacityProps, "style"> {
   label: string;
   loading?: boolean;
@@ -43,7 +30,7 @@ export function AuthPrimaryButton({
       {...rest}
     >
       {loading ? (
-        <ActivityIndicator color={T.onPrimary} />
+        <ActivityIndicator color={Theme.primaryText} />
       ) : (
         <>
           <Text style={styles.primaryBtnText}>{label}</Text>
@@ -54,9 +41,6 @@ export function AuthPrimaryButton({
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Social (outlined, pill-shaped)
-// ─────────────────────────────────────────────────────────────────────────────
 interface AuthSocialButtonProps extends Omit<TouchableOpacityProps, "style"> {
   label: string;
   icon: React.ReactNode;
@@ -71,21 +55,15 @@ export function AuthSocialButton({ label, icon, ...rest }: AuthSocialButtonProps
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   primaryBtn: {
-    height: 52,
-    borderRadius: 999,
-    backgroundColor: T.primary,
+    height: 48,
+    borderRadius: 6, // Crisp minimalist corner radius
+    backgroundColor: Theme.primary,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 24,
-    shadowColor: T.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 4,
   },
   disabled: {
     opacity: 0.55,
@@ -93,18 +71,17 @@ const styles = StyleSheet.create({
   primaryBtnText: {
     fontFamily: "Manrope_600SemiBold",
     fontSize: 14,
-    letterSpacing: 0.1,
-    color: T.onPrimary,
+    color: Theme.primaryText,
   },
   trailingIcon: {
     marginLeft: 8,
   },
   socialBtn: {
-    height: 52,
-    borderRadius: 999,
-    backgroundColor: T.surface,
+    height: 48,
+    borderRadius: 6, // Crisp minimalist corner radius
+    backgroundColor: Theme.surface,
     borderWidth: 1,
-    borderColor: T.outlineVariant,
+    borderColor: Theme.border,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -113,7 +90,6 @@ const styles = StyleSheet.create({
   socialBtnText: {
     fontFamily: "Manrope_600SemiBold",
     fontSize: 14,
-    letterSpacing: 0.1,
-    color: T.onSurface,
+    color: Theme.text,
   },
 });

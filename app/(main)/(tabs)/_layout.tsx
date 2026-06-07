@@ -44,7 +44,7 @@ export default function TabLayout() {
     >
       <Tabs.Screen name="study/index" />
       <Tabs.Screen name="tasks" />
-      <Tabs.Screen name="chat/index" />
+      <Tabs.Screen name="chat" />
       <Tabs.Screen name="history/index" />
       <Tabs.Screen name="rank/index" />
       <Tabs.Screen name="setting" />

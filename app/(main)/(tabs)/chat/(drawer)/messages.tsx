@@ -4,13 +4,13 @@ import { CreateChatModal } from "@/components/chat/CreateChatModal";
 import { SearchInput } from "@/components/chat/SearchInput";
 import { useChat } from "@/contexts/ChatContext";
 import { DrawerActions, useNavigation } from "@react-navigation/native";
-import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { Edit3, MessageSquare } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, Text, View, YStack } from "tamagui";
+import { Theme } from "@/constants/Theme";
 
 export default function ChatListScreen() {
 	const navigation = useNavigation();
@@ -36,9 +36,9 @@ export default function ChatListScreen() {
 				flex={1}
 				justifyContent="center"
 				alignContent="center"
-				backgroundColor="#fdf7ff"
+				backgroundColor={Theme.background}
 			>
-				<ActivityIndicator size="large" color="#6750A4" />
+				<ActivityIndicator size="large" color={Theme.primary} />
 			</View>
 		);
 	}
@@ -55,25 +55,23 @@ export default function ChatListScreen() {
 
 	return (
 		<SafeAreaView
-			style={{ flex: 1, backgroundColor: "#f8f9fb" }}
+			style={{ flex: 1, backgroundColor: Theme.background }}
 			edges={["top"]}
 		>
-			<YStack flex={1} backgroundColor="#fdf7ff">
+			<YStack flex={1} backgroundColor={Theme.background}>
 				<AppHeader
 					title="Messages"
 					showBackButton
 					onBack={() => {
-						// Logic to open drawer if needed, but AppHeader handleBack usually handles history
-						// If the user specifically wants drawer, we might need to adjust AppHeader
 						navigation.dispatch(DrawerActions.openDrawer());
 					}}
 					rightElement={
 						<Button
-							icon={<MessageSquare size={20} color="white" />}
+							icon={<MessageSquare size={18} color={Theme.text} />}
 							circular
 							chromeless
 							pressStyle={{
-								backgroundColor: "rgba(255, 255, 255, 0.1)",
+								backgroundColor: Theme.primaryPastel,
 							}}
 						/>
 					}
@@ -100,7 +98,7 @@ export default function ChatListScreen() {
 							alignItems="center"
 							marginTop="$10"
 						>
-							<Text color="$on_surface">
+							<Text color={Theme.textMuted} fontSize="$3">
 								No chats found. Start a new conversation!
 							</Text>
 						</View>
@@ -111,30 +109,23 @@ export default function ChatListScreen() {
 					onPress={() => setIsCreateModalOpen(true)}
 					style={{
 						position: "absolute",
-						right: 24,
-						bottom: 24,
+						right: 20,
+						bottom: 20,
 						zIndex: 50,
 					}}
 				>
-					<LinearGradient
-						colors={["#6750A4", "#4F378A"]}
-						start={{ x: 0, y: 0 }}
-						end={{ x: 1, y: 1 }}
+					<View
 						style={{
-							borderRadius: 20,
-							width: 64,
-							height: 64,
+							borderRadius: 6, // Crisp corners
+							width: 56,
+							height: 56,
+							backgroundColor: Theme.primary,
 							justifyContent: "center",
 							alignItems: "center",
-							elevation: 8,
-							shadowColor: "#6750A4",
-							shadowOffset: { width: 0, height: 8 },
-							shadowOpacity: 0.2,
-							shadowRadius: 16,
 						}}
 					>
-						<Edit3 color="white" size={28} />
-					</LinearGradient>
+						<Edit3 color={Theme.primaryText} size={24} />
+					</View>
 				</TouchableOpacity>
 			</YStack>
 

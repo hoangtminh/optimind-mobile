@@ -9,7 +9,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { GroupedSession, ListStats } from "../hooks/useHistory";
+import { GroupedSession, ListStats } from "../_hooks/useHistory";
 import { SessionItem } from "./SessionItem";
 
 export interface HistoryListProps {
@@ -118,3 +118,5 @@ export const HistoryList: React.FC<HistoryListProps> = ({
     </SafeAreaView>
   );
 };
+
+export default HistoryList;

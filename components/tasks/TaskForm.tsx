@@ -6,6 +6,7 @@ import {
 	TouchableOpacity,
 	View,
 } from "react-native";
+import { Theme } from "@/constants/Theme";
 
 interface TaskFormProps {
 	task?: any;
@@ -51,19 +52,23 @@ export default function TaskForm({
 			<TextInput
 				style={styles.input}
 				placeholder="Task title"
+				placeholderTextColor={Theme.textMuted}
 				value={title}
 				onChangeText={setTitle}
 				maxLength={100}
+				selectionColor={Theme.primary}
 			/>
 
 			<TextInput
 				style={[styles.input, styles.textArea]}
 				placeholder="Task description (optional)"
+				placeholderTextColor={Theme.textMuted}
 				value={description}
 				onChangeText={setDescription}
 				multiline
 				numberOfLines={3}
 				maxLength={500}
+				selectionColor={Theme.primary}
 			/>
 
 			<Text style={styles.label}>Priority</Text>
@@ -94,8 +99,10 @@ export default function TaskForm({
 			<TextInput
 				style={styles.input}
 				placeholder="YYYY-MM-DD"
+				placeholderTextColor={Theme.textMuted}
 				value={dueDate}
 				onChangeText={setDueDate}
+				selectionColor={Theme.primary}
 			/>
 
 			<View style={styles.formActions}>
@@ -123,87 +130,88 @@ const styles = StyleSheet.create({
 		width: "100%",
 	},
 	formTitle: {
-		fontSize: 20,
-		fontWeight: "600",
-		color: "#1e293b",
-		marginBottom: 20,
+		fontSize: 18,
+		fontWeight: "700",
+		color: Theme.text,
+		marginBottom: 16,
 		textAlign: "center",
 	},
 	input: {
 		borderWidth: 1,
-		borderColor: "#e2e8f0",
-		borderRadius: 8,
+		borderColor: Theme.border,
+		borderRadius: 6,
 		padding: 12,
-		fontSize: 16,
-		marginBottom: 16,
-		backgroundColor: "#ffffff",
+		fontSize: 15,
+		marginBottom: 14,
+		backgroundColor: Theme.surface,
+		color: Theme.text,
 	},
 	textArea: {
 		height: 80,
 		textAlignVertical: "top",
 	},
 	label: {
-		fontSize: 16,
-		fontWeight: "500",
-		color: "#374151",
-		marginBottom: 8,
+		fontSize: 14,
+		fontWeight: "600",
+		color: Theme.text,
+		marginBottom: 6,
 	},
 	priorityButtons: {
 		flexDirection: "row",
 		gap: 8,
-		marginBottom: 16,
+		marginBottom: 14,
 	},
 	priorityButton: {
 		flex: 1,
 		paddingVertical: 10,
-		paddingHorizontal: 16,
-		borderRadius: 8,
+		paddingHorizontal: 12,
+		borderRadius: 6,
 		borderWidth: 1,
-		borderColor: "#e2e8f0",
+		borderColor: Theme.border,
 		alignItems: "center",
+		backgroundColor: Theme.background,
 	},
 	priorityButtonActive: {
-		backgroundColor: "#0058be",
-		borderColor: "#0058be",
+		backgroundColor: Theme.primary,
+		borderColor: Theme.primary,
 	},
 	priorityButtonText: {
-		fontSize: 14,
-		fontWeight: "500",
-		color: "#64748b",
+		fontSize: 13,
+		fontWeight: "600",
+		color: Theme.textMuted,
 	},
 	priorityButtonTextActive: {
-		color: "#ffffff",
+		color: Theme.primaryText,
 	},
 	formActions: {
 		flexDirection: "row",
 		gap: 12,
-		marginTop: 20,
+		marginTop: 16,
 	},
 	cancelButton: {
 		flex: 1,
 		paddingVertical: 12,
-		paddingHorizontal: 24,
-		borderRadius: 8,
+		borderRadius: 6,
 		borderWidth: 1,
-		borderColor: "#e2e8f0",
+		borderColor: Theme.border,
+		backgroundColor: Theme.background,
 		alignItems: "center",
 	},
 	cancelButtonText: {
-		fontSize: 16,
-		fontWeight: "500",
-		color: "#64748b",
+		fontSize: 15,
+		fontWeight: "600",
+		color: Theme.textMuted,
 	},
 	saveButton: {
 		flex: 1,
 		paddingVertical: 12,
-		paddingHorizontal: 24,
-		borderRadius: 8,
-		backgroundColor: "#0058be",
+		borderRadius: 6,
+		backgroundColor: Theme.primary,
 		alignItems: "center",
 	},
 	saveButtonText: {
-		fontSize: 16,
-		fontWeight: "500",
-		color: "#ffffff",
+		fontSize: 15,
+		fontWeight: "600",
+		color: Theme.primaryText,
 	},
 });

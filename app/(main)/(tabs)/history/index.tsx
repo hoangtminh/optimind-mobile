@@ -2,9 +2,9 @@ import { AppHeader } from "@/components/common/AppHeader";
 import React from "react";
 import { ActivityIndicator, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { HistoryList } from "./components/HistoryList";
-import { SessionDetails } from "./components/SessionDetails";
-import { useHistory } from "./hooks/useHistory";
+import { HistoryList } from "./_components/HistoryList";
+import { SessionDetails } from "./_components/SessionDetails";
+import { useHistory } from "./_hooks/useHistory";
 
 export default function History() {
   const {

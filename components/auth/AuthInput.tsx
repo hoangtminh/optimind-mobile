@@ -7,29 +7,13 @@ import {
   TextInputProps,
   View,
 } from "react-native";
-
-// ─── Design tokens ────────────────────────────────────────────────────────────
-const T = {
-  primary: "#4f378a",
-  outline: "#7a7582",
-  outlineVariant: "#cbc4d2",
-  surface: "#fdf7ff",
-  onSurface: "#1d1b20",
-  onSurfaceVariant: "#494551",
-  surfaceContainerHigh: "#ece6ee",
-  error: "#ba1a1a",
-} as const;
+import { Theme } from "@/constants/Theme";
 
 interface AuthInputProps extends Omit<TextInputProps, "style"> {
   label: string;
-  /** Show error border + message */
   error?: string;
 }
 
-/**
- * Floating-label text input following the StudyFlow / Focused Academic design.
- * The label shrinks and rises when the field is focused or has content.
- */
 function AuthInput({ label, error, value, onChangeText, ...rest }: AuthInputProps) {
   const [isFocused, setIsFocused] = useState(false);
   const animatedLabel = useRef(new Animated.Value(value ? 1 : 0)).current;
@@ -56,22 +40,22 @@ function AuthInput({ label, error, value, onChangeText, ...rest }: AuthInputProp
 
   const labelTop = animatedLabel.interpolate({
     inputRange: [0, 1],
-    outputRange: [17, 6],
+    outputRange: [16, 6],
   });
   const labelFontSize = animatedLabel.interpolate({
     inputRange: [0, 1],
-    outputRange: [16, 12],
+    outputRange: [15, 11],
   });
   const labelColor = animatedLabel.interpolate({
     inputRange: [0, 1],
-    outputRange: [T.outline, isFocused ? T.primary : T.outline],
+    outputRange: [Theme.textMuted, isFocused ? Theme.primary : Theme.textMuted],
   });
 
   const borderColor = error
-    ? T.error
+    ? Theme.accentRedText
     : isFocused
-    ? T.primary
-    : T.outlineVariant;
+    ? Theme.primary
+    : Theme.border;
 
   return (
     <View style={styles.wrapper}>
@@ -80,11 +64,10 @@ function AuthInput({ label, error, value, onChangeText, ...rest }: AuthInputProp
           styles.inputContainer,
           {
             borderColor,
-            borderWidth: isFocused ? 1.5 : 1,
+            borderWidth: isFocused ? 1.2 : 1,
           },
         ]}
       >
-        {/* Floating label */}
         <Animated.Text
           style={[
             styles.floatingLabel,
@@ -105,7 +88,7 @@ function AuthInput({ label, error, value, onChangeText, ...rest }: AuthInputProp
           onFocus={handleFocus}
           onBlur={handleBlur}
           placeholderTextColor="transparent"
-          selectionColor={T.primary}
+          selectionColor={Theme.primary}
           {...rest}
         />
       </View>
@@ -119,32 +102,30 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   inputContainer: {
-    height: 58,
-    borderRadius: 12,
-    backgroundColor: T.surface,
-    paddingHorizontal: 16,
+    height: 54,
+    borderRadius: 6, // Crisp minimalist corner radius
+    backgroundColor: Theme.surface,
+    paddingHorizontal: 14,
     justifyContent: "flex-end",
   },
   floatingLabel: {
     position: "absolute",
-    left: 16,
+    left: 14,
     fontFamily: "Manrope_400Regular",
-    letterSpacing: 0.15,
     zIndex: 1,
   },
   input: {
     fontFamily: "Manrope_400Regular",
-    fontSize: 16,
-    lineHeight: 22,
-    color: "#1d1b20",
-    paddingBottom: 8,
-    paddingTop: 20,
+    fontSize: 15,
+    color: Theme.text,
+    paddingBottom: 6,
+    paddingTop: 18,
     includeFontPadding: false,
   },
   errorText: {
     fontFamily: "Manrope_400Regular",
     fontSize: 12,
-    color: "#ba1a1a",
+    color: Theme.accentRedText,
     marginTop: 4,
     marginLeft: 4,
   },

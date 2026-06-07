@@ -9,6 +9,7 @@ import {
 import { UnifiedStudyView } from "@/components/study/UnifiedStudyView";
 import { useStudySessions } from "@/contexts/StudySessionContext";
 import { activeSessionTracker } from "@/utils/activeSession";
+import { Theme } from "@/constants/Theme";
 import {
 	Brain,
 	Camera,
@@ -28,16 +29,16 @@ import * as ScreenOrientation from "expo-screen-orientation";
 const TabButton = styled(YStack, {
   paddingVertical: "$2",
   paddingHorizontal: "$4",
-  borderRadius: 100,
+  borderRadius: 6, // Crisp corners
   alignItems: "center",
   justifyContent: "center",
   flexDirection: "row",
   gap: "$2",
-  pressStyle: { scale: 0.95 },
+  pressStyle: { scale: 0.98 },
   variants: {
     active: {
       true: {
-        backgroundColor: "#e9ddff",
+        backgroundColor: Theme.primaryPastel,
       },
       false: {
         backgroundColor: "transparent",
@@ -259,7 +260,7 @@ export default function StudyScreen() {
 
   return (
     <SafeAreaView
-      style={{ flex: 1, backgroundColor: "#fdf7ff" }}
+      style={{ flex: 1, backgroundColor: Theme.background }}
       edges={["top"]}
     >
       <AppHeader
@@ -269,7 +270,7 @@ export default function StudyScreen() {
             circular
             size="$3"
             chromeless
-            icon={<Settings size={20} color="white" />}
+            icon={<Settings size={18} color={Theme.text} />}
             onPress={() => setSettingsModalOpen(true)}
           />
         }
@@ -279,24 +280,24 @@ export default function StudyScreen() {
         {/* Tab Navigation */}
         <XStack
           paddingHorizontal="$4"
-          paddingVertical="$3"
+          paddingVertical="$2"
           gap="$2"
-          backgroundColor="white"
+          backgroundColor={Theme.surface}
           borderBottomWidth={1}
-          borderBottomColor="#f2ecf4"
+          borderBottomColor={Theme.border}
         >
           <TabButton
             active={activeTab === "pomodoro"}
             onPress={() => setActiveTab("pomodoro")}
           >
             <Brain
-              size={16}
-              color={activeTab === "pomodoro" ? "#6750A4" : "#7a7582"}
+              size={15}
+              color={activeTab === "pomodoro" ? Theme.primary : Theme.textMuted}
             />
             <Text
-              fontSize="$3"
+              fontSize="$2"
               fontWeight="700"
-              color={activeTab === "pomodoro" ? "#6750A4" : "#7a7582"}
+              color={activeTab === "pomodoro" ? Theme.primary : Theme.textMuted}
             >
               Timer
             </Text>
@@ -306,13 +307,13 @@ export default function StudyScreen() {
             onPress={() => setActiveTab("camera")}
           >
             <Camera
-              size={16}
-              color={activeTab === "camera" ? "#6750A4" : "#7a7582"}
+              size={15}
+              color={activeTab === "camera" ? Theme.primary : Theme.textMuted}
             />
             <Text
-              fontSize="$3"
+              fontSize="$2"
               fontWeight="700"
-              color={activeTab === "camera" ? "#6750A4" : "#7a7582"}
+              color={activeTab === "camera" ? Theme.primary : Theme.textMuted}
             >
               Camera
             </Text>
@@ -322,13 +323,13 @@ export default function StudyScreen() {
             onPress={() => setActiveTab("tasks")}
           >
             <ListTodo
-              size={16}
-              color={activeTab === "tasks" ? "#6750A4" : "#7a7582"}
+              size={15}
+              color={activeTab === "tasks" ? Theme.primary : Theme.textMuted}
             />
             <Text
-              fontSize="$3"
+              fontSize="$2"
               fontWeight="700"
-              color={activeTab === "tasks" ? "#6750A4" : "#7a7582"}
+              color={activeTab === "tasks" ? Theme.primary : Theme.textMuted}
             >
               Tasks
             </Text>
@@ -338,29 +339,29 @@ export default function StudyScreen() {
         {/* Mini Timer Banner when in Camera or Tasks tab */}
         {(activeTab === "camera" || activeTab === "tasks") && (
           <XStack
-            backgroundColor="#F3EDF7"
+            backgroundColor={Theme.surface}
             marginHorizontal="$4"
             marginTop="$3"
             paddingVertical="$2"
             paddingHorizontal="$4"
-            borderRadius={16}
+            borderRadius={6} // Crisp corners
             alignItems="center"
             justifyContent="space-between"
             borderWidth={1}
-            borderColor="#EADDFF"
+            borderColor={Theme.border}
           >
             <XStack alignItems="center" gap={10}>
-              <Brain size={16} color="#6750A4" />
+              <Brain size={16} color={Theme.text} />
               <YStack>
                 <Text
                   fontSize="$1"
                   fontWeight="700"
-                  color="#7A7582"
+                  color={Theme.textMuted}
                   textTransform="uppercase"
                 >
                   {timerMode === "focus" ? "Focus Session" : "Break Time"}
                 </Text>
-                <Text fontSize="$4" fontWeight="900" color="#1D1B20">
+                <Text fontSize="$4" fontWeight="700" color={Theme.text}>
                   {formatTime(timerTimeLeft)}
                 </Text>
               </YStack>
@@ -368,27 +369,27 @@ export default function StudyScreen() {
             <XStack gap="$2" alignItems="center">
               <Button
                 circular
-                size={36}
-                backgroundColor={timerRunning ? "#FFD8E4" : "#6750A4"}
+                size={32}
+                backgroundColor={timerRunning ? Theme.accentRed : Theme.primary}
                 onPress={() => setTimerRunning(!timerRunning)}
-                pressStyle={{ scale: 0.9 }}
+                pressStyle={{ scale: 0.95 }}
                 icon={
                   timerRunning ? (
-                    <Pause size={14} color="#8C1D18" />
+                    <Pause size={14} color={Theme.accentRedText} />
                   ) : (
-                    <Play size={14} color="white" />
+                    <Play size={14} color={Theme.primaryText} />
                   )
                 }
               />
               <Button
                 circular
-                size={36}
-                backgroundColor="white"
+                size={32}
+                backgroundColor={Theme.surface}
                 borderWidth={1}
-                borderColor="#6750A4"
+                borderColor={Theme.border}
                 onPress={() => handleTimerReset()}
-                pressStyle={{ scale: 0.9 }}
-                icon={<RotateCcw size={14} color="#6750A4" />}
+                pressStyle={{ scale: 0.95 }}
+                icon={<RotateCcw size={14} color={Theme.text} />}
               />
             </XStack>
           </XStack>
