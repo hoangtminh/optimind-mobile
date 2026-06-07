@@ -5,8 +5,8 @@ import React from "react";
 import { ScrollView, Text, useWindowDimensions, View } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { SessionMetrics } from "../hooks/useHistory";
-import { formatSessionDateOnly } from "../utils/historyUtils";
+import { SessionMetrics } from "../_hooks/useHistory";
+import { formatSessionDateOnly } from "../_utils/historyUtils";
 
 export interface SessionDetailsProps {
   session: StudySession;

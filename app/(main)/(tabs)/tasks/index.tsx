@@ -2,7 +2,6 @@ import { AppHeader } from "@/components/common/AppHeader";
 import { PremiumAlertDialog } from "@/components/common/PremiumAlertDialog";
 import ProjectModal from "@/components/projects/CreateProjectModal";
 import { useProject } from "@/contexts/ProjectContext";
-import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import {
 	CheckCircle2,
@@ -15,30 +14,30 @@ import { useEffect, useState } from "react";
 import { FlatList } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, Text, View, XStack, YStack, styled } from "tamagui";
+import { Theme } from "@/constants/Theme";
 
 const ProjectCard = styled(YStack, {
 	padding: "$5",
-	borderRadius: 24,
-	backgroundColor: "#ffffff",
-	shadowColor: "#6750A4",
-	shadowRadius: 20,
-	shadowOpacity: 0.05,
-	shadowOffset: { width: 0, height: 8 },
-	pressStyle: { scale: 0.98, backgroundColor: "#f8f2fa" },
+	borderRadius: 8, // Crisp corners
+	backgroundColor: Theme.surface,
+	borderWidth: 1,
+	borderColor: Theme.border,
+	elevation: 0,
+	pressStyle: { scale: 0.98, backgroundColor: Theme.primaryPastel },
 });
 
 const CreateNewCard = styled(YStack, {
-	padding: "$6",
-	borderRadius: 24,
-	borderWidth: 2,
+	padding: "$5",
+	borderRadius: 8, // Crisp corners
+	borderWidth: 1.5,
 	borderStyle: "dashed",
-	borderColor: "#cbc4d2",
+	borderColor: Theme.border,
 	backgroundColor: "transparent",
 	alignItems: "center",
 	justifyContent: "center",
 	pressStyle: {
-		backgroundColor: "#fdf7ff",
-		borderColor: "#6750A4",
+		backgroundColor: Theme.primaryPastel,
+		borderColor: Theme.primary,
 	},
 });
 
@@ -64,10 +63,10 @@ export default function ProjectsListScreen() {
 
 	return (
 		<SafeAreaView
-			style={{ flex: 1, backgroundColor: "#fdf7ff" }}
+			style={{ flex: 1, backgroundColor: Theme.background }}
 			edges={["top"]}
 		>
-			<YStack flex={1} backgroundColor="#fdf7ff" position="relative">
+			<YStack flex={1} backgroundColor={Theme.background} position="relative">
 				<AppHeader
 					title="StudyFlow"
 					rightElement={
@@ -75,10 +74,10 @@ export default function ProjectsListScreen() {
 							circular
 							size="$3"
 							chromeless
-							icon={<MessageSquare size={20} color="white" />}
+							icon={<MessageSquare size={18} color={Theme.text} />}
 							onPress={() => router.push("/(main)/(tabs)/chat")}
 							pressStyle={{
-								backgroundColor: "rgba(255, 255, 255, 0.1)",
+								backgroundColor: Theme.primaryPastel,
 							}}
 						/>
 					}
@@ -87,20 +86,20 @@ export default function ProjectsListScreen() {
 				<FlatList
 					data={projects}
 					keyExtractor={(item) => item.id}
-					contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
-					ItemSeparatorComponent={() => <View height={20} />}
+					contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
+					ItemSeparatorComponent={() => <View height={12} />}
 					ListHeaderComponent={
-						<YStack paddingBottom="$6" paddingTop="$2">
+						<YStack paddingBottom="$4" paddingTop="$2">
 							<Text
-								fontSize={32}
-								fontWeight="800"
-								color="#1d1b20"
-								letterSpacing={-1}
+								fontSize={28}
+								fontWeight="700"
+								color={Theme.text}
+								letterSpacing={-0.5}
 								marginBottom="$1"
 							>
 								Your Projects
 							</Text>
-							<Text fontSize="$4" color="#494551" lineHeight={24}>
+							<Text fontSize="$3" color={Theme.textMuted} lineHeight={20}>
 								Manage active modules and deadlines with ease.
 							</Text>
 						</YStack>
@@ -117,58 +116,59 @@ export default function ProjectsListScreen() {
 								<XStack
 									alignItems="center"
 									justifyContent="space-between"
-									marginBottom="$4"
+									marginBottom="$3"
 								>
 									<View
-										paddingHorizontal="$3"
+										paddingHorizontal="$2.5"
 										paddingVertical="$1"
-										borderRadius={100}
-										backgroundColor="#e9ddff"
+										borderRadius={4}
+										backgroundColor={Theme.primaryPastel}
 									>
 										<Text
-											fontSize={11}
+											fontSize={10}
 											fontWeight="700"
-											color="#4f378a"
+											color={Theme.primaryPastelText}
+											letterSpacing={0.5}
 										>
 											ACTIVE MODULE
 										</Text>
 									</View>
-									<Timer size={18} color="#6750A4" />
+									<Timer size={16} color={Theme.primary} />
 								</XStack>
 
 								<Text
-									fontWeight="800"
-									fontSize="$6"
-									color="#1d1b20"
-									marginBottom="$2"
+									fontWeight="700"
+									fontSize="$5"
+									color={Theme.text}
+									marginBottom="$1.5"
 								>
 									{item.name}
 								</Text>
 
 								<Text
 									fontSize="$3"
-									color="#494551"
+									color={Theme.textMuted}
 									numberOfLines={2}
-									marginBottom="$5"
-									lineHeight={20}
+									marginBottom="$4"
+									lineHeight={18}
 								>
 									{item.description}
 								</Text>
 							</YStack>
 
 							<XStack
-								paddingTop="$4"
+								paddingTop="$3"
 								borderTopWidth={1}
-								borderTopColor="#f2ecf4"
+								borderTopColor={Theme.border}
 								justifyContent="space-between"
 								alignItems="center"
 							>
 								<XStack alignItems="center" gap="$2">
-									<CheckCircle2 size={16} color="#6750A4" />
+									<CheckCircle2 size={15} color={Theme.primary} />
 									<Text
-										fontSize={13}
+										fontSize={12}
 										fontWeight="600"
-										color="#494551"
+										color={Theme.textMuted}
 									>
 										{item.taskCount || 0} Tasks
 									</Text>
@@ -180,21 +180,7 @@ export default function ProjectsListScreen() {
 										size="$2"
 										chromeless
 										icon={
-											<MessageSquare
-												size={18}
-												color="#7a7582"
-											/>
-										}
-										pressStyle={{
-											backgroundColor: "#f2ecf4",
-										}}
-									/>
-									<Button
-										circular
-										size="$2"
-										chromeless
-										icon={
-											<Trash2 size={18} color="#ffdad6" />
+											<Trash2 size={16} color={Theme.accentRedText} />
 										}
 										onPress={(e) => {
 											e.stopPropagation();
@@ -202,7 +188,7 @@ export default function ProjectsListScreen() {
 											setDeleteDialogOpen(true);
 										}}
 										pressStyle={{
-											backgroundColor: "#ffdad6",
+											backgroundColor: Theme.accentRed,
 										}}
 									/>
 									<Button
@@ -210,10 +196,11 @@ export default function ProjectsListScreen() {
 										size="$2"
 										chromeless
 										icon={
-											<Plus size={18} color="#7a7582" />
+											<Plus size={16} color={Theme.textMuted} />
 										}
+										onPress={() => setIsModalOpen(true)}
 										pressStyle={{
-											backgroundColor: "#f2ecf4",
+											backgroundColor: Theme.background,
 										}}
 									/>
 								</XStack>
@@ -223,55 +210,48 @@ export default function ProjectsListScreen() {
 					ListFooterComponent={
 						<CreateNewCard
 							onPress={() => setIsModalOpen(true)}
-							marginTop="$4"
+							marginTop="$3"
 						>
 							<View
-								width={48}
-								height={48}
-								borderRadius={24}
-								backgroundColor="#f2ecf4"
+								width={40}
+								height={40}
+								borderRadius={6}
+								backgroundColor={Theme.primaryPastel}
 								alignItems="center"
 								justifyContent="center"
-								marginBottom="$3"
+								marginBottom="$2"
 							>
-								<Plus color="#6750A4" size={24} />
+								<Plus color={Theme.primary} size={20} />
 							</View>
-							<Text fontWeight="700" color="#494551">
+							<Text fontWeight="600" fontSize="$4" color={Theme.text}>
 								Start New Project
 							</Text>
-							<Text fontSize="$2" color="#7a7582" marginTop="$1">
+							<Text fontSize="$2" color={Theme.textMuted} marginTop="$1">
 								Expand your academic horizon
 							</Text>
 						</CreateNewCard>
 					}
 				/>
 
-				{/* FAB */}
-				<YStack position="absolute" bottom={24} right={24} zIndex={100}>
+				{/* FAB button matching Theme.primary and radius-6 */}
+				<YStack position="absolute" bottom={20} right={20} zIndex={100}>
 					<Button
 						unstyled
 						onPress={() => setIsModalOpen(true)}
 						pressStyle={{ scale: 0.95 }}
 					>
-						<LinearGradient
-							colors={["#6750A4", "#4F378A"]}
-							start={{ x: 0, y: 0 }}
-							end={{ x: 1, y: 1 }}
+						<View
 							style={{
-								width: 64,
-								height: 64,
-								borderRadius: 24,
+								width: 56,
+								height: 56,
+								borderRadius: 6, // Crisp corners
+								backgroundColor: Theme.primary,
 								justifyContent: "center",
 								alignItems: "center",
-								shadowColor: "#6750A4",
-								shadowOffset: { width: 0, height: 8 },
-								shadowOpacity: 0.2,
-								shadowRadius: 16,
-								elevation: 8,
 							}}
 						>
-							<Plus color="white" size={32} />
-						</LinearGradient>
+							<Plus color={Theme.primaryText} size={24} />
+						</View>
 					</Button>
 				</YStack>
 			</YStack>

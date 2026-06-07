@@ -2,7 +2,6 @@ import { AppHeader } from "@/components/common/AppHeader";
 import { PremiumAlertDialog } from "@/components/common/PremiumAlertDialog";
 import { useProject } from "@/contexts/ProjectContext";
 import { Task, useTask } from "@/contexts/TaskContext";
-import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { History, Layout, MessageSquare, Plus, Edit3, Trash2 } from "lucide-react-native";
 import { useEffect, useState } from "react";
@@ -10,25 +9,26 @@ import { FlatList } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, styled, Text, View, XStack, YStack } from "tamagui";
 import ProjectModal from "@/components/projects/CreateProjectModal";
-
 import KanbanView from "@/components/tasks/KanbanView";
 import TaskItem from "@/components/tasks/TaskItem";
 import TaskModal from "@/components/tasks/TaskModal";
 import { TaskStatus } from "@/lib/types/task";
+import { Theme } from "@/constants/Theme";
+import { toast } from "@/components/common/Toast";
 
 const TabButton = styled(YStack, {
 	paddingVertical: "$2",
 	paddingHorizontal: "$4",
-	borderRadius: 100,
+	borderRadius: 6, // Crisp corners
 	alignItems: "center",
 	justifyContent: "center",
 	flexDirection: "row",
 	gap: "$2",
-	pressStyle: { scale: 0.95 },
+	pressStyle: { scale: 0.98 },
 	variants: {
 		active: {
 			true: {
-				backgroundColor: "#e9ddff",
+				backgroundColor: Theme.primaryPastel,
 			},
 			false: {
 				backgroundColor: "transparent",
@@ -69,9 +69,21 @@ export default function ProjectTaskScreen() {
 	const ongoingTasks = tasks.filter((t) => t.status === "in_progress");
 	const completedTasks = tasks.filter((t) => t.status === "complete");
 
-	const handleToggleTask = (taskId: string, currentStatus: string) => {
+	const handleToggleTask = async (taskId: string, currentStatus: string) => {
 		const newStatus = currentStatus === "complete" ? "todo" : "complete";
-		updateTaskStatus(taskId, newStatus);
+		try {
+			await updateTaskStatus(taskId, newStatus);
+			toast.success(
+				`Task marked as ${newStatus === "complete" ? "complete" : "active"}`,
+			);
+		} catch (e) {
+			const rawMsg = e instanceof Error ? e.message : "An error occurred";
+			toast.error(
+				rawMsg.includes("Instant")
+					? "Invalid date/time format. Please check the due date."
+					: rawMsg,
+			);
+		}
 	};
 
 	const handleEditTask = (task: Task) => {
@@ -79,8 +91,18 @@ export default function ProjectTaskScreen() {
 		setIsAddModalOpen(true);
 	};
 
-	const handleStatusUpdate = (taskId: string, newStatus: TaskStatus) => {
-		updateTaskStatus(taskId, newStatus);
+	const handleStatusUpdate = async (taskId: string, newStatus: TaskStatus) => {
+		try {
+			await updateTaskStatus(taskId, newStatus);
+			toast.success(`Task status updated to ${newStatus.replace("_", " ")}`);
+		} catch (e) {
+			const rawMsg = e instanceof Error ? e.message : "An error occurred";
+			toast.error(
+				rawMsg.includes("Instant")
+					? "Invalid date/time format. Please check the due date."
+					: rawMsg,
+			);
+		}
 	};
 
 	const handleDeleteProject = () => {
@@ -89,7 +111,7 @@ export default function ProjectTaskScreen() {
 
 	return (
 		<SafeAreaView
-			style={{ flex: 1, backgroundColor: "#fdf7ff" }}
+			style={{ flex: 1, backgroundColor: Theme.background }}
 			edges={["top"]}
 		>
 			<YStack flex={1}>
@@ -103,17 +125,17 @@ export default function ProjectTaskScreen() {
 								circular
 								size="$3"
 								chromeless
-								icon={<Edit3 size={18} color="white" />}
+								icon={<Edit3 size={18} color={Theme.text} />}
 								onPress={() => setIsEditProjectOpen(true)}
-								pressStyle={{ backgroundColor: "rgba(255, 255, 255, 0.1)" }}
+								pressStyle={{ backgroundColor: Theme.primaryPastel }}
 							/>
 							<Button
 								circular
 								size="$3"
 								chromeless
-								icon={<Trash2 size={18} color="#ffdad6" />}
+								icon={<Trash2 size={18} color={Theme.accentRedText} />}
 								onPress={handleDeleteProject}
-								pressStyle={{ backgroundColor: "rgba(255, 255, 255, 0.1)" }}
+								pressStyle={{ backgroundColor: Theme.accentRed }}
 							/>
 						</XStack>
 					}
@@ -122,21 +144,21 @@ export default function ProjectTaskScreen() {
 				{/* Tab Navigation */}
 				<XStack
 					paddingHorizontal="$4"
-					paddingVertical="$3"
+					paddingVertical="$2"
 					gap="$2"
-					backgroundColor="white"
+					backgroundColor={Theme.surface}
 					borderBottomWidth={1}
-					borderBottomColor="#f2ecf4"
+					borderBottomColor={Theme.border}
 				>
 					<TabButton
 						active={activeTab === "tasks"}
 						onPress={() => setActiveTab("tasks")}
 					>
 						<Text
-							fontSize="$3"
+							fontSize="$2"
 							fontWeight="700"
 							color={
-								activeTab === "tasks" ? "#6750A4" : "#7a7582"
+								activeTab === "tasks" ? Theme.primary : Theme.textMuted
 							}
 						>
 							Tasks
@@ -147,16 +169,16 @@ export default function ProjectTaskScreen() {
 						onPress={() => setActiveTab("kanban")}
 					>
 						<Layout
-							size={16}
+							size={14}
 							color={
-								activeTab === "kanban" ? "#6750A4" : "#7a7582"
+								activeTab === "kanban" ? Theme.primary : Theme.textMuted
 							}
 						/>
 						<Text
-							fontSize="$3"
+							fontSize="$2"
 							fontWeight="700"
 							color={
-								activeTab === "kanban" ? "#6750A4" : "#7a7582"
+								activeTab === "kanban" ? Theme.primary : Theme.textMuted
 							}
 						>
 							Kanban
@@ -167,13 +189,13 @@ export default function ProjectTaskScreen() {
 						onPress={() => setActiveTab("chat")}
 					>
 						<MessageSquare
-							size={16}
-							color={activeTab === "chat" ? "#6750A4" : "#7a7582"}
+							size={14}
+							color={activeTab === "chat" ? Theme.primary : Theme.textMuted}
 						/>
 						<Text
-							fontSize="$3"
+							fontSize="$2"
 							fontWeight="700"
-							color={activeTab === "chat" ? "#6750A4" : "#7a7582"}
+							color={activeTab === "chat" ? Theme.primary : Theme.textMuted}
 						>
 							Chat
 						</Text>
@@ -183,13 +205,13 @@ export default function ProjectTaskScreen() {
 						onPress={() => setActiveTab("log")}
 					>
 						<History
-							size={16}
-							color={activeTab === "log" ? "#6750A4" : "#7a7582"}
+							size={14}
+							color={activeTab === "log" ? Theme.primary : Theme.textMuted}
 						/>
 						<Text
-							fontSize="$3"
+							fontSize="$2"
 							fontWeight="700"
-							color={activeTab === "log" ? "#6750A4" : "#7a7582"}
+							color={activeTab === "log" ? Theme.primary : Theme.textMuted}
 						>
 							Log
 						</Text>
@@ -218,7 +240,7 @@ export default function ProjectTaskScreen() {
 							item.id || `header-${index}`
 						}
 						contentContainerStyle={{
-							padding: 20,
+							padding: 16,
 							paddingBottom: 100,
 						}}
 						renderItem={({ item }) => {
@@ -232,28 +254,28 @@ export default function ProjectTaskScreen() {
 									<XStack
 										justifyContent="space-between"
 										alignItems="center"
-										marginTop="$4"
-										marginBottom="$3"
+										marginTop="$3"
+										marginBottom="$2"
 										paddingHorizontal="$2"
 									>
 										<Text
-											fontSize="$5"
-											fontWeight="800"
-											color="#1d1b20"
-											letterSpacing={-0.5}
+											fontSize="$4"
+											fontWeight="700"
+											color={Theme.text}
+											letterSpacing={-0.3}
 										>
 											{item.title}
 										</Text>
 										<View
-											backgroundColor="#f2ecf4"
-											paddingHorizontal="$3"
-											paddingVertical="$1"
-											borderRadius={12}
+											backgroundColor={Theme.primaryPastel}
+											paddingHorizontal="$2.5"
+											paddingVertical="$0.5"
+											borderRadius={4}
 										>
 											<Text
-												fontSize={12}
+												fontSize={11}
 												fontWeight="700"
-												color="#6750A4"
+												color={Theme.primaryPastelText}
 											>
 												{item.count}
 											</Text>
@@ -273,7 +295,7 @@ export default function ProjectTaskScreen() {
 						ItemSeparatorComponent={(props) => {
 							const { leadingItem } = props as any;
 							if (leadingItem?.type === "header") return null;
-							return <View height={12} />;
+							return <View height={8} />;
 						}}
 					/>
 				) : activeTab === "kanban" ? (
@@ -289,31 +311,33 @@ export default function ProjectTaskScreen() {
 						flex={1}
 						justifyContent="center"
 						alignItems="center"
-						padding="$10"
+						padding="$8"
 					>
 						<View
-							backgroundColor="#f8f2fa"
-							padding="$6"
-							borderRadius={30}
-							marginBottom="$5"
+							backgroundColor={Theme.surface}
+							borderWidth={1}
+							borderColor={Theme.border}
+							padding="$5"
+							borderRadius={6}
+							marginBottom="$4"
 						>
 							{activeTab === "chat" ? (
-								<MessageSquare size={40} color="#6750A4" />
+								<MessageSquare size={32} color={Theme.primary} />
 							) : (
-								<History size={40} color="#6750A4" />
+								<History size={32} color={Theme.primary} />
 							)}
 						</View>
 						<Text
-							fontSize="$6"
-							fontWeight="800"
-							color="#1d1b20"
+							fontSize="$5"
+							fontWeight="700"
+							color={Theme.text}
 							textAlign="center"
 						>
 							Coming Soon
 						</Text>
 						<Text
 							fontSize="$3"
-							color="#7a7582"
+							color={Theme.textMuted}
 							textAlign="center"
 							marginTop="$2"
 						>
@@ -323,32 +347,25 @@ export default function ProjectTaskScreen() {
 					</YStack>
 				)}
 
-				{/* FAB */}
-				<YStack position="absolute" bottom={24} right={24} zIndex={100}>
+				{/* FAB flat circular or crisp square */}
+				<YStack position="absolute" bottom={20} right={20} zIndex={100}>
 					<Button
 						unstyled
 						onPress={() => setIsAddModalOpen(true)}
 						pressStyle={{ scale: 0.95 }}
 					>
-						<LinearGradient
-							colors={["#6750A4", "#4F378A"]}
-							start={{ x: 0, y: 0 }}
-							end={{ x: 1, y: 1 }}
+						<View
 							style={{
-								width: 64,
-								height: 64,
-								borderRadius: 24,
+								width: 56,
+								height: 56,
+								borderRadius: 6,
+								backgroundColor: Theme.primary,
 								justifyContent: "center",
 								alignItems: "center",
-								shadowColor: "#6750A4",
-								shadowOffset: { width: 0, height: 8 },
-								shadowOpacity: 0.2,
-								shadowRadius: 16,
-								elevation: 8,
 							}}
 						>
-							<Plus color="white" size={32} />
-						</LinearGradient>
+							<Plus color={Theme.primaryText} size={24} />
+						</View>
 					</Button>
 				</YStack>
 			</YStack>
@@ -375,7 +392,7 @@ export default function ProjectTaskScreen() {
 						await deleteProject(projectId);
 						router.replace("/(main)/(tabs)/tasks");
 					} catch (e) {
-						// Error handling could be improved with a toast or another dialog
+						// Error handling
 					}
 				}}
 				title="Delete Project"

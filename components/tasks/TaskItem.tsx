@@ -12,16 +12,16 @@ import {
 import { useState } from "react";
 import { Button, styled, Text, XStack, YStack } from "tamagui";
 import { PremiumAlertDialog } from "../common/PremiumAlertDialog";
+import { Theme } from "@/constants/Theme";
 
 const TaskCard = styled(YStack, {
 	padding: "$4",
-	borderRadius: 20,
-	backgroundColor: "#ffffff",
-	shadowColor: "#6750A4",
-	shadowRadius: 15,
-	shadowOpacity: 0.05,
-	shadowOffset: { width: 0, height: 6 },
-	pressStyle: { scale: 0.98, backgroundColor: "#fdf7ff" },
+	borderRadius: 8, // Crisp corners
+	backgroundColor: Theme.surface,
+	borderWidth: 1,
+	borderColor: Theme.border,
+	elevation: 0,
+	pressStyle: { scale: 0.98, backgroundColor: Theme.primaryPastel },
 });
 
 interface TaskItemProps {
@@ -53,27 +53,47 @@ export default function TaskItem({
 
 	const getStatusInfo = () => {
 		if (isCompleted)
-			return { label: "Complete", color: "#2e7d32", bg: "#e8f5e9" };
+			return {
+				label: "Complete",
+				color: "#15803D",
+				bg: "#DCFCE7",
+				border: "#86EFAC",
+			};
 		if (isOverdue())
-			return { label: "Overdue", color: "#d32f2f", bg: "#ffebee" };
+			return {
+				label: "Overdue",
+				color: "#DC2626",
+				bg: "#FEE2E2",
+				border: "#FCA5A5",
+			};
 		if (task.status === "in_progress")
-			return { label: "On going", color: "#f57f17", bg: "#fff8e1" };
-		return { label: "To do", color: "#7a7582", bg: "#f2ecf4" };
+			return {
+				label: "On going",
+				color: "#4F46E5",
+				bg: "#EEF2FF",
+				border: "#C7D2FE",
+			};
+		return {
+			label: "To do",
+			color: "#4B5563",
+			bg: "#F3F4F6",
+			border: "#D1D5DB",
+		};
 	};
 
 	const status = getStatusInfo();
 
 	const priorityColors = {
-		high: { bg: "#ffdad6", text: "#93000a" },
-		medium: { bg: "#ffdcc6", text: "#723600" },
-		low: { bg: "#e9ddff", text: "#4f378a" },
+		high: { bg: "#FEE2E2", text: "#DC2626", border: "#FCA5A5" },
+		medium: { bg: "#FEF3C7", text: "#D97706", border: "#FCD34D" },
+		low: { bg: "#EFF6FF", text: "#1D4ED8", border: "#BFDBFE" },
 	};
 	const colors =
 		priorityColors[task.priority as keyof typeof priorityColors] ||
 		priorityColors.low;
 
 	return (
-		<TaskCard opacity={isCompleted ? 0.7 : 1}>
+		<TaskCard opacity={isCompleted ? 0.75 : 1}>
 			<XStack gap="$3" alignItems="flex-start">
 				<Button
 					circular
@@ -85,9 +105,9 @@ export default function TaskItem({
 					}}
 					icon={
 						isCompleted ? (
-							<CheckCircle2 size={22} color="#6750A4" />
+							<CheckCircle2 size={20} color={Theme.primary} />
 						) : (
-							<Circle size={22} color="#cbc4d2" />
+							<Circle size={20} color={Theme.border} />
 						)
 					}
 				/>
@@ -99,8 +119,8 @@ export default function TaskItem({
 						<YStack flex={1} onPress={handlePress}>
 							<Text
 								fontSize="$4"
-								fontWeight="700"
-								color="#1d1b20"
+								fontWeight="600"
+								color={Theme.text}
 								textDecorationLine={
 									isCompleted ? "line-through" : "none"
 								}
@@ -113,7 +133,7 @@ export default function TaskItem({
 								circular
 								size="$2"
 								chromeless
-								icon={<Edit2 size={16} color="#6750A4" />}
+								icon={<Edit2 size={14} color={Theme.primary} />}
 								onPress={(e) => {
 									e.stopPropagation();
 									onEdit?.(task);
@@ -123,7 +143,7 @@ export default function TaskItem({
 								circular
 								size="$2"
 								chromeless
-								icon={<Trash2 size={16} color="#d32f2f" />}
+								icon={<Trash2 size={14} color={Theme.accentRedText} />}
 								onPress={(e) => {
 									e.stopPropagation();
 									setIsDeleteDialogOpen(true);
@@ -133,21 +153,23 @@ export default function TaskItem({
 					</XStack>
 
 					<YStack onPress={handlePress} gap="$1">
-						<Text fontSize="$3" color="#494551">
+						<Text fontSize="$3" color={Theme.textMuted} numberOfLines={2}>
 							{task.note || "No note for this task"}
 						</Text>
 
 						<XStack
-							marginTop="$3"
-							gap="$3"
+							marginTop="$2.5"
+							gap="$3.5"
 							alignItems="center"
 							flexWrap="wrap"
 						>
 							<XStack
 								backgroundColor={status.bg}
+								borderWidth={1}
+								borderColor={status.border}
 								paddingHorizontal="$2"
 								paddingVertical="$0.5"
-								borderRadius={6}
+								borderRadius={4}
 								alignItems="center"
 								gap="$1"
 							>
@@ -160,7 +182,7 @@ export default function TaskItem({
 									<Clock size={10} color={status.color} />
 								)}
 								<Text
-									fontSize={10}
+									fontSize={9}
 									fontWeight="800"
 									color={status.color}
 									textTransform="uppercase"
@@ -171,9 +193,11 @@ export default function TaskItem({
 
 							<XStack
 								backgroundColor={colors.bg}
+								borderWidth={1}
+								borderColor={colors.border}
 								paddingHorizontal="$2"
 								paddingVertical="$0.5"
-								borderRadius={6}
+								borderRadius={4}
 								alignItems="center"
 								gap="$1"
 							>
@@ -183,7 +207,7 @@ export default function TaskItem({
 									fill={colors.text}
 								/>
 								<Text
-									fontSize={10}
+									fontSize={9}
 									fontWeight="800"
 									color={colors.text}
 									textTransform="uppercase"
@@ -194,8 +218,8 @@ export default function TaskItem({
 
 							{task.dueDate && (
 								<XStack alignItems="center" gap="$1">
-									<Calendar size={12} color="#7a7582" />
-									<Text fontSize={11} color="#7a7582">
+									<Calendar size={12} color={Theme.textMuted} />
+									<Text fontSize={11} color={Theme.textMuted}>
 										{new Date(
 											task.dueDate,
 										).toLocaleDateString(undefined, {

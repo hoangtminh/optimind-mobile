@@ -1,3 +1,4 @@
+import { Theme } from "@/constants/Theme";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { ArrowLeft } from "lucide-react-native";
@@ -33,17 +34,16 @@ export const AppHeader = ({
 
 	return (
 		<>
-			<StatusBar style="light" />
+			<StatusBar style="dark" />
 			<XStack
 				height={56}
 				alignItems="center"
 				paddingHorizontal="$4"
-				backgroundColor="#6750A4"
+				backgroundColor={Theme.surface}
+				borderBottomWidth={1}
+				borderBottomColor={Theme.border}
 				justifyContent="space-between"
-				elevation={4}
-				shadowColor="#000"
-				shadowRadius={10}
-				shadowOpacity={0.1}
+				elevation={0}
 				zIndex={100}
 			>
 				<XStack alignItems="center" flex={1} gap="$3">
@@ -52,17 +52,17 @@ export const AppHeader = ({
 							circular
 							size="$3"
 							chromeless
-							icon={<ArrowLeft size={20} color="white" />}
+							icon={<ArrowLeft size={20} color={Theme.text} />}
 							onPress={handleBack}
 							pressStyle={{
-								backgroundColor: "rgba(255, 255, 255, 0.1)",
+								backgroundColor: "rgba(0, 0, 0, 0.05)",
 							}}
 						/>
 					)}
 					<Text
 						fontSize="$5"
-						fontWeight="800"
-						color="white"
+						fontWeight="700"
+						color={Theme.text}
 						numberOfLines={1}
 						flex={1}
 					>

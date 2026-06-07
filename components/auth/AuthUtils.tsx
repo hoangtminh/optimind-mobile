@@ -1,20 +1,8 @@
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Theme } from "@/constants/Theme";
 
-const T = {
-  primary: "#4f378a",
-  outline: "#7a7582",
-  outlineVariant: "#cbc4d2",
-  onSurface: "#1d1b20",
-  onSurfaceVariant: "#494551",
-  surface: "#fdf7ff",
-  surfaceContainerHighest: "#e6e0e9",
-} as const;
-
-// ─────────────────────────────────────────────────────────────────────────────
-// OR divider
-// ─────────────────────────────────────────────────────────────────────────────
 interface AuthDividerProps {
   label?: string;
 }
@@ -32,21 +20,17 @@ const dividerStyles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    marginVertical: 24,
+    marginVertical: 20,
   },
-  line: { flex: 1, height: 1, backgroundColor: T.outlineVariant },
+  line: { flex: 1, height: 1, backgroundColor: Theme.border },
   text: {
     fontFamily: "Manrope_400Regular",
-    fontSize: 14,
-    letterSpacing: 0.25,
-    color: T.outline,
+    fontSize: 13,
+    color: Theme.textMuted,
     marginHorizontal: 12,
   },
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Checkbox row (terms / remember me)
-// ─────────────────────────────────────────────────────────────────────────────
 interface AuthCheckboxProps {
   checked: boolean;
   onToggle: () => void;
@@ -63,7 +47,7 @@ export function AuthCheckbox({ checked, onToggle, children }: AuthCheckboxProps)
     >
       <View style={[checkboxStyles.box, checked && checkboxStyles.boxChecked]}>
         {checked && (
-          <MaterialCommunityIcons name="check" size={13} color="#fff" />
+          <MaterialCommunityIcons name="check" size={12} color={Theme.primaryText} />
         )}
       </View>
       <View style={checkboxStyles.content}>{children}</View>
@@ -78,19 +62,19 @@ const checkboxStyles = StyleSheet.create({
     gap: 10,
   },
   box: {
-    width: 20,
-    height: 20,
-    borderRadius: 6,
+    width: 18,
+    height: 18,
+    borderRadius: 4, // Crisp checkbox radius
     borderWidth: 1.5,
-    borderColor: T.outlineVariant,
-    backgroundColor: T.surface,
+    borderColor: Theme.border,
+    backgroundColor: Theme.surface,
     alignItems: "center",
     justifyContent: "center",
     marginTop: 1,
   },
   boxChecked: {
-    backgroundColor: T.primary,
-    borderColor: T.primary,
+    backgroundColor: Theme.primary,
+    borderColor: Theme.primary,
   },
   content: { flex: 1 },
 });

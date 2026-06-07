@@ -1,7 +1,6 @@
 import { PremiumAlertDialog } from "@/components/common/PremiumAlertDialog";
 import { useAuth } from "@/hooks/useAuth";
-import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
+import { AntDesign } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
@@ -14,33 +13,21 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Theme } from "@/constants/Theme";
 
 // ── Separated sub-components (better re-render isolation) ──────────────────
 import AuthHeader from "@/components/auth/AuthHeader";
 import AuthInput from "@/components/auth/AuthInput";
 import { AuthCheckbox, AuthDivider } from "@/components/auth/AuthUtils";
-import { AuthSocialButton } from "@/components/auth/AuthButtons";
-
-// ─── Design tokens (StudyFlow / Focused Academic System) ──────────────────────
-const T = {
-  surface: "#fdf7ff",
-  surfaceContainerLow: "#f8f2fa",
-  primary: "#4f378a",
-  primaryContainer: "#6750a4",
-  onPrimary: "#ffffff",
-  onSurface: "#1d1b20",
-  onSurfaceVariant: "#494551",
-  outline: "#7a7582",
-  outlineVariant: "#cbc4d2",
-} as const;
+import { AuthPrimaryButton, AuthSocialButton } from "@/components/auth/AuthButtons";
 
 function GoogleIcon() {
-  return <AntDesign name="google" size={18} color="#1d1b20" />;
+  return <AntDesign name="google" size={18} color={Theme.text} />;
 }
 
 const SignUpScreen = () => {
   const router = useRouter();
-  const { signUp } = useAuth();
+  const { signUp, startGoogleLogin } = useAuth();
 
   // Form state
   const [username, setUsername] = useState("");
@@ -56,6 +43,23 @@ const SignUpScreen = () => {
     type: "error",
     onConfirm: () => {},
   });
+
+  const handleGoogleSignUp = async () => {
+    try {
+      setLoading(true);
+      await startGoogleLogin();
+    } catch (error: any) {
+      setDialog({
+        open: true,
+        title: "Google Sign Up Failed",
+        description: error.message,
+        type: "error",
+        onConfirm: () => {},
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSignUp = async () => {
     if (!agree) {
@@ -176,42 +180,24 @@ const SignUpScreen = () => {
               </Text>
             </AuthCheckbox>
 
-            {/* CTA — gradient pill */}
-            <TouchableOpacity
-              onPress={handleSignUp}
-              disabled={loading}
-              activeOpacity={0.85}
-              style={styles.ctaWrapper}
-            >
-              <LinearGradient
-                colors={[T.primary, T.primaryContainer]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={[styles.ctaGradient, loading && styles.disabled]}
-              >
-                {loading ? (
-                  <Text style={styles.ctaText}>Creating…</Text>
-                ) : (
-                  <>
-                    <Text style={styles.ctaText}>Create Account</Text>
-                    <MaterialCommunityIcons
-                      name="arrow-right"
-                      size={18}
-                      color="#fff"
-                      style={styles.ctaIcon}
-                    />
-                  </>
-                )}
-              </LinearGradient>
-            </TouchableOpacity>
+            {/* CTA — flat primary button */}
+            <View style={styles.ctaContainer}>
+              <AuthPrimaryButton
+                label="Create Account"
+                loading={loading}
+                onPress={handleSignUp}
+              />
+            </View>
 
             {/* Divider */}
             <AuthDivider label="Or sign up with" />
 
             {/* Social */}
             <AuthSocialButton
-              label="Continue with Google"
+              label={loading ? "Connecting..." : "Continue with Google"}
               icon={<GoogleIcon />}
+              onPress={handleGoogleSignUp}
+              disabled={loading}
             />
           </View>
 
@@ -243,25 +229,22 @@ const SignUpScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: T.surface,
+    backgroundColor: Theme.background,
   },
   flex: { flex: 1 },
   scroll: {
     flexGrow: 1,
     paddingHorizontal: 20,
-    paddingTop: 24,
+    paddingTop: 36,
     paddingBottom: 48,
   },
   // Card
   card: {
-    backgroundColor: T.surfaceContainerLow,
-    borderRadius: 20,
+    backgroundColor: Theme.surface,
+    borderRadius: 8, // Crisp minimalist corners
+    borderWidth: 1,
+    borderColor: Theme.border,
     padding: 24,
-    shadowColor: "#1d1b20",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 16,
-    elevation: 3,
     gap: 16,
   },
   passwordRow: {
@@ -274,37 +257,15 @@ const styles = StyleSheet.create({
     fontFamily: "Manrope_400Regular",
     fontSize: 13,
     lineHeight: 18,
-    color: T.onSurfaceVariant,
+    color: Theme.textMuted,
   },
   termsLink: {
     fontFamily: "Manrope_600SemiBold",
-    color: T.primary,
+    color: Theme.text,
   },
-  // Gradient CTA
-  ctaWrapper: {
+  ctaContainer: {
     marginTop: 4,
-    borderRadius: 999,
-    overflow: "hidden",
-    shadowColor: T.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 4,
   },
-  ctaGradient: {
-    height: 52,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  disabled: { opacity: 0.55 },
-  ctaText: {
-    fontFamily: "Manrope_600SemiBold",
-    fontSize: 14,
-    letterSpacing: 0.1,
-    color: T.onPrimary,
-  },
-  ctaIcon: { marginLeft: 8 },
   // Footer
   footerRow: {
     flexDirection: "row",
@@ -314,12 +275,12 @@ const styles = StyleSheet.create({
   footerText: {
     fontFamily: "Manrope_400Regular",
     fontSize: 14,
-    color: T.onSurfaceVariant,
+    color: Theme.textMuted,
   },
   footerLink: {
     fontFamily: "Manrope_700Bold",
     fontSize: 14,
-    color: T.primary,
+    color: Theme.text,
   },
 });
 

@@ -1,18 +1,20 @@
 import { Search } from "lucide-react-native";
 import { Input, View, YStack, styled } from "tamagui";
+import { Theme } from "@/constants/Theme";
 
 const StyledInput = styled(Input, {
-	backgroundColor: "#f2ecf4",
-	borderWidth: 0,
-	height: 52,
-	borderRadius: 16,
-	paddingLeft: 48,
-	fontSize: "$4",
-	color: "#1d1b20",
+	backgroundColor: Theme.surface,
+	borderWidth: 1,
+	borderColor: Theme.border,
+	height: 44,
+	borderRadius: 6, // Crisp corners
+	paddingLeft: 44,
+	fontSize: "$3",
+	color: Theme.text,
 	focusStyle: {
-		backgroundColor: "#ffffff",
-		borderWidth: 2,
-		borderColor: "#6750A4",
+		backgroundColor: Theme.surface,
+		borderWidth: 1.5,
+		borderColor: Theme.primary,
 	},
 });
 
@@ -34,15 +36,17 @@ export const SearchInput = ({
 			paddingBottom="$2"
 			position="relative"
 		>
-			<View position="absolute" left={32} top={30} zIndex={10}>
-				<Search size={20} color="#6750A4" />
+			<View position="absolute" left={28} top={28} zIndex={10}>
+				<Search size={16} color={Theme.primary} />
 			</View>
 			<StyledInput
 				placeholder={placeholder}
-				placeholderTextColor="$on_surface_variant"
+				placeholderTextColor={Theme.textMuted as any}
 				value={value}
 				onChangeText={onChangeText}
+				selectionColor={Theme.primary}
 			/>
 		</YStack>
 	);
 };
+export default SearchInput;

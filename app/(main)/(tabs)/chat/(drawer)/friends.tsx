@@ -1,192 +1,212 @@
 import { AppHeader } from "@/components/common/AppHeader";
 import { FriendListItem } from "@/components/chat/FriendListItem";
-import { SearchInput } from "@/components/chat/SearchInput";
+import { SentRequestsModal } from "@/components/chat/SentRequestsModal";
+import { IncomingRequestItem } from "@/components/chat/IncomingRequestItem";
+import { SearchResultCard } from "@/components/chat/SearchResultCard";
 import { DrawerActions, useNavigation } from "@react-navigation/native";
 import { useRouter } from "expo-router";
-import { Check, MessageSquare, Users, X } from "lucide-react-native";
+import { Users, Search } from "lucide-react-native";
 import React from "react";
-import { FlatList, Modal, Platform, ScrollView, TouchableOpacity } from "react-native";
+import { FlatList, ScrollView, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Avatar, Button, Circle, Text, View, XStack, YStack, styled } from "tamagui";
-
-
-// --- Mock Data ---
-const MOCK_FRIENDS = [
-	{ id: "u2", name: "Emily Carter", isOnline: true },
-	{ id: "u3", name: "David Chen", isOnline: false },
-	{ id: "u4", name: "Sophia Rodriguez", isOnline: true },
-	{ id: "u5", name: "Michael Johnson", isOnline: false },
-	{ id: "u6", name: "Olivia Williams", isOnline: true },
-	{ id: "u7", name: "Daniel Brown", isOnline: false },
-	{ id: "u8", name: "Ava Garcia", isOnline: true },
-	{ id: "u9", name: "James Miller", isOnline: false },
-	{ id: "u10", name: "Isabella Davis", isOnline: true },
-	{ id: "u11", name: "Liam Wilson", isOnline: false },
-];
-
-const MOCK_INCOMING_REQUESTS = [
-	{ id: "req1", name: "Alex Riverstone", role: "Ph.D. Architecture" },
-	{ id: "req2", name: "Elena Vance", role: "M.Sc. Data Ethics" },
-];
-
-const MOCK_SENT_REQUESTS = [
-	{ id: "s1", name: "Julian Thorne", role: "Digital Humanities" },
-	{ id: "s2", name: "Sarah Chen", role: "B.A. Urban Planning" },
-	{ id: "s3", name: "Alex Riverstone", role: "Ph.D. Architecture" },
-	{ id: "s4", name: "Elena Vance", role: "M.Sc. Data Ethics" },
-];
-
-// --- Sent Requests Modal Component (based on HTML) ---
-function SentRequestsModal({
-	isOpen,
-	onClose,
-}: {
-	isOpen: boolean;
-	onClose: () => void;
-}) {
-	return (
-		<Modal
-			visible={isOpen}
-			transparent
-			animationType="fade"
-			onRequestClose={onClose}
-		>
-			<View
-				flex={1}
-				justifyContent="center"
-				alignItems="center"
-				backgroundColor="rgba(0,0,0,0.4)"
-				padding="$4"
-			>
-				<View
-					backgroundColor="white"
-					width="100%"
-					maxWidth={500}
-					maxHeight="80%"
-					borderRadius={32}
-					shadowColor="#000"
-					shadowRadius={30}
-					shadowOpacity={0.1}
-					overflow="hidden"
-				>
-					<XStack
-						padding="$6"
-						justifyContent="space-between"
-						alignItems="center"
-						borderBottomWidth={1}
-						borderBottomColor="#f2ecf4"
-					>
-						<YStack>
-							<Text fontSize="$6" fontWeight="800" color="#1d1b20">
-								Sent Requests
-							</Text>
-							<Text fontSize="$2" color="#7a7582">
-								Manage your pending invitations
-							</Text>
-						</YStack>
-						<Button
-							circular
-							chromeless
-							icon={<X size={20} color="#1d1b20" />}
-							onPress={onClose}
-							pressStyle={{ backgroundColor: "#f2ecf4" }}
-						/>
-					</XStack>
-
-					<ScrollView contentContainerStyle={{ padding: 24 }}>
-						<YStack gap="$3">
-							{MOCK_SENT_REQUESTS.map((req) => (
-								<XStack
-									key={req.id}
-									padding="$3"
-									backgroundColor="#fdf7ff"
-									borderRadius={20}
-									alignItems="center"
-									justifyContent="space-between"
-								>
-									<XStack alignItems="center" gap="$3">
-										<Avatar circular size={48}>
-											<Avatar.Image
-												src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
-													req.name,
-												)}&background=6750A4&color=fff`}
-											/>
-											<Avatar.Fallback backgroundColor="#e9ddff" />
-										</Avatar>
-										<YStack>
-											<Text
-												fontWeight="700"
-												color="#1d1b20"
-											>
-												{req.name}
-											</Text>
-											<Button
-												size="$1"
-												backgroundColor="#ffdad6"
-												borderRadius={8}
-												marginTop="$1"
-												onPress={() => {}}
-											>
-												<Text
-													fontSize={10}
-													fontWeight="700"
-													color="#93000a"
-												>
-													Withdraw
-												</Text>
-											</Button>
-										</YStack>
-									</XStack>
-								</XStack>
-							))}
-						</YStack>
-					</ScrollView>
-
-					<View
-						padding="$4"
-						backgroundColor="#f2ecf4"
-						alignItems="center"
-					>
-						<Text
-							fontSize={10}
-							fontWeight="700"
-							color="#7a7582"
-							textTransform="uppercase"
-						>
-							Pending requests expire in 30 days
-						</Text>
-					</View>
-				</View>
-			</View>
-		</Modal>
-	);
-}
+import { Button, Text, View, XStack, YStack, Input } from "tamagui";
+import { Theme } from "@/constants/Theme";
+import { friendActions, FriendResponse, FriendRequestResponse, SearchFriendResult } from "@/api/friend-actions";
+import { chatActions } from "@/api/chat-actions";
 
 export default function FriendsScreen() {
 	const navigation = useNavigation();
 	const router = useRouter();
 	const [search, setSearch] = React.useState("");
+	const [friends, setFriends] = React.useState<FriendResponse[]>([]);
+	const [incomingRequests, setIncomingRequests] = React.useState<FriendRequestResponse[]>([]);
+	const [sentRequests, setSentRequests] = React.useState<FriendRequestResponse[]>([]);
+	const [searchResult, setSearchResult] = React.useState<SearchFriendResult | null>(null);
+	const [isSearching, setIsSearching] = React.useState(false);
+	const [isLoading, setIsLoading] = React.useState(false);
 	const [isSentModalOpen, setIsSentModalOpen] = React.useState(false);
 
-	const filteredFriends = MOCK_FRIENDS.filter((f) =>
-		f.name.toLowerCase().includes(search.toLowerCase()),
-	);
+	const loadData = React.useCallback(async () => {
+		setIsLoading(true);
+		try {
+			const [friendsRes, incomingRes, sentRes] = await Promise.all([
+				friendActions.getFriends(),
+				friendActions.getIncomingRequests(),
+				friendActions.getSentRequests(),
+			]);
+			if (friendsRes.success && friendsRes.data) {
+				setFriends(friendsRes.data);
+			}
+			if (incomingRes.success && incomingRes.data) {
+				setIncomingRequests(incomingRes.data);
+			}
+			if (sentRes.success && sentRes.data) {
+				setSentRequests(sentRes.data);
+			}
+		} catch (error) {
+			console.error("Failed to load friends data:", error);
+		} finally {
+			setIsLoading(false);
+		}
+	}, []);
 
-	// Only show first 5 friends if not searching, to allow the "See all friends" preview logic
-	const displayedFriends = search
-		? filteredFriends
-		: filteredFriends.slice(0, 5);
+	React.useEffect(() => {
+		loadData();
+	}, [loadData]);
 
-	const handleStartChat = (friendId: string) => {
-		// Logic to start a chat, maybe navigate to a new chat screen or an existing one
-		console.log("Start chat with friend:", friendId);
-	};
+	React.useEffect(() => {
+		if (search === "") {
+			setSearchResult(null);
+		}
+	}, [search]);
+
+	const handleSearch = React.useCallback(async () => {
+		if (!search.trim()) return;
+		setIsSearching(true);
+		setSearchResult(null);
+		try {
+			const res = await friendActions.searchFriendByEmail(search.trim());
+			if (res.success && res.data) {
+				setSearchResult(res.data);
+			} else {
+				setSearchResult(null);
+				alert(res.error || "User not found");
+			}
+		} catch (error) {
+			console.error("Search failed:", error);
+			alert("Search failed. Please check the email and try again.");
+		} finally {
+			setIsSearching(false);
+		}
+	}, [search]);
+
+	const handleAcceptRequest = React.useCallback(async (requestId: string) => {
+		try {
+			const res = await friendActions.acceptFriendRequest(requestId);
+			if (res.success) {
+				await loadData();
+				if (searchResult) {
+					const updated = await friendActions.searchFriendByEmail(searchResult.email);
+					if (updated.success && updated.data) {
+						setSearchResult(updated.data);
+					}
+				}
+			} else {
+				alert(res.error || "Failed to accept request");
+			}
+		} catch (error) {
+			console.error("Accept request failed:", error);
+		}
+	}, [loadData, searchResult]);
+
+	const handleDeclineRequest = React.useCallback(async (requestId: string) => {
+		try {
+			const res = await friendActions.declineFriendRequest(requestId);
+			if (res.success) {
+				await loadData();
+				if (searchResult) {
+					const updated = await friendActions.searchFriendByEmail(searchResult.email);
+					if (updated.success && updated.data) {
+						setSearchResult(updated.data);
+					}
+				}
+			} else {
+				alert(res.error || "Failed to decline request");
+			}
+		} catch (error) {
+			console.error("Decline request failed:", error);
+		}
+	}, [loadData, searchResult]);
+
+	const handleWithdrawRequest = React.useCallback(async (requestId: string) => {
+		try {
+			const res = await friendActions.withdrawFriendRequest(requestId);
+			if (res.success) {
+				await loadData();
+				if (searchResult) {
+					const updated = await friendActions.searchFriendByEmail(searchResult.email);
+					if (updated.success && updated.data) {
+						setSearchResult(updated.data);
+					}
+				}
+			} else {
+				alert(res.error || "Failed to withdraw request");
+			}
+		} catch (error) {
+			console.error("Withdraw request failed:", error);
+		}
+	}, [loadData, searchResult]);
+
+	const handleAddFriend = React.useCallback(async (email: string) => {
+		try {
+			const res = await friendActions.sendFriendRequest(email);
+			if (res.success) {
+				await loadData();
+				if (searchResult) {
+					const updated = await friendActions.searchFriendByEmail(email);
+					if (updated.success && updated.data) {
+						setSearchResult(updated.data);
+					}
+				}
+			} else {
+				alert(res.error || "Failed to send friend request");
+			}
+		} catch (error) {
+			console.error("Send friend request failed:", error);
+		}
+	}, [loadData, searchResult]);
+
+	const handleStartChat = React.useCallback(async (email: string, username: string) => {
+		try {
+			const res = await chatActions.createChat(
+				`Chat with ${username}`,
+				[email],
+				false
+			);
+			if (res.success && res.data) {
+				router.push(`/(main)/(tabs)/chat/${res.data.id}`);
+			} else {
+				alert(res.error || "Failed to start chat");
+			}
+		} catch (error) {
+			console.error("Start chat failed:", error);
+		}
+	}, [router]);
+
+	const renderFriendItem = React.useCallback(({ item }: { item: FriendResponse }) => {
+		return (
+			<FriendListItem
+				friend={{
+					id: item.friend.id,
+					name: item.friend.username,
+					isOnline: false,
+				}}
+				onPress={() => handleStartChat(item.friend.email, item.friend.username)}
+				onMessagePress={() => handleStartChat(item.friend.email, item.friend.username)}
+			/>
+		);
+	}, [handleStartChat]);
+
+	const filteredFriends = React.useMemo(() => {
+		return friends.filter((f) =>
+			f.friend.username.toLowerCase().includes(search.toLowerCase()) ||
+			f.friend.email.toLowerCase().includes(search.toLowerCase())
+		);
+	}, [friends, search]);
+
+	const displayedFriends = React.useMemo(() => {
+		return search ? filteredFriends : filteredFriends.slice(0, 5);
+	}, [search, filteredFriends]);
+
+	const isSearchingMode = search.trim() !== "";
+	const handleCloseSentModal = React.useCallback(() => setIsSentModalOpen(false), []);
+
 	return (
 		<SafeAreaView
-			style={{ flex: 1, backgroundColor: "#f8f9fb" }}
+			style={{ flex: 1, backgroundColor: Theme.background }}
 			edges={["top"]}
 		>
-			<YStack flex={1} backgroundColor="#fdf7ff">
+			<YStack flex={1} backgroundColor={Theme.background}>
 				<AppHeader
 					title="Friends"
 					showBackButton
@@ -205,163 +225,190 @@ export default function FriendsScreen() {
 					}
 				/>
 
-				<SearchInput
-					value={search}
-					onChangeText={setSearch}
-					placeholder="Search friends..."
-				/>
+				{/* Search Field & Search Button */}
+				<XStack
+					paddingHorizontal="$4"
+					paddingTop="$4"
+					paddingBottom="$2"
+					gap="$2"
+					alignItems="center"
+				>
+					<View flex={1} position="relative">
+						<View position="absolute" left={12} top={14} zIndex={10}>
+							<Search size={16} color={Theme.primary} />
+						</View>
+						<Input
+							placeholder="Search friends by email..."
+							backgroundColor={Theme.surface}
+							borderWidth={1}
+							borderColor={Theme.border}
+							height={44}
+							borderRadius={8}
+							paddingLeft={40}
+							fontSize="$3"
+							color={Theme.text}
+							value={search}
+							onChangeText={setSearch}
+							onSubmitEditing={handleSearch}
+							returnKeyType="search"
+						/>
+					</View>
+					<Button
+						backgroundColor={Theme.primary}
+						height={44}
+						borderRadius={8}
+						onPress={handleSearch}
+						pressStyle={{ opacity: 0.8 }}
+					>
+						{isSearching ? (
+							<ActivityIndicator size="small" color="white" />
+						) : (
+							<Button.Text color="white" fontWeight="700">Search</Button.Text>
+						)}
+					</Button>
+				</XStack>
 
-				{/* Friends List */}
-				<FlatList
-					data={displayedFriends}
-					keyExtractor={(item) => item.id}
-					contentContainerStyle={{ padding: 16, paddingBottom: 80 }}
-					ItemSeparatorComponent={() => <View height={12} />}
-					ListHeaderComponent={
-						<YStack marginBottom="$4" gap="$3">
-							{/* Incoming Requests Section */}
-							<XStack
-								justifyContent="space-between"
-								alignItems="center"
-								marginBottom="$1"
-							>
+				{/* Sent Requests Button - Always Visible */}
+				<XStack
+					paddingHorizontal="$4"
+					paddingBottom="$3"
+					justifyContent="space-between"
+					alignItems="center"
+				>
+					<Text fontSize="$2" color={Theme.textMuted} fontWeight="600" letterSpacing={0.5} textTransform="uppercase">
+						{isSearchingMode ? "Searching Network" : "Connections"}
+					</Text>
+					<Button
+						size="$2"
+						backgroundColor={Theme.primaryPastel}
+						borderRadius={6}
+						height={32}
+						onPress={() => setIsSentModalOpen(true)}
+						pressStyle={{ opacity: 0.8 }}
+					>
+						<Button.Text color={Theme.primaryPastelText} fontWeight="700">
+							Sent Requests ({sentRequests.length})
+						</Button.Text>
+					</Button>
+				</XStack>
+
+				{/* Conditionally Render Search Results (Searching Mode) OR Incoming & Connections (Default Mode) */}
+				{isSearchingMode ? (
+					<YStack flex={1} paddingHorizontal="$4" gap="$3">
+						{isSearching ? (
+							<View flex={1} justifyContent="center" alignItems="center" marginTop="$8">
+								<ActivityIndicator size="large" color={Theme.primary} />
+								<Text color={Theme.textMuted} marginTop="$2">Searching user...</Text>
+							</View>
+						) : searchResult ? (
+							<SearchResultCard
+								searchResult={searchResult}
+								sentRequests={sentRequests}
+								incomingRequests={incomingRequests}
+								onAddFriend={handleAddFriend}
+								onWithdrawRequest={handleWithdrawRequest}
+								onAcceptRequest={handleAcceptRequest}
+								onDeclineRequest={handleDeclineRequest}
+								onStartChat={handleStartChat}
+							/>
+						) : (
+							<View flex={1} justifyContent="center" alignItems="center" marginTop="$8">
+								<Text color={Theme.textMuted} fontSize="$3">
+									No user found with that email.
+								</Text>
+							</View>
+						)}
+					</YStack>
+				) : (
+					<YStack flex={1} gap="$4">
+						{/* Incoming Requests Section (Limited Height) */}
+						{incomingRequests.length > 0 && (
+							<YStack paddingHorizontal="$4" gap="$2">
 								<Text
 									fontWeight="800"
-									fontSize="$5"
-									color="#1d1b20"
+									fontSize="$4"
+									color={Theme.text}
 								>
 									Incoming Requests
 								</Text>
-								<Button
-									size="$2"
-									backgroundColor="#f2ecf4"
-									onPress={() => setIsSentModalOpen(true)}
-									pressStyle={{ backgroundColor: "#e9ddff" }}
+								<View
+									maxHeight={160}
+									borderWidth={1}
+									borderColor={Theme.border}
+									borderRadius={8}
+									backgroundColor={Theme.surfaceMuted}
+									padding="$2"
 								>
-									<Text color="#6750A4" fontWeight="700">
-										Sent Requests
-									</Text>
-								</Button>
-							</XStack>
+									<ScrollView nestedScrollEnabled contentContainerStyle={{ gap: 8 }}>
+										{incomingRequests.map((req) => (
+											<IncomingRequestItem
+												key={req.id}
+												request={req}
+												onAccept={handleAcceptRequest}
+												onDecline={handleDeclineRequest}
+											/>
+										))}
+									</ScrollView>
+								</View>
+							</YStack>
+						)}
 
-							{MOCK_INCOMING_REQUESTS.map((req) => (
-								<XStack
-									key={req.id}
-									padding="$3"
-									borderRadius={24}
-									alignItems="center"
-									gap="$3"
-									backgroundColor="white"
-									shadowColor="#000"
-									shadowRadius={10}
-									shadowOpacity={0.03}
-								>
-									<Avatar circular size="$5">
-										<Avatar.Image
-											src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
-												req.name,
-											)}&background=e9ddff&color=6750A4&bold=true`}
-										/>
-										<Avatar.Fallback />
-									</Avatar>
-									<YStack flex={1}>
-										<Text
-											fontWeight="700"
-											color="#1d1b20"
-											fontSize="$4"
-										>
-											{req.name}
-										</Text>
-										<Text
-											fontSize={12}
-											color="#7a7582"
-											fontWeight="600"
-										>
-											{req.role}
-										</Text>
-									</YStack>
-									<XStack gap="$2">
-										<Button
-											size="$3"
-											circular
-											backgroundColor="#6750A4"
-											icon={
-												<Check
-													size={18}
-													color="white"
-												/>
-											}
-											pressStyle={{ opacity: 0.8 }}
-										/>
-										<Button
-											size="$3"
-											circular
-											backgroundColor="#f2ecf4"
-											icon={
-												<X
-													size={18}
-													color="#6750A4"
-												/>
-											}
-											pressStyle={{ backgroundColor: "#e9ddff" }}
-										/>
-									</XStack>
-								</XStack>
-							))}
-
-							<View height={12} />
+						{/* Your Friends Section */}
+						<YStack flex={1} paddingHorizontal="$4" gap="$2">
 							<Text
 								fontWeight="800"
-								fontSize="$5"
-								color="#1d1b20"
-								marginTop="$2"
+								fontSize="$4"
+								color={Theme.text}
 							>
 								Your Friends
 							</Text>
-						</YStack>
-					}
-					renderItem={({ item }) => (
-						<FriendListItem
-							friend={item}
-							onPress={() => handleStartChat(item.id)}
-							onMessagePress={() => handleStartChat(item.id)}
-						/>
-					)}
-					ListFooterComponent={
-						!search && filteredFriends.length > 5 ? (
-							<Button
-								marginTop="$5"
-								backgroundColor="$surface_container_high"
-								onPress={() =>
-									router.push(
-										"/(main)/(tabs)/chat/all-friends",
-									)
+							<FlatList
+								data={displayedFriends}
+								keyExtractor={(item) => item.friendshipId}
+								contentContainerStyle={{ paddingBottom: 40 }}
+								ItemSeparatorComponent={() => <View height={12} />}
+								refreshing={isLoading}
+								onRefresh={loadData}
+								renderItem={renderFriendItem}
+								ListFooterComponent={
+									friends.length > 5 ? (
+										<Button
+											marginTop="$3"
+											backgroundColor={Theme.surfaceMuted}
+											borderWidth={1}
+											borderColor={Theme.border}
+											borderRadius={6}
+											onPress={() => router.push("/(main)/(tabs)/chat/all-friends")}
+										>
+											<Button.Text color={Theme.text} fontWeight="600">
+												See All Friends ({friends.length})
+											</Button.Text>
+										</Button>
+									) : null
 								}
-							>
-								<Button.Text fontWeight="600">
-									See All Friends
-								</Button.Text>
-							</Button>
-						) : null
-					}
-					ListEmptyComponent={
-						<View
-							flex={1}
-							justifyContent="center"
-							alignItems="center"
-							marginTop="$10"
-						>
-							<Text color="$on_surface_variant">
-								No friends found.
-							</Text>
-						</View>
-					}
-				/>
+								ListEmptyComponent={
+									<View
+										flex={1}
+										justifyContent="center"
+										alignItems="center"
+										marginTop="$8"
+									>
+										<Text color={Theme.textMuted}>
+											No friends found.
+										</Text>
+									</View>
+								}
+							/>
+						</YStack>
+					</YStack>
+				)}
 			</YStack>
 
 			<SentRequestsModal
 				isOpen={isSentModalOpen}
-				onClose={() => setIsSentModalOpen(false)}
+				onClose={handleCloseSentModal}
+				sentRequests={sentRequests}
+				onWithdraw={handleWithdrawRequest}
 			/>
 		</SafeAreaView>
 	);

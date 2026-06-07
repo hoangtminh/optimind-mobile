@@ -2,9 +2,7 @@ import { Task, useTask } from "@/contexts/TaskContext";
 import DateTimePicker, {
 	DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
-import { LinearGradient } from "expo-linear-gradient";
 import {
-	AlertCircle,
 	Calendar,
 	CheckCircle2,
 	Circle,
@@ -30,6 +28,8 @@ import {
 	YStack,
 	styled,
 } from "tamagui";
+import { Theme } from "@/constants/Theme";
+import { toast } from "@/components/common/Toast";
 
 interface TaskModalProps {
 	visible: boolean;
@@ -40,27 +40,29 @@ interface TaskModalProps {
 }
 
 const StyledInput = styled(Input, {
-	backgroundColor: "#f8f2fa",
-	borderWidth: 1.5,
-	borderColor: "#f2ecf4",
-	height: 52,
-	borderRadius: 16,
+	backgroundColor: Theme.surface,
+	borderWidth: 1,
+	borderColor: Theme.border,
+	height: 48,
+	borderRadius: 6,
 	fontSize: "$4",
+	color: Theme.text,
 	focusStyle: {
-		borderColor: "#6750A4",
-		backgroundColor: "#ffffff",
+		borderColor: Theme.primary,
+		backgroundColor: Theme.surface,
 	},
 });
 
 const StyledTextArea = styled(TextArea, {
-	backgroundColor: "#f8f2fa",
-	borderWidth: 1.5,
-	borderColor: "#f2ecf4",
-	borderRadius: 16,
+	backgroundColor: Theme.surface,
+	borderWidth: 1,
+	borderColor: Theme.border,
+	borderRadius: 6,
 	fontSize: "$4",
+	color: Theme.text,
 	focusStyle: {
-		borderColor: "#6750A4",
-		backgroundColor: "#ffffff",
+		borderColor: Theme.primary,
+		backgroundColor: Theme.surface,
 	},
 });
 
@@ -78,9 +80,9 @@ export default function TaskModal({
 		"todo",
 	);
 	const [dueDate, setDueDate] = useState<Date | null>(null);
-	const [showPicker, setShowPicker] = useState(false);
+	const [showDatePicker, setShowDatePicker] = useState(false);
+	const [showTimePicker, setShowTimePicker] = useState(false);
 	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState("");
 
 	const { createTask, updateTask } = useTask();
 
@@ -102,34 +104,107 @@ export default function TaskModal({
 		setPriority("low");
 		setStatus("todo");
 		setDueDate(null);
-		setError("");
 	};
 
 	const handleDateChange = (
 		event: DateTimePickerEvent,
 		selectedDate?: Date,
 	) => {
-		setShowPicker(Platform.OS === "ios");
+		setShowDatePicker(Platform.OS === "ios");
 		if (selectedDate) {
-			setDueDate(selectedDate);
+			const current = dueDate ? new Date(dueDate) : new Date();
+			current.setFullYear(
+				selectedDate.getFullYear(),
+				selectedDate.getMonth(),
+				selectedDate.getDate(),
+			);
+			setDueDate(current);
 		}
 	};
 
-	const formatDate = (date: Date) => {
-		const year = date.getFullYear();
-		const month = String(date.getMonth() + 1).padStart(2, "0");
-		const day = String(date.getDate()).padStart(2, "0");
-		return `${year}-${month}-${day}`;
+	const handleTimeChange = (
+		event: DateTimePickerEvent,
+		selectedTime?: Date,
+	) => {
+		setShowTimePicker(Platform.OS === "ios");
+		if (selectedTime) {
+			const current = dueDate ? new Date(dueDate) : new Date();
+			current.setHours(
+				selectedTime.getHours(),
+				selectedTime.getMinutes(),
+				0,
+				0,
+			);
+			setDueDate(current);
+		}
+	};
+
+	const formatDateOnly = (date: Date) => {
+		return date.toLocaleDateString(undefined, {
+			month: "short",
+			day: "numeric",
+			year: "numeric",
+		});
+	};
+
+	const formatTimeOnly = (date: Date) => {
+		return date.toLocaleTimeString(undefined, {
+			hour: "2-digit",
+			minute: "2-digit",
+		});
+	};
+
+	const cleanErrorMessage = (errorMsg: string): string => {
+		if (!errorMsg) return "An unexpected error occurred";
+
+		if (
+			errorMsg.includes("Cannot deserialize") &&
+			errorMsg.includes("java.time.Instant")
+		) {
+			return "Invalid date/time format. Please check the due date.";
+		}
+
+		if (
+			errorMsg.includes("JSON parse error") ||
+			errorMsg.includes("deserialize")
+		) {
+			return "Unable to save task due to a formatting error.";
+		}
+
+		if (
+			errorMsg.includes("Network Error") ||
+			errorMsg.includes("Network request failed")
+		) {
+			return "Network error. Please check your internet connection.";
+		}
+
+		try {
+			if (errorMsg.startsWith("{") && errorMsg.endsWith("}")) {
+				const parsed = JSON.parse(errorMsg);
+				if (parsed.message) return parsed.message;
+			}
+		} catch (e) {
+			// Ignore
+		}
+
+		if (errorMsg.length > 100) {
+			const firstLine = errorMsg.split("\n")[0];
+			if (firstLine && firstLine.length < 100) {
+				return firstLine;
+			}
+			return "An error occurred while saving the task.";
+		}
+
+		return errorMsg;
 	};
 
 	const handleSaveTask = async () => {
 		if (!title.trim()) {
-			setError("Task title is required");
+			toast.error("Task title is required");
 			return;
 		}
 
 		setLoading(true);
-		setError("");
 
 		try {
 			const taskData = {
@@ -137,7 +212,7 @@ export default function TaskModal({
 				note: description.trim(),
 				priority,
 				status,
-				dueDate: dueDate ? formatDate(dueDate) : undefined,
+				dueDate: dueDate ? dueDate.toISOString() : undefined,
 				projectId,
 				tag: [],
 				repeated: "none",
@@ -145,14 +220,18 @@ export default function TaskModal({
 
 			if (task) {
 				await updateTask(task.id, taskData);
+				toast.success("Task updated successfully");
 			} else {
 				await createTask(taskData);
+				toast.success("Task created successfully");
 			}
 
 			handleClose();
 			if (onTaskSaved) onTaskSaved();
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "An error occurred");
+			const rawMsg = err instanceof Error ? err.message : "An error occurred";
+			console.error("Task action failed:", err);
+			toast.error(cleanErrorMessage(rawMsg));
 		} finally {
 			setLoading(false);
 		}
@@ -177,32 +256,31 @@ export default function TaskModal({
 				<View
 					flex={1}
 					justifyContent="flex-end"
-					backgroundColor="rgba(29, 27, 32, 0.6)"
+					backgroundColor="rgba(29, 27, 32, 0.4)"
 					style={
 						Platform.OS === "web"
-							? ({ backdropFilter: "blur(12px)" } as any)
+							? ({ backdropFilter: "blur(4px)" } as any)
 							: {}
 					}
 				>
 					<YStack
-						backgroundColor="white"
+						backgroundColor={Theme.surface}
 						width="100%"
-						borderTopLeftRadius={32}
-						borderTopRightRadius={32}
-						padding="$6"
-						paddingBottom="$10"
-						shadowColor="#000"
-						shadowRadius={30}
-						shadowOpacity={0.2}
-						gap="$5"
+						borderTopLeftRadius={12}
+						borderTopRightRadius={12}
+						borderWidth={1}
+						borderColor={Theme.border}
+						padding="$5"
+						paddingBottom="$8"
+						gap="$4"
 					>
 						<View
-							width={40}
+							width={32}
 							height={4}
-							backgroundColor="#e0e0e0"
+							backgroundColor={Theme.border}
 							borderRadius={2}
 							alignSelf="center"
-							marginBottom="$2"
+							marginBottom="$1"
 						/>
 
 						<XStack
@@ -211,25 +289,25 @@ export default function TaskModal({
 						>
 							<XStack gap="$3" alignItems="center">
 								<View
-									backgroundColor="#e9ddff"
-									padding="$2"
-									borderRadius={12}
+									backgroundColor={Theme.primaryPastel}
+									padding="$2.5"
+									borderRadius={6}
 								>
 									{task ? (
-										<Edit size={24} color="#6750A4" />
+										<Edit size={18} color={Theme.primary} />
 									) : (
-										<ListPlus size={24} color="#6750A4" />
+										<ListPlus size={18} color={Theme.primary} />
 									)}
 								</View>
 								<YStack>
 									<Text
-										fontSize="$6"
-										fontWeight="800"
-										color="#1d1b20"
+										fontSize="$5"
+										fontWeight="700"
+										color={Theme.text}
 									>
 										{task ? "Edit Task" : "New Task"}
 									</Text>
-									<Text fontSize="$2" color="#7a7582">
+									<Text fontSize="$2" color={Theme.textMuted}>
 										{task
 											? "Update your task details"
 											: "Add a step to your project"}
@@ -240,61 +318,46 @@ export default function TaskModal({
 								circular
 								size="$3"
 								chromeless
-								icon={<X size={20} color="#494551" />}
+								icon={<X size={18} color={Theme.textMuted} />}
 								onPress={handleClose}
-								pressStyle={{ backgroundColor: "#f2ecf4" }}
+								pressStyle={{ backgroundColor: Theme.background }}
 							/>
 						</XStack>
 
-						<YStack gap="$4">
-							{error ? (
-								<XStack
-									backgroundColor="#ffdad6"
-									padding="$3"
-									borderRadius={12}
-									gap="$2"
-									alignItems="center"
-								>
-									<AlertCircle size={18} color="#93000a" />
-									<Text
-										color="#93000a"
-										fontSize="$2"
-										fontWeight="600"
-									>
-										{error}
-									</Text>
-								</XStack>
-							) : null}
+						<YStack gap="$3">
+							{/* Errors are handled via Toast alerts */}
 
-							<YStack gap="$2">
+							<YStack gap="$1.5">
 								<Text
 									fontSize="$3"
-									color="#494551"
-									fontWeight="700"
+									color={Theme.text}
+									fontWeight="600"
 									marginLeft="$1"
 								>
 									Task Title
 								</Text>
 								<StyledInput
 									placeholder="What needs to be done?"
+									placeholderTextColor={Theme.textMuted as any}
 									value={title}
 									onChangeText={setTitle}
 								/>
 							</YStack>
 
-							<YStack gap="$2">
+							<YStack gap="$1.5">
 								<Text
 									fontSize="$3"
-									color="#494551"
-									fontWeight="700"
+									color={Theme.text}
+									fontWeight="600"
 									marginLeft="$1"
 								>
 									Notes (Optional)
 								</Text>
 								<StyledTextArea
 									placeholder="Add more details..."
+									placeholderTextColor={Theme.textMuted as any}
 									numberOfLines={3}
-									height={100}
+									height={80}
 									textAlignVertical="top"
 									paddingTop="$3"
 									value={description}
@@ -302,115 +365,116 @@ export default function TaskModal({
 								/>
 							</YStack>
 
-							<XStack gap="$4">
-								<YStack flex={1} gap="$2">
-									<Text
-										fontSize="$3"
-										color="#494551"
-										fontWeight="700"
-										marginLeft="$1"
-									>
-										Priority
-									</Text>
-									<XStack
-										backgroundColor="#f8f2fa"
-										borderRadius={16}
-										height={52}
-										alignItems="center"
-										paddingHorizontal="$3"
-										justifyContent="space-between"
-										borderWidth={1.5}
-										borderColor="#f2ecf4"
-									>
-										<XStack gap="$1">
-											{["low", "medium", "high"].map(
-												(p) => (
+							<YStack gap="$1.5">
+								<Text
+									fontSize="$3"
+									color={Theme.text}
+									fontWeight="600"
+									marginLeft="$1"
+								>
+									Priority
+								</Text>
+								<XStack
+									backgroundColor={Theme.background}
+									borderRadius={6}
+									height={48}
+									alignItems="center"
+									paddingHorizontal="$3"
+									justifyContent="space-between"
+									borderWidth={1}
+									borderColor={Theme.border}
+								>
+									<XStack gap="$1">
+										{["low", "medium", "high"].map(
+											(p) => (
+												<View
+													key={p}
+													onPress={() =>
+														setPriority(
+															p as any,
+														)
+													}
+													pressStyle={{
+														scale: 0.95,
+													}}
+													padding="$1"
+												>
 													<View
-														key={p}
-														onPress={() =>
-															setPriority(
-																p as any,
-															)
+														width={18}
+														height={18}
+														borderRadius={9}
+														backgroundColor={
+															priority === p
+																? Theme.primary
+																: Theme.border
 														}
-														pressStyle={{
-															scale: 0.9,
-														}}
-														padding="$1"
-													>
-														<View
-															width={24}
-															height={24}
-															borderRadius={12}
-															backgroundColor={
-																priority === p
-																	? "#6750A4"
-																	: "#cbc4d2"
-															}
-															borderWidth={
-																priority === p
-																	? 0
-																	: 1
-															}
-															borderColor="#7a7582"
-														/>
-													</View>
-												),
-											)}
-										</XStack>
-										<Text
-											color="#1d1b20"
-											fontWeight="600"
-											textTransform="capitalize"
-										>
-											{priority}
-										</Text>
+														borderWidth={
+															priority === p
+																? 0
+																: 1
+														}
+														borderColor={Theme.border}
+													/>
+												</View>
+											),
+										)}
 									</XStack>
-								</YStack>
+									<Text
+										color={Theme.text}
+										fontWeight="600"
+										fontSize="$3"
+										textTransform="capitalize"
+									>
+										{priority}
+									</Text>
+								</XStack>
+							</YStack>
 
-								<YStack flex={1} gap="$2">
+							<XStack gap="$4">
+								<YStack flex={1} gap="$1.5">
 									<Text
 										fontSize="$3"
-										color="#494551"
-										fontWeight="700"
+										color={Theme.text}
+										fontWeight="600"
 										marginLeft="$1"
 									>
 										Due Date
 									</Text>
 									<TouchableOpacity
-										onPress={() => setShowPicker(true)}
+										onPress={() => setShowDatePicker(true)}
 										activeOpacity={0.7}
 									>
 										<XStack
-											backgroundColor="#f8f2fa"
-											borderRadius={16}
-											height={52}
+											backgroundColor={Theme.background}
+											borderRadius={6}
+											height={48}
 											alignItems="center"
 											paddingHorizontal="$3"
-											borderWidth={1.5}
-											borderColor="#f2ecf4"
+											borderWidth={1}
+											borderColor={Theme.border}
 										>
 											<Calendar
-												size={18}
-												color="#6750A4"
-												style={{ marginRight: 8 }}
+												size={16}
+												color={Theme.primary}
+												style={{ marginRight: 6 }}
 											/>
 											<Text
 												flex={1}
 												color={
 													dueDate
-														? "#1d1b20"
-														: "#7a7582"
+														? Theme.text
+														: Theme.textMuted
 												}
 												fontSize="$3"
 												fontWeight="600"
 											>
 												{dueDate
-													? formatDate(dueDate)
-													: "YYYY-MM-DD"}
+													? formatDateOnly(dueDate)
+													: "Pick Date"}
 											</Text>
 										</XStack>
 									</TouchableOpacity>
-									{showPicker && (
+									{showDatePicker && (
 										<DateTimePicker
 											value={dueDate || new Date()}
 											mode="date"
@@ -424,13 +488,70 @@ export default function TaskModal({
 										/>
 									)}
 								</YStack>
+
+								<YStack flex={1} gap="$1.5">
+									<Text
+										fontSize="$3"
+										color={Theme.text}
+										fontWeight="600"
+										marginLeft="$1"
+									>
+										Time
+									</Text>
+									<TouchableOpacity
+										onPress={() => setShowTimePicker(true)}
+										activeOpacity={0.7}
+									>
+										<XStack
+											backgroundColor={Theme.background}
+											borderRadius={6}
+											height={48}
+											alignItems="center"
+											paddingHorizontal="$3"
+											borderWidth={1}
+											borderColor={Theme.border}
+										>
+											<Clock
+												size={16}
+												color={Theme.primary}
+												style={{ marginRight: 6 }}
+											/>
+											<Text
+												flex={1}
+												color={
+													dueDate
+														? Theme.text
+														: Theme.textMuted
+												}
+												fontSize="$3"
+												fontWeight="600"
+											>
+												{dueDate
+													? formatTimeOnly(dueDate)
+													: "Pick Time"}
+											</Text>
+										</XStack>
+									</TouchableOpacity>
+									{showTimePicker && (
+										<DateTimePicker
+											value={dueDate || new Date()}
+											mode="time"
+											display={
+												Platform.OS === "ios"
+													? "spinner"
+													: "default"
+											}
+											onChange={handleTimeChange}
+										/>
+									)}
+								</YStack>
 							</XStack>
 
-							<YStack gap="$2">
+							<YStack gap="$1.5">
 								<Text
 									fontSize="$3"
-									color="#494551"
-									fontWeight="700"
+									color={Theme.text}
+									fontWeight="600"
 									marginLeft="$1"
 								>
 									Status
@@ -456,19 +577,19 @@ export default function TaskModal({
 										<Button
 											key={s.id}
 											flex={1}
-											height={44}
-											borderRadius={12}
+											height={40}
+											borderRadius={6}
 											backgroundColor={
 												status === s.id
-													? "#e9ddff"
-													: "#f8f2fa"
+													? Theme.primaryPastel
+													: Theme.background
 											}
 											borderColor={
 												status === s.id
-													? "#6750A4"
-													: "#f2ecf4"
+													? Theme.primary
+													: Theme.border
 											}
-											borderWidth={1.5}
+											borderWidth={status === s.id ? 1.5 : 1}
 											onPress={() =>
 												setStatus(s.id as any)
 											}
@@ -479,11 +600,11 @@ export default function TaskModal({
 												alignItems="center"
 											>
 												<s.icon
-													size={16}
+													size={14}
 													color={
 														status === s.id
-															? "#6750A4"
-															: "#7a7582"
+															? Theme.primary
+															: Theme.textMuted
 													}
 												/>
 												<Text
@@ -491,8 +612,8 @@ export default function TaskModal({
 													fontWeight="700"
 													color={
 														status === s.id
-															? "#6750A4"
-															: "#494551"
+															? Theme.primary
+															: Theme.textMuted
 													}
 												>
 													{s.label}
@@ -504,57 +625,51 @@ export default function TaskModal({
 							</YStack>
 						</YStack>
 
-						<XStack gap="$3" marginTop="$2">
+						<XStack gap="$3" marginTop="$3">
 							<Button
 								flex={1}
-								height={56}
-								borderRadius={16}
-								backgroundColor="#f2ecf4"
+								height={48}
+								borderRadius={6}
+								backgroundColor={Theme.background}
 								onPress={handleClose}
 								pressStyle={{
-									backgroundColor: "#e9ddff",
+									backgroundColor: Theme.border,
 									scale: 0.98,
 								}}
 							>
-								<Text color="#6750A4" fontWeight="700">
+								<Text color={Theme.textMuted} fontWeight="600" fontSize="$4">
 									Cancel
 								</Text>
 							</Button>
 
-							<YStack flex={2}>
-								<Button
-									unstyled
-									onPress={handleSaveTask}
-									disabled={loading || !title.trim()}
-									opacity={loading || !title.trim() ? 0.5 : 1}
+							<Button
+								flex={2}
+								height={48}
+								borderRadius={6}
+								backgroundColor={Theme.primary}
+								onPress={handleSaveTask}
+								disabled={loading || !title.trim()}
+								opacity={loading || !title.trim() ? 0.55 : 1}
+								pressStyle={{
+									backgroundColor: Theme.primary,
+									opacity: 0.9,
+									scale: 0.98,
+								}}
+							>
+								<Text
+									color={Theme.primaryText}
+									fontWeight="700"
+									fontSize="$4"
 								>
-									<LinearGradient
-										colors={["#6750A4", "#4F378A"]}
-										start={{ x: 0, y: 0 }}
-										end={{ x: 1, y: 1 }}
-										style={{
-											height: 56,
-											borderRadius: 16,
-											justifyContent: "center",
-											alignItems: "center",
-										}}
-									>
-										<Text
-											color="white"
-											fontWeight="800"
-											fontSize="$4"
-										>
-											{loading
-												? task
-													? "Updating..."
-													: "Creating..."
-												: task
-													? "Update Task"
-													: "Create Task"}
-										</Text>
-									</LinearGradient>
-								</Button>
-							</YStack>
+									{loading
+										? task
+											? "Updating..."
+											: "Creating..."
+										: task
+											? "Update Task"
+											: "Create Task"}
+								</Text>
+							</Button>
 						</XStack>
 					</YStack>
 				</View>
