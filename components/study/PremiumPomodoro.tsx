@@ -1,4 +1,5 @@
 import { playLongBreakTing, playTing } from "@/utils/tingSound";
+import { Theme } from "@/constants/Theme";
 import { LinearGradient } from "expo-linear-gradient";
 import {
   Brain,
@@ -22,22 +23,6 @@ import {
   YStack,
 } from "tamagui";
 
-// ─── Design Tokens ─────────────────────────────────────────────────────────────
-const C = {
-  primary: "#6750A4",
-  primaryDark: "#4F378A",
-  primaryContainer: "#EADDFF",
-  primaryFixed: "#F3EDF7",
-  onPrimary: "#ffffff",
-  surface: "#1D1B20",
-  surfaceVariant: "#7A7582",
-  outline: "#49454F",
-  focusColor: "#6750A4",
-  breakColor: "#7B5EA7",
-  longBreakColor: "#3B5998",
-} as const;
-
-// ─── Types ─────────────────────────────────────────────────────────────────────
 export type TimerMode = "focus" | "break" | "longBreak";
 
 export interface PomodoroProps {
@@ -50,20 +35,17 @@ export interface PomodoroProps {
   totalTime: number;
   currentCycle: number;
   totalCycles: number;
+  isCountdown?: boolean;
   setTimeLeft: React.Dispatch<React.SetStateAction<number>>;
   setIsRunning: (running: boolean) => void;
   setMode: (mode: TimerMode) => void;
   onFinish?: () => void;
-  onReset?: (shouldSave?: boolean) => void;
+  onReset?: (shouldSave?: boolean, completed?: boolean) => void;
   onSettingsPress?: () => void;
   onCycleComplete?: () => void;
-  /** Called when a full set (all cycles + long break) completes, so the parent can reset currentCycle to 1. */
   onLongBreakComplete?: () => void;
 }
 
-// ─── Sub-components ─────────────────────────────────────────────────────────────
-
-/** Renders N dots showing completed/current/remaining cycles. */
 function CycleDotsIndicator({
   currentCycle,
   totalCycles,
@@ -86,15 +68,20 @@ function CycleDotsIndicator({
             key={index}
             style={[
               styles.cycleDot,
-              isCompleted && styles.cycleDotCompleted,
-              isCurrent && styles.cycleDotCurrent,
-              isLongBreakCycle && styles.cycleDotLongBreak,
+              { backgroundColor: Theme.border },
+              isCompleted && { backgroundColor: Theme.primary },
+              isCurrent && {
+                backgroundColor: Theme.primary,
+                borderWidth: 2,
+                borderColor: Theme.primaryPastelText,
+              },
+              isLongBreakCycle && { backgroundColor: Theme.accentBlueText },
             ]}
           />
         );
       })}
       {mode === "longBreak" && (
-        <Moon size={14} color={C.longBreakColor} strokeWidth={2} />
+        <Moon size={14} color={Theme.accentBlueText} strokeWidth={2} />
       )}
     </XStack>
   );
@@ -115,7 +102,7 @@ function ModeToggleChip({
     <Button
       size="$3"
       borderRadius={100}
-      backgroundColor={isActive ? C.primary : "transparent"}
+      backgroundColor={isActive ? Theme.primary : "transparent"}
       onPress={onPress}
       chromeless={!isActive}
       pressStyle={{ scale: 0.95 }}
@@ -124,7 +111,7 @@ function ModeToggleChip({
         {icon}
         <Text
           fontWeight="700"
-          color={isActive ? "white" : C.primary}
+          color={isActive ? Theme.primaryText : Theme.primary}
           fontSize="$2"
         >
           {label}
@@ -152,10 +139,10 @@ function ProgressRing({
 
   const ringColor =
     mode === "longBreak"
-      ? C.longBreakColor
+      ? Theme.accentBlueText
       : mode === "break"
-        ? C.breakColor
-        : C.primary;
+        ? Theme.accentGreenText
+        : Theme.primary;
 
   return (
     <Svg
@@ -167,7 +154,7 @@ function ProgressRing({
         cx={center}
         cy={center}
         r={radius}
-        stroke="#F3EDF7"
+        stroke={Theme.background}
         strokeWidth={strokeWidth}
         fill="none"
       />
@@ -206,7 +193,7 @@ function TimerDisplay({
       <Text
         fontSize={64}
         fontWeight="900"
-        color="#1D1B20"
+        color={Theme.text}
         lineHeight={72}
         letterSpacing={-2}
       >
@@ -215,7 +202,7 @@ function TimerDisplay({
       <Text
         fontSize="$3"
         fontWeight="700"
-        color="#7A7582"
+        color={Theme.textMuted}
         textTransform="uppercase"
         letterSpacing={2}
       >
@@ -225,7 +212,6 @@ function TimerDisplay({
   );
 }
 
-/** Control row: Reset, Play/Pause, Settings. */
 function TimerControls({
   isRunning,
   onToggle,
@@ -242,49 +228,64 @@ function TimerControls({
       <Button
         circular
         size="$5"
-        backgroundColor={C.primaryFixed}
+        backgroundColor={Theme.primaryPastel}
         onPress={onReset}
-        pressStyle={{ scale: 0.9, backgroundColor: C.primaryContainer }}
-        icon={<RotateCcw size={24} color={C.primary} />}
+        pressStyle={{ scale: 0.9, backgroundColor: Theme.border }}
+        icon={<RotateCcw size={24} color={Theme.primary} />}
       />
       <Button unstyled onPress={onToggle} pressStyle={{ scale: 0.92 }}>
         <LinearGradient
-          colors={[C.primary, C.primaryDark]}
-          style={styles.playButtonGradient}
+          colors={[Theme.primary, Theme.primary]}
+          style={[styles.playButtonGradient, { backgroundColor: Theme.primary }]}
         >
           {isRunning ? (
-            <Pause size={36} color="white" fill="white" />
+            <Pause size={36} color={Theme.primaryText} fill={Theme.primaryText} />
           ) : (
-            <Play size={36} color="white" fill="white" x={2} />
+            <Play size={36} color={Theme.primaryText} fill={Theme.primaryText} x={2} />
           )}
         </LinearGradient>
       </Button>
       <Button
         circular
         size="$5"
-        backgroundColor={C.primaryFixed}
+        backgroundColor={Theme.primaryPastel}
         onPress={onSettingsPress}
-        pressStyle={{ scale: 0.9, backgroundColor: C.primaryContainer }}
-        icon={<Settings2 size={24} color={C.primary} />}
+        pressStyle={{ scale: 0.9, backgroundColor: Theme.border }}
+        icon={<Settings2 size={24} color={Theme.primary} />}
       />
     </XStack>
   );
 }
 
-/** Session progress bar + label row. */
 function SessionProgress({
   progress,
   mode,
   currentCycle,
   totalCycles,
+  isCountdown,
 }: {
   progress: number;
   mode: TimerMode;
   currentCycle: number;
   totalCycles: number;
+  isCountdown: boolean;
 }) {
   const modeTag =
     mode === "focus" ? "FOCUS" : mode === "break" ? "BREAK" : "LONG BREAK";
+
+  const modeBadgeBg =
+    mode === "longBreak"
+      ? Theme.accentBlue
+      : mode === "break"
+        ? Theme.accentGreen
+        : Theme.primaryPastel;
+
+  const modeBadgeText =
+    mode === "longBreak"
+      ? Theme.accentBlueText
+      : mode === "break"
+        ? Theme.accentGreenText
+        : Theme.primaryPastelText;
 
   return (
     <YStack width="100%" gap="$3" paddingHorizontal="$2">
@@ -293,59 +294,59 @@ function SessionProgress({
           <Text
             fontSize="$2"
             fontWeight="800"
-            color="#49454F"
+            color={Theme.textMuted}
             textTransform="uppercase"
             letterSpacing={0.5}
           >
             Session
           </Text>
-          <Text fontSize="$5" fontWeight="900" color="#1D1B20">
+          <Text fontSize="$5" fontWeight="900" color={Theme.text}>
             {Math.round(progress)}% Complete
           </Text>
         </YStack>
         <XStack gap="$2" alignItems="center">
           <View
-            backgroundColor={C.primaryContainer}
+            backgroundColor={modeBadgeBg}
             paddingHorizontal="$3"
             paddingVertical="$1"
             borderRadius={100}
           >
-            <Text fontSize="$1" fontWeight="900" color="#21005D">
+            <Text fontSize="$1" fontWeight="900" color={modeBadgeText}>
               {modeTag}
             </Text>
           </View>
-          <View
-            backgroundColor="#F0EAFF"
-            paddingHorizontal="$3"
-            paddingVertical="$1"
-            borderRadius={100}
-          >
-            <Text fontSize="$1" fontWeight="900" color={C.primary}>
-              {currentCycle}/{totalCycles}
-            </Text>
-          </View>
+          {!isCountdown && (
+            <View
+              backgroundColor={Theme.primaryPastel}
+              paddingHorizontal="$3"
+              paddingVertical="$1"
+              borderRadius={100}
+            >
+              <Text fontSize="$1" fontWeight="900" color={Theme.primaryPastelText}>
+                {currentCycle}/{totalCycles}
+              </Text>
+            </View>
+          )}
         </XStack>
       </XStack>
       <Progress
         value={progress}
-        height={12}
-        backgroundColor={C.primaryFixed}
+        height={10}
+        backgroundColor={Theme.surfaceMuted}
         borderRadius={100}
       >
-        <Progress.Indicator backgroundColor={C.primary} />
+        <Progress.Indicator backgroundColor={Theme.primary} />
       </Progress>
     </YStack>
   );
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────────
 function formatSeconds(seconds: number): string {
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
   return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────────
 const RING_SIZE = 240;
 const RING_STROKE = 10;
 
@@ -359,6 +360,7 @@ const PremiumPomodoroComponent = ({
   totalTime,
   currentCycle,
   totalCycles,
+  isCountdown = false,
   setTimeLeft,
   setIsRunning,
   setMode,
@@ -366,18 +368,17 @@ const PremiumPomodoroComponent = ({
   onSettingsPress,
   onCycleComplete,
   onLongBreakComplete,
+  onFinish,
 }: PomodoroProps) => {
   const sessionEndedRef = useRef(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
 
-  // Reset the "already fired" guard whenever a new session starts
   useEffect(() => {
     if (timeLeft === totalTime) {
       sessionEndedRef.current = false;
     }
   }, [timeLeft, totalTime]);
 
-  // Auto-advance to next mode when timer hits zero
   useEffect(() => {
     if (timeLeft !== 0 || !isRunning || sessionEndedRef.current) return;
 
@@ -385,29 +386,41 @@ const PremiumPomodoroComponent = ({
 
     const advanceToNextMode = async () => {
       if (mode === "focus") {
-        const isLastCycleOfSet = currentCycle >= totalCycles;
-        if (isLastCycleOfSet) {
-          // Focus → Long Break
+        if (isCountdown) {
+          await playLongBreakTing();
+          setIsRunning(false);
+          onFinish?.();
+          return;
+        }
+        const isLastFocus = currentCycle >= totalCycles;
+        if (isLastFocus) {
           await playLongBreakTing();
           setMode("longBreak");
           setTimeLeft((longBreakDuration ?? 15) * 60);
         } else {
-          // Focus → Short Break
           await playTing();
-          onCycleComplete?.();
           setMode("break");
           setTimeLeft(breakDuration * 60);
         }
       } else {
-        // Break or Long Break → Focus
         await playTing();
         if (mode === "longBreak") {
-          onLongBreakComplete?.(); // signal parent to reset currentCycle → 1
+          onLongBreakComplete?.();
+          setIsRunning(false);
+          onFinish?.();
+          return;
+        } else {
+          const wasLastCycle = currentCycle >= totalCycles;
+          onCycleComplete?.();
+          if (wasLastCycle) {
+            setIsRunning(false);
+            onFinish?.();
+            return;
+          }
         }
         setMode("focus");
         setTimeLeft(focusDuration * 60);
       }
-      // Keep the timer running — auto-continue into the next mode
       setIsRunning(true);
     };
 
@@ -443,18 +456,16 @@ const PremiumPomodoroComponent = ({
   return (
     <YStack
       padding="$6"
-      borderRadius={40}
-      backgroundColor="white"
-      shadowColor={C.primary}
-      shadowRadius={40}
-      shadowOpacity={0.15}
+      borderRadius={12}
+      backgroundColor={Theme.surface}
+      borderColor={Theme.border}
+      borderWidth={1}
       gap="$6"
       alignItems="center"
     >
-      {/* Mode toggle tab bar */}
       <XStack
         gap="$2"
-        backgroundColor="#F7F2FA"
+        backgroundColor={Theme.surfaceMuted}
         padding="$1.5"
         borderRadius={100}
         alignSelf="center"
@@ -462,7 +473,7 @@ const PremiumPomodoroComponent = ({
         <ModeToggleChip
           label="Focus"
           icon={
-            <Brain size={16} color={mode === "focus" ? "white" : C.primary} />
+            <Brain size={16} color={mode === "focus" ? Theme.primaryText : Theme.primary} />
           }
           isActive={mode === "focus"}
           onPress={() => setMode("focus")}
@@ -470,7 +481,7 @@ const PremiumPomodoroComponent = ({
         <ModeToggleChip
           label="Break"
           icon={
-            <Coffee size={16} color={mode === "break" ? "white" : C.primary} />
+            <Coffee size={16} color={mode === "break" ? Theme.primaryText : Theme.primary} />
           }
           isActive={mode === "break"}
           onPress={() => setMode("break")}
@@ -480,7 +491,7 @@ const PremiumPomodoroComponent = ({
           icon={
             <Moon
               size={16}
-              color={mode === "longBreak" ? "white" : C.primary}
+              color={mode === "longBreak" ? Theme.primaryText : Theme.primary}
             />
           }
           isActive={mode === "longBreak"}
@@ -488,14 +499,14 @@ const PremiumPomodoroComponent = ({
         />
       </XStack>
 
-      {/* Cycle dots above the ring */}
-      <CycleDotsIndicator
-        currentCycle={currentCycle}
-        totalCycles={totalCycles}
-        mode={mode}
-      />
+      {!isCountdown && (
+        <CycleDotsIndicator
+          currentCycle={currentCycle}
+          totalCycles={totalCycles}
+          mode={mode}
+        />
+      )}
 
-      {/* SVG Ring + Time display */}
       <View
         position="relative"
         width={RING_SIZE}
@@ -512,7 +523,6 @@ const PremiumPomodoroComponent = ({
         <TimerDisplay timeLeft={timeLeft} mode={mode} />
       </View>
 
-      {/* Play/Pause + Reset + Settings */}
       <TimerControls
         isRunning={isRunning}
         onToggle={() => setIsRunning(!isRunning)}
@@ -520,12 +530,12 @@ const PremiumPomodoroComponent = ({
         onSettingsPress={onSettingsPress}
       />
 
-      {/* Progress bar footer */}
       <SessionProgress
         progress={progress}
         mode={mode}
         currentCycle={currentCycle}
         totalCycles={totalCycles}
+        isCountdown={isCountdown}
       />
 
       <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>
@@ -533,13 +543,11 @@ const PremiumPomodoroComponent = ({
           <AlertDialog.Overlay
             key="overlay"
             opacity={0.5}
-            backgroundColor="#1d1b20"
+            backgroundColor="rgba(0,0,0,0.5)"
             enterStyle={{ opacity: 0 }}
             exitStyle={{ opacity: 0 }}
           />
           <AlertDialog.Content
-            bordered
-            elevate
             key="content"
             enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
             exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
@@ -547,9 +555,11 @@ const PremiumPomodoroComponent = ({
             y={0}
             scale={1}
             opacity={1}
-            backgroundColor="white"
-            borderRadius={32}
-            padding="$6"
+            backgroundColor={Theme.surface}
+            borderColor={Theme.border}
+            borderWidth={1}
+            borderRadius={12}
+            padding="$5"
             width="90%"
             maxWidth={400}
             alignSelf="center"
@@ -558,54 +568,73 @@ const PremiumPomodoroComponent = ({
             <YStack gap="$4" alignItems="center">
               <YStack gap="$2" alignItems="center">
                 <AlertDialog.Title
-                  fontSize="$6"
-                  fontWeight="800"
-                  color="#1d1b20"
+                  fontSize="$5"
+                  fontWeight="700"
+                  color={Theme.text}
                   textAlign="center"
                 >
-                  Khôi phục bộ đếm?
+                  Reset Timer?
                 </AlertDialog.Title>
                 <AlertDialog.Description
-                  color="#494551"
+                  color={Theme.textMuted}
                   textAlign="center"
                   fontSize={14}
                   lineHeight={20}
                 >
-                  Bạn đang trong một phiên học. Bạn có muốn lưu lại kết quả của
-                  phiên học này trước khi khôi phục không?
+                  You are currently in a study session. Has this study session been completed?
                 </AlertDialog.Description>
               </YStack>
 
-              <XStack gap="$3" width="100%" marginTop="$4">
+              <XStack gap="$2" width="100%">
                 <Button
                   flex={1}
-                  height={48}
-                  borderRadius={16}
-                  backgroundColor="#f2ecf4"
+                  height={40}
+                  borderRadius={6}
+                  backgroundColor={Theme.surfaceMuted}
+                  borderColor={Theme.border}
+                  borderWidth={1}
                   onPress={() => {
                     setShowResetDialog(false);
                     onReset?.(false);
                   }}
-                  pressStyle={{ backgroundColor: "#e9ddff" }}
+                  pressStyle={{ scale: 0.98 }}
                 >
-                  <Text fontWeight="700" color="#6750A4">
-                    Không lưu
+                  <Text fontSize={11} fontWeight="600" color={Theme.text}>
+                    Discard
                   </Text>
                 </Button>
 
                 <Button
                   flex={1}
-                  height={48}
-                  borderRadius={16}
-                  backgroundColor="#6750A4"
+                  height={40}
+                  borderRadius={6}
+                  backgroundColor={Theme.surfaceMuted}
+                  borderColor={Theme.border}
+                  borderWidth={1}
                   onPress={() => {
                     setShowResetDialog(false);
-                    onReset?.(true);
+                    onReset?.(true, false);
                   }}
-                  pressStyle={{ opacity: 0.8 }}
+                  pressStyle={{ scale: 0.98 }}
                 >
-                  <Text fontWeight="700" color="white">
-                    Lưu lại
+                  <Text fontSize={11} fontWeight="600" color={Theme.text}>
+                    Incomplete
+                  </Text>
+                </Button>
+
+                <Button
+                  flex={1}
+                  height={40}
+                  borderRadius={6}
+                  backgroundColor={Theme.primary}
+                  onPress={() => {
+                    setShowResetDialog(false);
+                    onReset?.(true, true);
+                  }}
+                  pressStyle={{ scale: 0.98 }}
+                >
+                  <Text fontSize={11} fontWeight="600" color={Theme.primaryText}>
+                    Completed
                   </Text>
                 </Button>
               </XStack>
@@ -619,7 +648,6 @@ const PremiumPomodoroComponent = ({
 
 export const PremiumPomodoro = React.memo(PremiumPomodoroComponent);
 
-// ─── Styles ───────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   playButtonGradient: {
     width: 88,
@@ -627,31 +655,10 @@ const styles = StyleSheet.create({
     borderRadius: 44,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: C.primary,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.4,
-    shadowRadius: 15,
-    elevation: 8,
   },
   cycleDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#E8DEF8",
-  },
-  cycleDotCompleted: {
-    backgroundColor: C.primary,
-  },
-  cycleDotCurrent: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: C.primary,
-    // Pulse ring via box-shadow not available in RN — use border instead
-    borderWidth: 2,
-    borderColor: "#C4B5FD",
-  },
-  cycleDotLongBreak: {
-    backgroundColor: C.longBreakColor,
   },
 });

@@ -9,7 +9,9 @@ import {
   useRef,
   useState,
 } from "react";
-import { Platform } from "react-native";
+import { AppState, Platform } from "react-native";
+import { authActions } from "../api/auth-actions";
+import { setAuthToken } from "../api/client";
 import { chatActions } from "../api/chat-actions";
 import { useAuth } from "../hooks/useAuth";
 import { ChatMessageResponse, ChatRoomResponse } from "../lib/types/chat";
@@ -24,6 +26,11 @@ if (typeof global.TextDecoder === "undefined") {
 if (typeof global.Buffer === "undefined") {
   global.Buffer = Buffer;
 }
+
+const SOCKET_URL = ((process.env.EXPO_PUBLIC_API_URL || "http://localhost:8080").replace("http://", "ws://").replace("https://", "wss://") + "/chat/websocket");
+const TOKEN_REFRESH_SKEW_MS = 60 * 1000;
+const HEARTBEAT_INTERVAL_MS = 10000;
+const RECONNECT_DELAY_MS = 5000;
 
 interface ChatContextType {
   chats: ChatRoomResponse[];
@@ -71,6 +78,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const [isConnected, setIsConnected] = useState(false);
   const stompClientRef = useRef<Client | null>(null);
   const activeChatIdRef = useRef<string | null>(null);
+  const appStateRef = useRef(AppState.currentState);
 
   useEffect(() => {
     activeChatIdRef.current = activeChatId;
@@ -83,30 +91,100 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     return await SecureStore.getItemAsync(key);
   };
 
+  const setToken = async (key: string, value: string) => {
+    if (Platform.OS === "web") {
+      localStorage.setItem(key, value);
+      return;
+    }
+    await SecureStore.setItemAsync(key, value);
+  };
+
+  const isTokenExpiredOrExpiringSoon = (token: string) => {
+    try {
+      const payload = token.split(".")[1];
+      if (!payload) return true;
+
+      const normalizedPayload = payload.replace(/-/g, "+").replace(/_/g, "/");
+      const decoded = JSON.parse(
+        Buffer.from(normalizedPayload, "base64").toString("utf8"),
+      );
+
+      if (typeof decoded.exp !== "number") return true;
+      return decoded.exp * 1000 - Date.now() <= TOKEN_REFRESH_SKEW_MS;
+    } catch {
+      return true;
+    }
+  };
+
+  const refreshAccessToken = async () => {
+    const refreshToken = await getToken("refreshToken");
+    if (!refreshToken) return null;
+
+    const response = await authActions.refresh({ refreshToken });
+    if (!response.success || !response.data?.accessToken) return null;
+
+    const { accessToken, refreshToken: newRefreshToken } = response.data;
+    await setToken("accessToken", accessToken);
+    if (newRefreshToken) {
+      await setToken("refreshToken", newRefreshToken);
+    }
+    setAuthToken(accessToken);
+    return accessToken;
+  };
+
+  const getFreshAccessToken = async () => {
+    const token = await getToken("accessToken");
+    if (token && !isTokenExpiredOrExpiringSoon(token)) {
+      return token;
+    }
+
+    return await refreshAccessToken();
+  };
+
   useEffect(() => {
-    fetchChats();
+    if (user?.id) {
+      fetchChats();
+      return;
+    }
+
+    setChats([]);
+    setMessages([]);
+    setActiveChatId(null);
+    setIsConnected(false);
+  }, [user?.id]);
+
+  useEffect(() => {
+    appStateRef.current = AppState.currentState;
   }, []);
 
   useEffect(() => {
     if (!user || !user.id) return;
 
-    const setupClient = async () => {
-      const token = await getToken("accessToken");
-      const socketUrl = ((process.env.EXPO_PUBLIC_API_URL || "http://localhost:8080").replace("http://", "ws://").replace("https://", "wss://") + "/chat/websocket");
+    let isDisposed = false;
 
+    const createClient = () => {
       try {
         const client = new Client({
-          brokerURL: socketUrl,
-          connectHeaders: {
-            Authorization: `Bearer ${token}`,
+          brokerURL: SOCKET_URL,
+          beforeConnect: async () => {
+            const token = await getFreshAccessToken();
+            if (!token) {
+              throw new Error("Missing access token for chat socket");
+            }
+
+            client.connectHeaders = {
+              Authorization: `Bearer ${token}`,
+            };
           },
           // Adding for stompjs to connect from Android
           forceBinaryWSFrames: true,
           appendMissingNULLonIncoming: true,
-          reconnectDelay: 5000,
+          reconnectDelay: RECONNECT_DELAY_MS,
+          heartbeatIncoming: HEARTBEAT_INTERVAL_MS,
+          heartbeatOutgoing: HEARTBEAT_INTERVAL_MS,
           onConnect: () => {
+            if (isDisposed) return;
             setIsConnected(true);
-            console.log("connected");
             client.subscribe(`/user/${user.id}/notifications`, (message) => {
               const payload = JSON.parse(message.body);
               const targetChatId = payload.chatId;
@@ -114,7 +192,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
               if (targetChatId === activeChatIdRef.current) {
                 setMessages((prev) => [payload, ...prev]);
               } else {
-                console.log("New message in another chat:", targetChatId);
+                fetchChats();
               }
             });
 
@@ -134,11 +212,10 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
           },
           onDisconnect: () => setIsConnected(false),
           onStompError: (frame) => {
-            console.log("SERVER REJECTED US:", frame.headers["message"]);
-            console.log("FULL ERROR FRAME:", frame);
+            console.warn("Chat socket STOMP error:", frame.headers["message"]);
           },
           onWebSocketError: (event) => {
-            console.error("WebSocket connection error:", event);
+            console.warn("Chat socket connection error:", event);
             setIsConnected(false);
           },
           onWebSocketClose: () => {
@@ -146,18 +223,50 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
           },
         });
 
-        client.activate();
         stompClientRef.current = client;
+        return client;
       } catch (err) {
-        console.log(err);
+        console.warn("Failed to create chat socket client:", err);
+        return null;
       }
     };
 
-    setupClient();
-    return () => {
-      stompClientRef.current?.deactivate();
+    const client = createClient();
+    if (!client) return;
+
+    const activateClient = () => {
+      if (isDisposed || client.active || appStateRef.current !== "active") return;
+      client.activate();
     };
-  }, [user]);
+
+    const deactivateClient = () => {
+      if (!client.active) return;
+      setIsConnected(false);
+      client.deactivate();
+    };
+
+    activateClient();
+
+    const subscription = AppState.addEventListener("change", (nextAppState) => {
+      appStateRef.current = nextAppState;
+
+      if (nextAppState === "active") {
+        activateClient();
+      } else {
+        deactivateClient();
+      }
+    });
+
+    return () => {
+      isDisposed = true;
+      subscription.remove();
+      setIsConnected(false);
+      client.deactivate();
+      if (stompClientRef.current === client) {
+        stompClientRef.current = null;
+      }
+    };
+  }, [user?.id]);
 
   const joinChat = async (chatId: string) => {
     setActiveChatId(chatId);

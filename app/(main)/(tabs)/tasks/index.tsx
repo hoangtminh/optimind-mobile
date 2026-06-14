@@ -19,11 +19,8 @@ import { Theme } from "@/constants/Theme";
 const ProjectCard = styled(YStack, {
 	padding: "$5",
 	borderRadius: 8, // Crisp corners
-	backgroundColor: Theme.surface,
 	borderWidth: 1,
-	borderColor: Theme.border,
 	elevation: 0,
-	pressStyle: { scale: 0.98, backgroundColor: Theme.primaryPastel },
 });
 
 const CreateNewCard = styled(YStack, {
@@ -31,14 +28,9 @@ const CreateNewCard = styled(YStack, {
 	borderRadius: 8, // Crisp corners
 	borderWidth: 1.5,
 	borderStyle: "dashed",
-	borderColor: Theme.border,
 	backgroundColor: "transparent",
 	alignItems: "center",
 	justifyContent: "center",
-	pressStyle: {
-		backgroundColor: Theme.primaryPastel,
-		borderColor: Theme.primary,
-	},
 });
 
 export default function ProjectsListScreen() {
@@ -88,6 +80,9 @@ export default function ProjectsListScreen() {
 					keyExtractor={(item) => item.id}
 					contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
 					ItemSeparatorComponent={() => <View height={12} />}
+					maxToRenderPerBatch={10}
+					windowSize={5}
+					initialNumToRender={6}
 					ListHeaderComponent={
 						<YStack paddingBottom="$4" paddingTop="$2">
 							<Text
@@ -105,7 +100,11 @@ export default function ProjectsListScreen() {
 						</YStack>
 					}
 					renderItem={({ item }) => (
-						<ProjectCard>
+						<ProjectCard
+							backgroundColor={Theme.surface}
+							borderColor={Theme.border}
+							pressStyle={{ scale: 0.98, backgroundColor: Theme.primaryPastel }}
+						>
 							<YStack
 								onPress={() =>
 									router.push(
@@ -211,6 +210,11 @@ export default function ProjectsListScreen() {
 						<CreateNewCard
 							onPress={() => setIsModalOpen(true)}
 							marginTop="$3"
+							borderColor={Theme.border}
+							pressStyle={{
+								backgroundColor: Theme.primaryPastel,
+								borderColor: Theme.primary,
+							}}
 						>
 							<View
 								width={40}

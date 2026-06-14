@@ -1,3 +1,4 @@
+import { Theme } from "@/constants/Theme";
 import { Brain, Check, Clock, Coffee, Repeat, X } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import {
@@ -29,8 +30,8 @@ interface TimerSettingsModalProps {
 }
 
 const SettingItem = styled(YStack, {
-  gap: "$2",
-  marginBottom: "$4",
+  gap: "$1.5",
+  marginBottom: "$3",
 });
 
 const DEFAULT_SETTINGS: TimerSettings = {
@@ -68,10 +69,15 @@ export const TimerSettingsModal = ({
   const updateSetting = (key: keyof TimerSettings, value: any) => {
     setTempSettings((prev) => {
       if (!prev) return DEFAULT_SETTINGS;
-      return {
+      const updated = {
         ...prev,
         [key]: value,
       };
+      if (key === "mode" && value === "countdown") {
+        updated.cyclesBeforeLongBreak = 1;
+        updated.totalCycles = 1;
+      }
+      return updated;
     });
   };
 
@@ -86,63 +92,72 @@ export const TimerSettingsModal = ({
         />
         <Dialog.Content
           key="content"
-          bordered
           x={0}
           scale={1}
           opacity={1}
           y={0}
-          backgroundColor="white"
-          borderRadius={32}
-          padding="$6"
+          backgroundColor={Theme.surface}
+          borderColor={Theme.border}
+          borderWidth={1}
+          borderRadius={12}
+          padding="$5"
           width="95%"
           maxWidth={450}
           alignSelf="center"
         >
-          <YStack>
+          <YStack gap="$4">
             <XStack justifyContent="space-between" alignItems="center">
-              <Dialog.Title fontSize="$6" fontWeight="900" color="#1d1b20">
-                Timer Settings
+              <Dialog.Title fontSize="$5" fontWeight="700" color={Theme.text}>
+                Timer Preferences
               </Dialog.Title>
               <Dialog.Close asChild>
                 <Button
                   circular
                   size="$3"
                   chromeless
-                  icon={<X size={20} color="#7a7582" />}
+                  icon={<X size={18} color={Theme.textMuted} />}
                 />
               </Dialog.Close>
             </XStack>
 
-            <ScrollView maxHeight={400} showsVerticalScrollIndicator={false}>
-              <YStack gap="$5">
+            <ScrollView maxHeight={600} showsVerticalScrollIndicator={false}>
+              <YStack gap="$1">
                 <SettingItem>
-                  <Label fontSize="$3" fontWeight="700" color="#494551">
+                  <Label
+                    fontSize="$2"
+                    fontWeight="600"
+                    color={Theme.text}
+                    textTransform="uppercase"
+                    letterSpacing={1}
+                  >
                     Mode
                   </Label>
                   <XStack
-                    backgroundColor="#f2ecf4"
-                    padding="$1.5"
-                    borderRadius={16}
+                    backgroundColor={Theme.surfaceMuted}
+                    borderColor={Theme.border}
+                    borderWidth={1}
+                    padding="$1"
+                    borderRadius={8}
                     gap="$1"
                   >
                     <Button
                       flex={1}
                       size="$3"
-                      borderRadius={12}
+                      borderRadius={6}
                       backgroundColor={
                         tempSettings?.mode === "pomodoro"
-                          ? "white"
+                          ? Theme.primary
                           : "transparent"
                       }
                       onPress={() => updateSetting("mode", "pomodoro")}
                       chromeless={tempSettings?.mode !== "pomodoro"}
                     >
                       <Text
-                        fontWeight="700"
+                        fontWeight="600"
                         color={
                           tempSettings?.mode === "pomodoro"
-                            ? "#6750A4"
-                            : "#7a7582"
+                            ? Theme.primaryText
+                            : Theme.textMuted
                         }
                       >
                         Pomodoro
@@ -151,21 +166,21 @@ export const TimerSettingsModal = ({
                     <Button
                       flex={1}
                       size="$3"
-                      borderRadius={12}
+                      borderRadius={6}
                       backgroundColor={
                         tempSettings?.mode === "countdown"
-                          ? "white"
+                          ? Theme.primary
                           : "transparent"
                       }
                       onPress={() => updateSetting("mode", "countdown")}
                       chromeless={tempSettings?.mode !== "countdown"}
                     >
                       <Text
-                        fontWeight="700"
+                        fontWeight="600"
                         color={
                           tempSettings?.mode === "countdown"
-                            ? "#6750A4"
-                            : "#7a7582"
+                            ? Theme.primaryText
+                            : Theme.textMuted
                         }
                       >
                         Countdown
@@ -174,12 +189,18 @@ export const TimerSettingsModal = ({
                   </XStack>
                 </SettingItem>
 
-                <XStack gap="$4">
+                <XStack gap="$3">
                   <SettingItem flex={1}>
-                    <XStack gap="$2" alignItems="center" marginBottom="$1">
-                      <Brain size={16} color="#6750A4" />
-                      <Label fontSize="$3" fontWeight="700" color="#494551">
-                        Focus
+                    <XStack gap="$2" alignItems="center">
+                      <Brain size={14} color={Theme.primary} />
+                      <Label
+                        fontSize="$2"
+                        fontWeight="600"
+                        color={Theme.text}
+                        textTransform="uppercase"
+                        letterSpacing={1}
+                      >
+                        Focus (m)
                       </Label>
                     </XStack>
                     <Input
@@ -188,19 +209,29 @@ export const TimerSettingsModal = ({
                       onChangeText={(val) =>
                         updateSetting("focusDuration", parseInt(val) || 0)
                       }
-                      borderRadius={16}
-                      borderWidth={2}
-                      borderColor="#f2ecf4"
+                      borderRadius={6}
+                      borderWidth={1}
+                      borderColor={Theme.border}
+                      backgroundColor={Theme.surface}
+                      color={Theme.text}
+                      height={"fit"}
                       focusStyle={{
-                        borderColor: "#6750A4",
+                        borderColor: Theme.primary,
+                        borderWidth: 1,
                       }}
                     />
                   </SettingItem>
                   <SettingItem flex={1}>
-                    <XStack gap="$2" alignItems="center" marginBottom="$1">
-                      <Coffee size={16} color="#6750A4" />
-                      <Label fontSize="$3" fontWeight="700" color="#494551">
-                        Break
+                    <XStack gap="$2" alignItems="center">
+                      <Coffee size={14} color={Theme.primary} />
+                      <Label
+                        fontSize="$2"
+                        fontWeight="600"
+                        color={Theme.text}
+                        textTransform="uppercase"
+                        letterSpacing={1}
+                      >
+                        Break (m)
                       </Label>
                     </XStack>
                     <Input
@@ -209,11 +240,15 @@ export const TimerSettingsModal = ({
                       onChangeText={(val) =>
                         updateSetting("breakDuration", parseInt(val) || 0)
                       }
-                      borderRadius={16}
-                      borderWidth={2}
-                      borderColor="#f2ecf4"
+                      borderRadius={6}
+                      borderWidth={1}
+                      borderColor={Theme.border}
+                      backgroundColor={Theme.surface}
+                      color={Theme.text}
+                      height={"fit"}
                       focusStyle={{
-                        borderColor: "#6750A4",
+                        borderColor: Theme.primary,
+                        borderWidth: 1,
                       }}
                     />
                   </SettingItem>
@@ -223,9 +258,15 @@ export const TimerSettingsModal = ({
                   <>
                     <SettingItem>
                       <XStack gap="$2" alignItems="center" marginBottom="$1">
-                        <Clock size={16} color="#6750A4" />
-                        <Label fontSize="$3" fontWeight="700" color="#494551">
-                          Long Break
+                        <Clock size={14} color={Theme.primary} />
+                        <Label
+                          fontSize="$2"
+                          fontWeight="600"
+                          color={Theme.text}
+                          textTransform="uppercase"
+                          letterSpacing={1}
+                        >
+                          Long Break (m)
                         </Label>
                       </XStack>
                       <Input
@@ -236,20 +277,30 @@ export const TimerSettingsModal = ({
                         onChangeText={(val) =>
                           updateSetting("longBreakDuration", parseInt(val) || 0)
                         }
-                        borderRadius={16}
-                        borderWidth={2}
-                        borderColor="#f2ecf4"
+                        borderRadius={6}
+                        borderWidth={1}
+                        borderColor={Theme.border}
+                        backgroundColor={Theme.surface}
+                        color={Theme.text}
+                        height={"fit"}
                         focusStyle={{
-                          borderColor: "#6750A4",
+                          borderColor: Theme.primary,
+                          borderWidth: 1,
                         }}
                       />
                     </SettingItem>
 
-                    <XStack gap="$4">
+                    <XStack gap="$3">
                       <SettingItem flex={1}>
                         <XStack gap="$2" alignItems="center" marginBottom="$1">
-                          <Repeat size={16} color="#6750A4" />
-                          <Label fontSize="$3" fontWeight="700" color="#494551">
+                          <Repeat size={14} color={Theme.primary} />
+                          <Label
+                            fontSize="$2"
+                            fontWeight="600"
+                            color={Theme.text}
+                            textTransform="uppercase"
+                            letterSpacing={1}
+                          >
                             Cycles
                           </Label>
                         </XStack>
@@ -265,19 +316,29 @@ export const TimerSettingsModal = ({
                               parseInt(val) || 0,
                             )
                           }
-                          borderRadius={16}
-                          borderWidth={2}
-                          borderColor="#f2ecf4"
+                          borderRadius={6}
+                          borderWidth={1}
+                          borderColor={Theme.border}
+                          backgroundColor={Theme.surface}
+                          color={Theme.text}
+                          height={"fit"}
                           focusStyle={{
-                            borderColor: "#6750A4",
+                            borderColor: Theme.primary,
+                            borderWidth: 1,
                           }}
                         />
                       </SettingItem>
                       <SettingItem flex={1}>
                         <XStack gap="$2" alignItems="center" marginBottom="$1">
-                          <Repeat size={16} color="#6750A4" />
-                          <Label fontSize="$3" fontWeight="700" color="#494551">
-                            Total
+                          <Repeat size={14} color={Theme.primary} />
+                          <Label
+                            fontSize="$2"
+                            fontWeight="600"
+                            color={Theme.text}
+                            textTransform="uppercase"
+                            letterSpacing={1}
+                          >
+                            Total Cycles
                           </Label>
                         </XStack>
                         <Input
@@ -286,11 +347,15 @@ export const TimerSettingsModal = ({
                           onChangeText={(val) =>
                             updateSetting("totalCycles", parseInt(val) || 0)
                           }
-                          borderRadius={16}
-                          borderWidth={2}
-                          borderColor="#f2ecf4"
+                          borderRadius={6}
+                          borderWidth={1}
+                          borderColor={Theme.border}
+                          backgroundColor={Theme.surface}
+                          color={Theme.text}
+                          height={"fit"}
                           focusStyle={{
-                            borderColor: "#6750A4",
+                            borderColor: Theme.primary,
+                            borderWidth: 1,
                           }}
                         />
                       </SettingItem>
@@ -300,28 +365,30 @@ export const TimerSettingsModal = ({
               </YStack>
             </ScrollView>
 
-            <XStack gap="$3" marginTop="$2">
+            <XStack gap="$3">
               <Dialog.Close asChild>
                 <Button
                   flex={1}
-                  borderRadius={16}
-                  backgroundColor="#f2ecf4"
-                  pressStyle={{ scale: 0.95 }}
+                  borderRadius={6}
+                  backgroundColor={Theme.surfaceMuted}
+                  borderColor={Theme.border}
+                  borderWidth={1}
+                  pressStyle={{ scale: 0.98 }}
                 >
-                  <Text fontWeight="700" color="#6750A4">
+                  <Text fontWeight="600" color={Theme.text}>
                     Cancel
                   </Text>
                 </Button>
               </Dialog.Close>
               <Button
                 flex={2}
-                borderRadius={16}
-                backgroundColor="#6750A4"
-                pressStyle={{ scale: 0.95 }}
+                borderRadius={6}
+                backgroundColor={Theme.primary}
+                pressStyle={{ scale: 0.98 }}
                 onPress={handleSave}
-                icon={<Check size={18} color="white" />}
+                icon={<Check size={16} color={Theme.primaryText} />}
               >
-                <Text fontWeight="700" color="white">
+                <Text fontWeight="600" color={Theme.primaryText}>
                   Save Changes
                 </Text>
               </Button>

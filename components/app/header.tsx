@@ -70,7 +70,7 @@ export default function Header({
 				{showCart && (
 					<TouchableOpacity
 						onPress={() => {
-							router.push("/(tabs)/setting");
+							router.push("/(main)/(tabs)/setting");
 						}}
 					>
 						<Ionicons name="bag-outline" size={24} />

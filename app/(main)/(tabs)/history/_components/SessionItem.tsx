@@ -1,3 +1,4 @@
+import { Theme } from "@/constants/Theme";
 import { StudySession } from "@/lib/types/study";
 import { ChevronRight, Clock } from "lucide-react-native";
 import React, { useCallback, useMemo } from "react";
@@ -38,56 +39,128 @@ const SessionItemComponent: React.FC<SessionItemProps> = ({
     return formatSecondsDuration(totalSecs);
   }, [session.totalTime, session.duration]);
 
+  console.log(session);
+
   return (
     <TouchableOpacity
       onPress={handlePress}
       activeOpacity={0.7}
-      className="w-full bg-white rounded-2xl p-3 flex-row items-center justify-between mb-2 border border-[#f2ecf4]"
+      style={{
+        width: "100%",
+        backgroundColor: Theme.surface,
+        borderRadius: 12, // Crisp corners
+        padding: 12,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginBottom: 8,
+        borderWidth: 1,
+        borderColor: Theme.border,
+      }}
     >
-      <View className="flex-row items-center flex-1 pr-2">
-        <View className="w-9 h-9 rounded-full bg-[#f2ecf4] items-center justify-center shrink-0 mr-3">
-          <Clock size={16} color="#6750A4" />
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          flex: 1,
+          paddingRight: 8,
+        }}
+      >
+        <View
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 18,
+            backgroundColor: Theme.primaryPastel,
+            alignItems: "center",
+            justifyContent: "center",
+            marginRight: 12,
+          }}
+        >
+          <Clock size={16} color={Theme.primary} />
         </View>
-        <View className="flex-1">
-          <View className="flex-row items-center justify-between mb-0.5">
+        <View style={{ flex: 1 }}>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: 2,
+            }}
+          >
             <Text
-              className="font-bold text-[#1d1b20] text-sm flex-1 mr-2"
+              style={{
+                fontWeight: "700",
+                color: Theme.text,
+                fontSize: 14,
+                flex: 1,
+                marginRight: 8,
+              }}
               numberOfLines={1}
             >
               {sessionTitle}
             </Text>
             {session.completed ? (
-              <View className="bg-[#e9ddff] px-2 py-0.5 rounded-full">
-                <Text className="text-[10px] font-bold text-[#4f378a]">
+              <View
+                style={{
+                  backgroundColor: Theme.accentGreen,
+                  paddingHorizontal: 8,
+                  paddingVertical: 2,
+                  borderRadius: 12,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 10,
+                    fontWeight: "700",
+                    color: Theme.accentGreenText,
+                  }}
+                >
                   Completed
                 </Text>
               </View>
             ) : (
-              <View className="bg-[#ffdad6] px-2 py-0.5 rounded-full">
-                <Text className="text-[10px] font-bold text-[#ba1a1a]">
+              <View
+                style={{
+                  backgroundColor: Theme.accentRed,
+                  paddingHorizontal: 8,
+                  paddingVertical: 2,
+                  borderRadius: 12,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 10,
+                    fontWeight: "700",
+                    color: Theme.accentRedText,
+                  }}
+                >
                   Incomplete
                 </Text>
               </View>
             )}
           </View>
-          <View className="flex-row items-center gap-1.5">
-            <Text className="text-[12px] text-[#494551]">
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <Text style={{ fontSize: 12, color: Theme.textMuted }}>
               {formatSessionDateTime(
                 session.date,
                 session.startTime,
                 session.endTime,
               )}
             </Text>
-            <Text className="text-[12px] text-[#7a7582]">•</Text>
-            <Text className="text-[12px] text-[#6750A4] font-semibold">
+            <Text style={{ fontSize: 12, color: Theme.textMuted }}>•</Text>
+            <Text
+              style={{ fontSize: 12, color: Theme.primary, fontWeight: "600" }}
+            >
               {durationText}
             </Text>
           </View>
         </View>
       </View>
-      <ChevronRight size={16} color="#7a7582" />
+      <ChevronRight size={16} color={Theme.textMuted} />
     </TouchableOpacity>
   );
 };
 
 export const SessionItem = React.memo(SessionItemComponent);
+export default SessionItem;

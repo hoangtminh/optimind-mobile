@@ -13,3 +13,22 @@ export interface UserProfile {
 	studyTime?: number;
 	createdAt?: string;
 }
+
+export interface LeaderboardUser {
+	id: string;
+	name: string;
+	avatar?: string;
+	level: number;
+	totalStudyTime: number;
+	completedTasks: number;
+	streak: number;
+	rank: number;
+	isCurrentUser?: boolean;
+}
+
+export interface LeaderboardResponse {
+	topUsers: LeaderboardUser[];
+	currentUser: LeaderboardUser;
+	currentUserRank: number;
+}
+

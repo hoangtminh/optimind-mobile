@@ -25,6 +25,7 @@ import { ProjectProvider } from "@/contexts/ProjectContext";
 import { StudySessionProvider } from "@/contexts/StudySessionContext";
 import { TaskProvider } from "@/contexts/TaskContext";
 import { UserProvider } from "@/contexts/UserContext";
+import { SettingsProvider, useSettings } from "@/contexts/SettingsContext";
 import { useAuth } from "@/hooks/useAuth";
 import { config } from "@/tamagui.config";
 import { KeyboardProvider } from "react-native-keyboard-controller";
@@ -74,7 +75,9 @@ export default function RootLayout() {
         <TamaguiProvider config={config} defaultTheme="light">
           <PortalProvider>
             <AuthProvider>
-              <RootLayoutNav />
+              <SettingsProvider>
+                <RootLayoutNav />
+              </SettingsProvider>
               <PortalHost name="" />
               <ToastContainer />
             </AuthProvider>
@@ -85,20 +88,8 @@ export default function RootLayout() {
   );
 }
 
-const CustomNavigationTheme = {
-  ...DefaultTheme,
-  colors: {
-    ...DefaultTheme.colors,
-    background: Theme.background,
-    card: Theme.surface,
-    text: Theme.text,
-    border: Theme.border,
-    notification: Theme.accentRedText,
-  },
-};
-
 function RootLayoutNav() {
-  const colorScheme = useColorScheme();
+  const { settings } = useSettings();
   const { user, isLoading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
@@ -116,8 +107,20 @@ function RootLayoutNav() {
     }
   }, [user, segments, isLoading, router]);
 
+  const CustomNavigationTheme = {
+    ...DefaultTheme,
+    colors: {
+      ...DefaultTheme.colors,
+      background: Theme.background,
+      card: Theme.surface,
+      text: Theme.text,
+      border: Theme.border,
+      notification: Theme.accentRedText,
+    },
+  };
+
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : CustomNavigationTheme}>
+    <ThemeProvider value={CustomNavigationTheme}>
       <UserProvider>
         <ProjectProvider>
           <TaskProvider>

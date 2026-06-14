@@ -22,30 +22,16 @@ interface ProjectModalProps {
 }
 
 const StyledInput = styled(Input, {
-	backgroundColor: Theme.surface,
 	borderWidth: 1,
-	borderColor: Theme.border,
 	height: 48,
 	borderRadius: 6,
 	fontSize: "$4",
-	color: Theme.text,
-	focusStyle: {
-		borderColor: Theme.primary,
-		backgroundColor: Theme.surface,
-	},
 });
 
 const StyledTextArea = styled(TextArea, {
-	backgroundColor: Theme.surface,
 	borderWidth: 1,
-	borderColor: Theme.border,
 	borderRadius: 6,
 	fontSize: "$4",
-	color: Theme.text,
-	focusStyle: {
-		borderColor: Theme.primary,
-		backgroundColor: Theme.surface,
-	},
 });
 
 export default function ProjectModal({
@@ -171,6 +157,13 @@ export default function ProjectModal({
 									placeholderTextColor={Theme.textMuted as any}
 									value={name}
 									onChangeText={setName}
+									backgroundColor={Theme.surface}
+									borderColor={Theme.border}
+									color={Theme.text}
+									focusStyle={{
+										borderColor: Theme.primary,
+										backgroundColor: Theme.surface,
+									}}
 								/>
 							</YStack>
 
@@ -192,6 +185,13 @@ export default function ProjectModal({
 									paddingTop="$3"
 									value={description}
 									onChangeText={setDescription}
+									backgroundColor={Theme.surface}
+									borderColor={Theme.border}
+									color={Theme.text}
+									focusStyle={{
+										borderColor: Theme.primary,
+										backgroundColor: Theme.surface,
+									}}
 								/>
 							</YStack>
 						</YStack>

@@ -1,3 +1,28 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Custom scrollbar styling for the whole app */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(120, 119, 116, 0.35);
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(120, 119, 116, 0.5);
+}
+
+/* Firefox standard scrollbar properties */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(120, 119, 116, 0.35) transparent;
+}

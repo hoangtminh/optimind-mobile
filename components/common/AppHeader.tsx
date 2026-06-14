@@ -34,12 +34,12 @@ export const AppHeader = ({
 
 	return (
 		<>
-			<StatusBar style="dark" />
+			<StatusBar style={Theme.isDark ? "light" : "dark"} />
 			<XStack
 				height={56}
 				alignItems="center"
 				paddingHorizontal="$4"
-				backgroundColor={Theme.surface}
+				backgroundColor={Theme.primaryPastel}
 				borderBottomWidth={1}
 				borderBottomColor={Theme.border}
 				justifyContent="space-between"
@@ -55,7 +55,7 @@ export const AppHeader = ({
 							icon={<ArrowLeft size={20} color={Theme.text} />}
 							onPress={handleBack}
 							pressStyle={{
-								backgroundColor: "rgba(0, 0, 0, 0.05)",
+								backgroundColor: Theme.isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.05)",
 							}}
 						/>
 					)}

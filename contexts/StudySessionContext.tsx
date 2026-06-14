@@ -88,6 +88,7 @@ export const StudySessionProvider = ({ children }: { children: ReactNode }) => {
           cycles: Number(sessionData.cycles) || 1,
           averageFocus: Number(sessionData.averageFocus) || 0.0,
           sessionType: sessionData.sessionType || "pomodoro",
+          completed: !!sessionData.completed,
           focusData: Array.isArray(sessionData.focusData)
             ? sessionData.focusData.map((d: any) => ({
                 timestamp: d.timestamp || new Date().toISOString(),

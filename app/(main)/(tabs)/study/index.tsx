@@ -1,23 +1,24 @@
 import { AppHeader } from "@/components/common/AppHeader";
+import { PremiumAlertDialog } from "@/components/common/PremiumAlertDialog";
 import { FocusCamera } from "@/components/study/FocusCamera";
 import type { TimerMode } from "@/components/study/PremiumPomodoro";
 import { Task, TaskManager } from "@/components/study/TaskManager";
 import {
-	TimerSettings,
-	TimerSettingsModal,
+  TimerSettingsModal
 } from "@/components/study/TimerSettingsModal";
 import { UnifiedStudyView } from "@/components/study/UnifiedStudyView";
+import { Theme } from "@/constants/Theme";
+import { useSettings } from "@/contexts/SettingsContext";
 import { useStudySessions } from "@/contexts/StudySessionContext";
 import { activeSessionTracker } from "@/utils/activeSession";
-import { Theme } from "@/constants/Theme";
 import {
-	Brain,
-	Camera,
-	ListTodo,
-	Pause,
-	Play,
-	RotateCcw,
-	Settings,
+  Brain,
+  Camera,
+  ListTodo,
+  Pause,
+  Play,
+  RotateCcw,
+  Settings,
 } from "lucide-react-native";
 import { useCallback, useEffect, useState } from "react";
 import { ScrollView } from "react-native";
@@ -35,16 +36,6 @@ const TabButton = styled(YStack, {
   flexDirection: "row",
   gap: "$2",
   pressStyle: { scale: 0.98 },
-  variants: {
-    active: {
-      true: {
-        backgroundColor: Theme.primaryPastel,
-      },
-      false: {
-        backgroundColor: "transparent",
-      },
-    },
-  } as const,
 });
 
 export interface SessionStats {
@@ -66,22 +57,15 @@ export default function StudyScreen() {
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const { saveDetailedSession } = useStudySessions();
 
-  const [timerSettings, setTimerSettings] = useState<TimerSettings>({
-    mode: "pomodoro",
-    focusDuration: 25,
-    breakDuration: 5,
-    longBreakDuration: 15,
-    cyclesBeforeLongBreak: 4,
-    totalCycles: 4,
-  });
+  const { settings, updateSettings } = useSettings();
 
   const [timerRunning, setTimerRunning] = useState(false);
   const [timerMode, setTimerMode] = useState<TimerMode>("focus");
   const [timerTotalTime, setTimerTotalTime] = useState(
-    timerSettings.focusDuration * 60,
+    settings.focusDuration * 60,
   );
   const [timerTimeLeft, setTimerTimeLeft] = useState(
-    timerSettings.focusDuration * 60,
+    settings.focusDuration * 60,
   );
   const [currentCycle, setCurrentCycle] = useState(1);
   const [sessionKey, setSessionKey] = useState(Date.now());
@@ -119,16 +103,15 @@ export default function StudyScreen() {
   // Sync totalTime when settings or mode changes
   useEffect(() => {
     let duration: number;
-    if (timerMode === "focus") duration = timerSettings.focusDuration;
-    else if (timerMode === "longBreak")
-      duration = timerSettings.longBreakDuration;
-    else duration = timerSettings.breakDuration;
+    if (timerMode === "focus") duration = settings.focusDuration;
+    else if (timerMode === "longBreak") duration = settings.longBreakDuration;
+    else duration = settings.breakDuration;
     setTimerTotalTime(duration * 60);
     setTimerTimeLeft(duration * 60);
   }, [
-    timerSettings.focusDuration,
-    timerSettings.breakDuration,
-    timerSettings.longBreakDuration,
+    settings.focusDuration,
+    settings.breakDuration,
+    settings.longBreakDuration,
     timerMode,
   ]);
 
@@ -175,43 +158,47 @@ export default function StudyScreen() {
         focusTime: 0,
         breakTime: 0,
         cycles: currentCycle,
-        sessionType: timerSettings.mode,
+        sessionType: settings.mode,
       });
     }
-  }, [timerRunning, sessionStats, currentCycle, timerSettings.mode]);
+  }, [timerRunning, sessionStats, currentCycle, settings.mode]);
 
-  const handleSaveSession = useCallback(async () => {
-    if (!sessionStats) return;
+  const handleSaveSession = useCallback(
+    async (isCompletedSet: boolean) => {
+      if (!sessionStats) return;
 
-    const finalStats = {
-      ...sessionStats,
-      endTime: new Date().toISOString(),
-      cycles: currentCycle,
-    };
-
-    const averageFocus =
-      focusHistory.length > 0
-        ? focusHistory.reduce((acc, curr) => acc + curr.score, 0) /
-          focusHistory.length
-        : 0;
-
-    const focusData = focusHistory.map((item) => {
-      const startTimeMs = new Date(finalStats.startTime).getTime();
-      const ts = new Date(startTimeMs + item.timeElapsed * 1000);
-      return {
-        timestamp: ts.toISOString(),
-        focusLevel: item.score,
+      const finalStats = {
+        ...sessionStats,
+        endTime: new Date().toISOString(),
+        cycles: isCompletedSet ? settings.totalCycles : currentCycle,
+        completed: isCompletedSet,
       };
-    });
 
-    const sessionData = {
-      ...finalStats,
-      averageFocus,
-      focusData,
-    };
+      const averageFocus =
+        focusHistory.length > 0
+          ? focusHistory.reduce((acc, curr) => acc + curr.score, 0) /
+            focusHistory.length
+          : 0;
 
-    await saveDetailedSession(sessionData);
-  }, [sessionStats, focusHistory, currentCycle, saveDetailedSession]);
+      const focusData = focusHistory.map((item) => {
+        const startTimeMs = new Date(finalStats.startTime).getTime();
+        const ts = new Date(startTimeMs + item.timeElapsed * 1000);
+        return {
+          timestamp: ts.toISOString(),
+          focusLevel: item.score,
+        };
+      });
+
+      const sessionData = {
+        ...finalStats,
+        averageFocus,
+        focusData,
+      };
+
+      await saveDetailedSession(sessionData);
+    },
+    [sessionStats, focusHistory, currentCycle, saveDetailedSession, settings.totalCycles],
+  );
 
   const timerTimeElapsed = timerTotalTime - timerTimeLeft;
 
@@ -230,9 +217,9 @@ export default function StudyScreen() {
   }, []);
 
   const handleTimerReset = useCallback(
-    async (shouldSave?: boolean) => {
+    async (shouldSave?: boolean, completed?: boolean) => {
       if (shouldSave) {
-        await handleSaveSession();
+        await handleSaveSession(completed ?? false);
       }
       setTimerRunning(false);
       setTimerTimeLeft(timerTotalTime);
@@ -249,14 +236,26 @@ export default function StudyScreen() {
   const handleCycleComplete = useCallback(() => {
     setCurrentCycle((prev) => {
       const next = prev + 1;
-      return next > timerSettings.totalCycles ? 1 : next;
+      return next > settings.totalCycles ? 1 : next;
     });
-  }, [timerSettings.totalCycles]);
+  }, [settings.totalCycles]);
 
   /** Called when a full set (all cycles + long break) finishes — resets to cycle 1. */
   const handleLongBreakComplete = useCallback(() => {
     setCurrentCycle(1);
   }, []);
+
+  const [showCongratsModal, setShowCongratsModal] = useState(false);
+
+  const handleSessionFinish = useCallback(async () => {
+    await handleSaveSession(true);
+    setShowCongratsModal(true);
+  }, [handleSaveSession]);
+
+  const handleCongratsConfirm = useCallback(() => {
+    setShowCongratsModal(false);
+    handleTimerReset(false);
+  }, [handleTimerReset]);
 
   return (
     <SafeAreaView
@@ -287,7 +286,9 @@ export default function StudyScreen() {
           borderBottomColor={Theme.border}
         >
           <TabButton
-            active={activeTab === "pomodoro"}
+            backgroundColor={
+              activeTab === "pomodoro" ? Theme.primaryPastel : "transparent"
+            }
             onPress={() => setActiveTab("pomodoro")}
           >
             <Brain
@@ -303,7 +304,9 @@ export default function StudyScreen() {
             </Text>
           </TabButton>
           <TabButton
-            active={activeTab === "camera"}
+            backgroundColor={
+              activeTab === "camera" ? Theme.primaryPastel : "transparent"
+            }
             onPress={() => setActiveTab("camera")}
           >
             <Camera
@@ -319,7 +322,9 @@ export default function StudyScreen() {
             </Text>
           </TabButton>
           <TabButton
-            active={activeTab === "tasks"}
+            backgroundColor={
+              activeTab === "tasks" ? Theme.primaryPastel : "transparent"
+            }
             onPress={() => setActiveTab("tasks")}
           >
             <ListTodo
@@ -404,7 +409,7 @@ export default function StudyScreen() {
             style={{ display: activeTab === "pomodoro" ? "flex" : "none" }}
           >
             <UnifiedStudyView
-              timerSettings={timerSettings}
+              timerSettings={settings}
               timerRunning={timerRunning}
               timerTimeLeft={timerTimeLeft}
               timerMode={timerMode}
@@ -417,6 +422,7 @@ export default function StudyScreen() {
               onCycleComplete={handleCycleComplete}
               onLongBreakComplete={handleLongBreakComplete}
               onSettingsPress={() => setSettingsModalOpen(true)}
+              onFinish={handleSessionFinish}
             />
           </YStack>
 
@@ -445,8 +451,18 @@ export default function StudyScreen() {
       <TimerSettingsModal
         open={settingsModalOpen}
         onOpenChange={setSettingsModalOpen}
-        settings={timerSettings}
-        onSave={setTimerSettings}
+        settings={settings}
+        onSave={updateSettings}
+      />
+
+      <PremiumAlertDialog
+        open={showCongratsModal}
+        onOpenChange={setShowCongratsModal}
+        title="Congratulations! 🎉"
+        description="You have successfully finished all study cycles! Your session has been completed and saved."
+        type="success"
+        confirmText="Finish"
+        onConfirm={handleCongratsConfirm}
       />
     </SafeAreaView>
   );

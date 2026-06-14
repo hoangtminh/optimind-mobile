@@ -8,6 +8,7 @@ import {
 	YStack,
 	styled,
 } from "tamagui";
+import { Theme } from "@/constants/Theme";
 
 type DialogType = "success" | "error" | "info" | "confirm";
 
@@ -26,7 +27,6 @@ const StyledOverlay = styled(AlertDialog.Overlay, {
 	opacity: 0.5,
 	enterStyle: { opacity: 0 },
 	exitStyle: { opacity: 0 },
-	backgroundColor: "#1d1b20",
 });
 
 const StyledContent = styled(AlertDialog.Content, {
@@ -37,8 +37,7 @@ const StyledContent = styled(AlertDialog.Content, {
 	scale: 1,
 	opacity: 1,
 	y: 0,
-	backgroundColor: "white",
-	borderRadius: 32,
+	borderRadius: 12, // Crisp corners for minimalist aesthetic
 	padding: "$6",
 	width: "90%",
 	maxWidth: 400,
@@ -58,48 +57,58 @@ export const PremiumAlertDialog = ({
 	const getIcon = () => {
 		switch (type) {
 			case "success":
-				return <CheckCircle2 size={32} color="#006c49" />;
+				return <CheckCircle2 size={32} color={Theme.accentGreenText} />;
 			case "error":
-				return <AlertCircle size={32} color="#ba1a1a" />;
+				return <AlertCircle size={32} color={Theme.accentRedText} />;
 			case "confirm":
-				return <AlertCircle size={32} color="#6750A4" />;
+				return <AlertCircle size={32} color={Theme.primary} />;
 			default:
-				return <Info size={32} color="#6750A4" />;
+				return <Info size={32} color={Theme.primary} />;
 		}
 	};
 
 	const getIconBg = () => {
 		switch (type) {
 			case "success":
-				return "#e6f4ea";
+				return Theme.accentGreen;
 			case "error":
-				return "#ffdad6";
+				return Theme.accentRed;
 			default:
-				return "#f2ecf4";
+				return Theme.primaryPastel;
 		}
 	};
 
 	const getConfirmBtnBg = () => {
 		switch (type) {
 			case "error":
-				return "#ba1a1a";
+				return Theme.accentRedText;
 			case "success":
-				return "#006c49";
+				return Theme.accentGreenText;
 			default:
-				return "#6750A4";
+				return Theme.primary;
+		}
+	};
+
+	const getConfirmBtnTextColor = () => {
+		switch (type) {
+			case "error":
+			case "success":
+				return "#ffffff"; // Keep text white on primary green/red
+			default:
+				return Theme.primaryText; // Black on primary in dark mode, white in light mode
 		}
 	};
 
 	return (
 		<AlertDialog open={open} onOpenChange={onOpenChange}>
 			<AlertDialog.Portal>
-				<StyledOverlay />
-				<StyledContent>
+				<StyledOverlay backgroundColor={Theme.isDark ? "rgba(0, 0, 0, 0.7)" : "rgba(29, 27, 32, 0.4)"} />
+				<StyledContent backgroundColor={Theme.surface} borderColor={Theme.border}>
 					<YStack gap="$4" alignItems="center">
 						<View
 							backgroundColor={getIconBg()}
 							padding="$4"
-							borderRadius={24}
+							borderRadius={12} // Crisp corners
 							marginBottom="$2"
 						>
 							{getIcon()}
@@ -107,15 +116,15 @@ export const PremiumAlertDialog = ({
 
 						<YStack gap="$2" alignItems="center">
 							<AlertDialog.Title
-								fontSize="$7"
+								fontSize="$6"
 								fontWeight="800"
-								color="#1d1b20"
+								color={Theme.text}
 								textAlign="center"
 							>
 								{title}
 							</AlertDialog.Title>
 							<AlertDialog.Description
-								color="#494551"
+								color={Theme.textMuted}
 								textAlign="center"
 								fontSize="$4"
 								lineHeight={22}
@@ -129,17 +138,17 @@ export const PremiumAlertDialog = ({
 								<AlertDialog.Cancel asChild>
 									<Button
 										flex={1}
-										height={56}
-										borderRadius={16}
-										backgroundColor="#f2ecf4"
+										height={48}
+										borderRadius={8}
+										backgroundColor={Theme.primaryPastel}
 										chromeless
 										pressStyle={{
-											backgroundColor: "#e9ddff",
+											backgroundColor: Theme.border,
 										}}
 									>
 										<Text
 											fontWeight="700"
-											color="#6750A4"
+											color={Theme.primary}
 											fontSize="$4"
 										>
 											{cancelText}
@@ -150,15 +159,15 @@ export const PremiumAlertDialog = ({
 							<AlertDialog.Action asChild>
 								<Button
 									flex={1}
-									height={56}
-									borderRadius={16}
+									height={48}
+									borderRadius={8}
 									backgroundColor={getConfirmBtnBg()}
 									onPress={onConfirm}
 									pressStyle={{ opacity: 0.8 }}
 								>
 									<Text
 										fontWeight="700"
-										color="white"
+										color={getConfirmBtnTextColor()}
 										fontSize="$4"
 									>
 										{confirmText}

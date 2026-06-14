@@ -25,16 +25,6 @@ const TabButton = styled(YStack, {
 	flexDirection: "row",
 	gap: "$2",
 	pressStyle: { scale: 0.98 },
-	variants: {
-		active: {
-			true: {
-				backgroundColor: Theme.primaryPastel,
-			},
-			false: {
-				backgroundColor: "transparent",
-			},
-		},
-	} as const,
 });
 
 export default function ProjectTaskScreen() {
@@ -151,7 +141,7 @@ export default function ProjectTaskScreen() {
 					borderBottomColor={Theme.border}
 				>
 					<TabButton
-						active={activeTab === "tasks"}
+						backgroundColor={activeTab === "tasks" ? Theme.primaryPastel : "transparent"}
 						onPress={() => setActiveTab("tasks")}
 					>
 						<Text
@@ -165,7 +155,7 @@ export default function ProjectTaskScreen() {
 						</Text>
 					</TabButton>
 					<TabButton
-						active={activeTab === "kanban"}
+						backgroundColor={activeTab === "kanban" ? Theme.primaryPastel : "transparent"}
 						onPress={() => setActiveTab("kanban")}
 					>
 						<Layout
@@ -185,7 +175,7 @@ export default function ProjectTaskScreen() {
 						</Text>
 					</TabButton>
 					<TabButton
-						active={activeTab === "chat"}
+						backgroundColor={activeTab === "chat" ? Theme.primaryPastel : "transparent"}
 						onPress={() => setActiveTab("chat")}
 					>
 						<MessageSquare
@@ -201,7 +191,7 @@ export default function ProjectTaskScreen() {
 						</Text>
 					</TabButton>
 					<TabButton
-						active={activeTab === "log"}
+						backgroundColor={activeTab === "log" ? Theme.primaryPastel : "transparent"}
 						onPress={() => setActiveTab("log")}
 					>
 						<History
@@ -221,6 +211,9 @@ export default function ProjectTaskScreen() {
 				{/* Content */}
 				{activeTab === "tasks" ? (
 					<FlatList
+						maxToRenderPerBatch={15}
+						windowSize={5}
+						initialNumToRender={8}
 						data={[
 							{
 								type: "header",

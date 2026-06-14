@@ -9,7 +9,7 @@ import {
 	Flag,
 	Trash2,
 } from "lucide-react-native";
-import { useState } from "react";
+import React, { useState } from "react";
 import { Button, styled, Text, XStack, YStack } from "tamagui";
 import { PremiumAlertDialog } from "../common/PremiumAlertDialog";
 import { Theme } from "@/constants/Theme";
@@ -17,11 +17,8 @@ import { Theme } from "@/constants/Theme";
 const TaskCard = styled(YStack, {
 	padding: "$4",
 	borderRadius: 8, // Crisp corners
-	backgroundColor: Theme.surface,
 	borderWidth: 1,
-	borderColor: Theme.border,
 	elevation: 0,
-	pressStyle: { scale: 0.98, backgroundColor: Theme.primaryPastel },
 });
 
 interface TaskItemProps {
@@ -31,7 +28,7 @@ interface TaskItemProps {
 	onEdit?: (task: Task) => void;
 }
 
-export default function TaskItem({
+function TaskItem({
 	task,
 	projectId,
 	onToggle,
@@ -55,45 +52,50 @@ export default function TaskItem({
 		if (isCompleted)
 			return {
 				label: "Complete",
-				color: "#15803D",
-				bg: "#DCFCE7",
-				border: "#86EFAC",
+				color: Theme.accentGreenText,
+				bg: Theme.accentGreen,
+				border: Theme.accentGreenText + "20",
 			};
 		if (isOverdue())
 			return {
 				label: "Overdue",
-				color: "#DC2626",
-				bg: "#FEE2E2",
-				border: "#FCA5A5",
+				color: Theme.accentRedText,
+				bg: Theme.accentRed,
+				border: Theme.accentRedText + "20",
 			};
 		if (task.status === "in_progress")
 			return {
 				label: "On going",
-				color: "#4F46E5",
-				bg: "#EEF2FF",
-				border: "#C7D2FE",
+				color: Theme.accentBlueText,
+				bg: Theme.accentBlue,
+				border: Theme.accentBlueText + "20",
 			};
 		return {
 			label: "To do",
-			color: "#4B5563",
-			bg: "#F3F4F6",
-			border: "#D1D5DB",
+			color: Theme.textMuted,
+			bg: Theme.surfaceMuted,
+			border: Theme.border,
 		};
 	};
 
 	const status = getStatusInfo();
 
 	const priorityColors = {
-		high: { bg: "#FEE2E2", text: "#DC2626", border: "#FCA5A5" },
-		medium: { bg: "#FEF3C7", text: "#D97706", border: "#FCD34D" },
-		low: { bg: "#EFF6FF", text: "#1D4ED8", border: "#BFDBFE" },
+		high: { bg: Theme.accentRed, text: Theme.accentRedText, border: Theme.accentRedText + "20" },
+		medium: { bg: Theme.accentYellow, text: Theme.accentYellowText, border: Theme.accentYellowText + "20" },
+		low: { bg: Theme.accentBlue, text: Theme.accentBlueText, border: Theme.accentBlueText + "20" },
 	};
 	const colors =
 		priorityColors[task.priority as keyof typeof priorityColors] ||
 		priorityColors.low;
 
 	return (
-		<TaskCard opacity={isCompleted ? 0.75 : 1}>
+		<TaskCard
+			opacity={isCompleted ? 0.75 : 1}
+			backgroundColor={Theme.surface}
+			borderColor={Theme.border}
+			pressStyle={{ scale: 0.98, backgroundColor: Theme.primaryPastel }}
+		>
 			<XStack gap="$3" alignItems="flex-start">
 				<Button
 					circular
@@ -246,3 +248,4 @@ export default function TaskItem({
 		</TaskCard>
 	);
 }
+export default React.memo(TaskItem);

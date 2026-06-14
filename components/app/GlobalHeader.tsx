@@ -1,6 +1,6 @@
 import { Theme } from "@/constants/Theme";
 import { MaterialIcons } from "@expo/vector-icons";
-import { ExpoStatusBar } from "expo-status-bar";
+import { StatusBar as ExpoStatusBar } from "expo-status-bar";
 import React from "react";
 import {
 	Platform,
@@ -25,10 +25,11 @@ export default function GlobalHeader({
 }: GlobalHeaderProps) {
 	return (
 		<>
+			<ExpoStatusBar style={Theme.isDark ? "light" : "dark"} />
 			<View
 				style={{
 					paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
-					backgroundColor: Theme.surface,
+					backgroundColor: Theme.primaryPastel,
 					borderBottomWidth: 1,
 					borderBottomColor: Theme.border,
 					paddingHorizontal: 16,

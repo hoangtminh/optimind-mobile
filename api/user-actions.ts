@@ -1,4 +1,4 @@
-import { UserProfile } from "../lib/types/user";
+import { UserProfile, LeaderboardResponse } from "../lib/types/user";
 import { apiGet, apiPut, ApiResponse } from "./client";
 
 export const userActions = {
@@ -9,4 +9,6 @@ export const userActions = {
 		data: Partial<UserProfile>,
 	): Promise<ApiResponse<UserProfile>> =>
 		apiPut<UserProfile>(`/api/users/${id}`, data),
+	getLeaderboard: (): Promise<ApiResponse<LeaderboardResponse>> =>
+		apiGet<LeaderboardResponse>("/api/users/leaderboard"),
 };

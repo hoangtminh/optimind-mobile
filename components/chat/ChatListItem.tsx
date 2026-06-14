@@ -1,3 +1,4 @@
+import React from "react";
 import { useChat } from "@/contexts/ChatContext";
 import { useRouter } from "expo-router";
 import { LogOut, MoreVertical } from "lucide-react-native";
@@ -18,11 +19,8 @@ const StyledCard = styled(XStack, {
 	borderRadius: 8, // Crisp corners
 	alignItems: "center",
 	gap: "$4",
-	backgroundColor: Theme.surface,
 	borderWidth: 1,
-	borderColor: Theme.border,
 	elevation: 0,
-	pressStyle: { scale: 0.98, backgroundColor: Theme.primaryPastel },
 });
 
 interface ChatListItemProps {
@@ -37,7 +35,7 @@ interface ChatListItemProps {
 	hasUnread?: boolean;
 }
 
-export const ChatListItem = ({
+const ChatListItemComponent = ({
 	chat,
 	hasUnread = false,
 }: ChatListItemProps) => {
@@ -49,10 +47,17 @@ export const ChatListItem = ({
 			onPress={() => router.push(`/(main)/(tabs)/chat/${chat.id}`)}
 			borderLeftWidth={hasUnread ? 4 : 0}
 			borderLeftColor={Theme.primary}
+			backgroundColor={Theme.surface}
+			borderColor={Theme.border}
+			pressStyle={{ scale: 0.98, backgroundColor: Theme.primaryPastel }}
 		>
 			<Avatar circular size="$5">
 				<Avatar.Image
-					src={`https://ui-avatars.com/api/?name=${encodeURIComponent(chat.name)}&background=F2EDFA&color=4F378A&bold=true`}
+					src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
+						chat.name,
+					)}&background=${Theme.isDark ? "2A223A" : "F2EDFA"}&color=${
+						Theme.isDark ? "BB86FC" : "4F378A"
+					}&bold=true`}
 				/>
 				<Avatar.Fallback backgroundColor={Theme.primaryPastel} />
 			</Avatar>
@@ -154,4 +159,5 @@ export const ChatListItem = ({
 		</StyledCard>
 	);
 };
+export const ChatListItem = React.memo(ChatListItemComponent);
 export default ChatListItem;

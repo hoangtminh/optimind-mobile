@@ -5,7 +5,8 @@ import React, {
 	useEffect,
 	useState,
 } from "react";
-import { userActions, UserProfile } from "../api/user-actions";
+import { userActions } from "../api/user-actions";
+import { UserProfile } from "../lib/types/user";
 import { useAuth } from "../hooks/useAuth";
 
 interface UserContextType {

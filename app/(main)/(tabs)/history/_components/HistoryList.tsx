@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { GroupedSession, ListStats } from "../_hooks/useHistory";
 import { SessionItem } from "./SessionItem";
+import { Theme } from "@/constants/Theme";
 
 export interface HistoryListProps {
   listStats: ListStats;
@@ -29,7 +30,7 @@ export const HistoryList: React.FC<HistoryListProps> = ({
 }) => {
   return (
     <SafeAreaView
-      style={{ flex: 1, backgroundColor: "#fdf7ff" }}
+      style={{ flex: 1, backgroundColor: Theme.primaryPastel }}
       edges={["top"]}
     >
       <AppHeader title="Study History" />
@@ -42,33 +43,33 @@ export const HistoryList: React.FC<HistoryListProps> = ({
           <RefreshControl
             refreshing={isLoading}
             onRefresh={onRefresh}
-            colors={["#6750A4"]}
-            tintColor="#6750A4"
+            colors={[Theme.primary]}
+            tintColor={Theme.primary}
           />
         }
       >
         {/* Summary Stats (Bento style) */}
         <View className="px-6 pt-5 pb-3">
-          <View className="grid grid-cols-2 gap-4">
-            <View className="bg-white rounded-2xl p-4 items-center justify-center border border-[#f2ecf4]">
+          <View style={{ flexDirection: "row", gap: 12 }}>
+            <View style={{ flex: 1, backgroundColor: Theme.surface, borderRadius: 12, padding: 16, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: Theme.border }}>
               <Text
-                className="text-2xl font-black text-[#6750A4]"
+                style={{ fontSize: 20, fontWeight: "900", color: Theme.primary }}
                 numberOfLines={1}
               >
                 {listStats.displayTotalTime}
               </Text>
-              <Text className="text-xs font-semibold text-[#494551] mt-1.5">
+              <Text style={{ fontSize: 11, fontWeight: "600", color: Theme.textMuted, marginTop: 6 }}>
                 Total Study Time
               </Text>
             </View>
-            <View className="bg-white rounded-2xl p-4 items-center justify-center border border-[#f2ecf4]">
+            <View style={{ flex: 1, backgroundColor: Theme.surface, borderRadius: 12, padding: 16, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: Theme.border }}>
               <Text
-                className="text-2xl font-black text-[#6750A4]"
+                style={{ fontSize: 20, fontWeight: "900", color: Theme.primary }}
                 numberOfLines={1}
               >
                 {listStats.completedSessions}
               </Text>
-              <Text className="text-xs font-semibold text-[#494551] mt-1.5">
+              <Text style={{ fontSize: 11, fontWeight: "600", color: Theme.textMuted, marginTop: 6 }}>
                 Sessions Completed
               </Text>
             </View>
@@ -80,7 +81,7 @@ export const HistoryList: React.FC<HistoryListProps> = ({
           {groupedSessions.length > 0 ? (
             groupedSessions.map((group) => (
               <View key={group.title} className="mb-4">
-                <Text className="text-[#494551] font-bold text-sm tracking-wide mb-3 uppercase px-1">
+                <Text style={{ color: Theme.text, fontWeight: "700", fontSize: 12, letterSpacing: 0.5, marginBottom: 12, textTransform: "uppercase", paddingHorizontal: 4 }}>
                   {group.title}
                 </Text>
                 {group.data.map((session) => (
@@ -94,20 +95,20 @@ export const HistoryList: React.FC<HistoryListProps> = ({
             ))
           ) : isLoading ? (
             <View className="items-center justify-center p-12 mt-8">
-              <ActivityIndicator size="large" color="#6750A4" />
-              <Text className="text-[#494551] text-sm mt-3 font-semibold">
+              <ActivityIndicator size="large" color={Theme.primary} />
+              <Text style={{ color: Theme.textMuted, fontSize: 14, marginTop: 12, fontWeight: "600" }}>
                 Loading study history...
               </Text>
             </View>
           ) : (
-            <View className="bg-white p-8 rounded-2xl border border-purple-50 items-center justify-center mt-8">
-              <View className="w-16 h-16 rounded-full bg-[#f8f2fa] items-center justify-center mb-4">
-                <Calendar size={28} color="#7a7582" />
+            <View style={{ backgroundColor: Theme.surface, padding: 32, borderRadius: 12, borderWidth: 1, borderColor: Theme.border, alignItems: "center", justifyContent: "center", marginTop: 32 }}>
+              <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: Theme.primaryPastel, alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
+                <Calendar size={28} color={Theme.textMuted} />
               </View>
-              <Text className="text-base font-semibold text-[#1d1b20] text-center mb-1">
+              <Text style={{ fontSize: 16, fontWeight: "700", color: Theme.text, textAlign: "center", marginBottom: 4 }}>
                 No Sessions Yet
               </Text>
-              <Text className="text-sm text-[#494551] text-center max-w-[240px]">
+              <Text style={{ fontSize: 13, color: Theme.textMuted, textAlign: "center", maxWidth: 240 }}>
                 Start your first study session to track your cognitive metrics
                 and progress!
               </Text>

@@ -8,10 +8,7 @@ const StyledFriendCard = styled(XStack, {
 	borderRadius: 8, // Crisp corners
 	alignItems: "center",
 	gap: "$4",
-	backgroundColor: Theme.surface,
 	borderWidth: 1,
-	borderColor: Theme.border,
-	pressStyle: { scale: 0.98, backgroundColor: Theme.primaryPastel },
 });
 
 interface FriendListItemProps {
@@ -24,16 +21,25 @@ interface FriendListItemProps {
 	onMessagePress?: () => void;
 }
 
-export const FriendListItem = ({
+const FriendListItemComponent = ({
 	friend,
 	onPress,
 	onMessagePress,
 }: FriendListItemProps) => {
 	return (
-		<StyledFriendCard onPress={onPress}>
+		<StyledFriendCard
+			onPress={onPress}
+			backgroundColor={Theme.surface}
+			borderColor={Theme.border}
+			pressStyle={{ scale: 0.98, backgroundColor: Theme.primaryPastel }}
+		>
 			<Avatar circular size="$5">
 				<Avatar.Image
-					src={`https://ui-avatars.com/api/?name=${encodeURIComponent(friend.name)}&background=F2EDFA&color=4F378A&bold=true`}
+					src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
+						friend.name,
+					)}&background=${Theme.isDark ? "2A223A" : "F2EDFA"}&color=${
+						Theme.isDark ? "BB86FC" : "4F378A"
+					}&bold=true`}
 				/>
 				<Avatar.Fallback backgroundColor={Theme.primaryPastel} />
 				{friend.isOnline && (
@@ -75,4 +81,5 @@ export const FriendListItem = ({
 		</StyledFriendCard>
 	);
 };
+export const FriendListItem = React.memo(FriendListItemComponent);
 export default FriendListItem;

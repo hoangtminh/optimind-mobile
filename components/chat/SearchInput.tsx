@@ -3,19 +3,11 @@ import { Input, View, YStack, styled } from "tamagui";
 import { Theme } from "@/constants/Theme";
 
 const StyledInput = styled(Input, {
-	backgroundColor: Theme.surface,
 	borderWidth: 1,
-	borderColor: Theme.border,
 	height: 44,
 	borderRadius: 6, // Crisp corners
 	paddingLeft: 44,
 	fontSize: "$3",
-	color: Theme.text,
-	focusStyle: {
-		backgroundColor: Theme.surface,
-		borderWidth: 1.5,
-		borderColor: Theme.primary,
-	},
 });
 
 interface SearchInputProps {
@@ -44,7 +36,15 @@ export const SearchInput = ({
 				placeholderTextColor={Theme.textMuted as any}
 				value={value}
 				onChangeText={onChangeText}
-				selectionColor={Theme.primary}
+				selectionColor={Theme.primary as any}
+				backgroundColor={Theme.surface}
+				borderColor={Theme.border}
+				color={Theme.text}
+				focusStyle={{
+					backgroundColor: Theme.surface,
+					borderWidth: 1.5,
+					borderColor: Theme.primary,
+				}}
 			/>
 		</YStack>
 	);

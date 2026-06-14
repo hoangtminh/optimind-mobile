@@ -5,6 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { HistoryList } from "./_components/HistoryList";
 import { SessionDetails } from "./_components/SessionDetails";
 import { useHistory } from "./_hooks/useHistory";
+import { Theme } from "@/constants/Theme";
 
 export default function History() {
   const {
@@ -23,7 +24,7 @@ export default function History() {
   if (selectedSessionId && isLoadingDetails) {
     return (
       <SafeAreaView
-        style={{ flex: 1, backgroundColor: "#fdf7ff" }}
+        style={{ flex: 1, backgroundColor: Theme.primaryPastel }}
         edges={["top"]}
       >
         <AppHeader
@@ -32,8 +33,8 @@ export default function History() {
           onBack={handleGoBack}
         />
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#6750A4" />
-          <Text className="text-[#494551] text-sm mt-3 font-semibold">
+          <ActivityIndicator size="large" color={Theme.primary} />
+          <Text style={{ color: Theme.textMuted, fontSize: 14, marginTop: 12, fontWeight: "600" }}>
             Loading details...
           </Text>
         </View>

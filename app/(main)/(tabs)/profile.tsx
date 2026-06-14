@@ -1,6 +1,6 @@
 import GlobalHeader from "@/components/app/GlobalHeader";
 import { useStudySessions } from "@/contexts/StudySessionContext";
-import { useAuth } from "@/hooks/useAuth";
+import { useUser } from "@/contexts/UserContext";
 import { useProgressCalculator, useTimeFormatter } from "@/hooks/useUtils";
 import { DrawerActions, useNavigation } from "@react-navigation/native";
 import { Camera, Edit, Flame, Target, Trophy, User } from "lucide-react-native";
@@ -17,14 +17,15 @@ import { Theme } from "@/constants/Theme";
 
 export default function Profile() {
 	const navigation = useNavigation();
-	const { user } = useAuth();
+	const { user } = useUser();
+	const styles = getStyles();
 	const { studySessions } = useStudySessions();
 	const { getExperienceProgress } = useProgressCalculator();
 	const { formatDuration } = useTimeFormatter();
 
 	if (!user) return null;
 
-	const experienceProgress = getExperienceProgress(user.exp);
+	const experienceProgress = getExperienceProgress(user.exp || 0);
 
 	const completedTodaySessions = studySessions.filter((session) => {
 		const today = new Date().toDateString();
@@ -123,7 +124,7 @@ export default function Profile() {
 					<View style={styles.statCard}>
 						<User size={20} color={Theme.accentBlueText} />
 						<Text style={styles.statNumber}>
-							{formatDuration(user.studyTime)}
+							{formatDuration(user.studyTime || 0)}
 						</Text>
 						<Text style={styles.statLabel}>Total Study</Text>
 					</View>
@@ -192,7 +193,7 @@ function ChevronRightIcon() {
 	);
 }
 
-const styles = StyleSheet.create({
+const getStyles = () => StyleSheet.create({
 	container: {
 		flex: 1,
 		backgroundColor: Theme.background,

@@ -40,30 +40,16 @@ interface TaskModalProps {
 }
 
 const StyledInput = styled(Input, {
-	backgroundColor: Theme.surface,
 	borderWidth: 1,
-	borderColor: Theme.border,
 	height: 48,
 	borderRadius: 6,
 	fontSize: "$4",
-	color: Theme.text,
-	focusStyle: {
-		borderColor: Theme.primary,
-		backgroundColor: Theme.surface,
-	},
 });
 
 const StyledTextArea = styled(TextArea, {
-	backgroundColor: Theme.surface,
 	borderWidth: 1,
-	borderColor: Theme.border,
 	borderRadius: 6,
 	fontSize: "$4",
-	color: Theme.text,
-	focusStyle: {
-		borderColor: Theme.primary,
-		backgroundColor: Theme.surface,
-	},
 });
 
 export default function TaskModal({
@@ -341,6 +327,13 @@ export default function TaskModal({
 									placeholderTextColor={Theme.textMuted as any}
 									value={title}
 									onChangeText={setTitle}
+									backgroundColor={Theme.surface}
+									borderColor={Theme.border}
+									color={Theme.text}
+									focusStyle={{
+										borderColor: Theme.primary,
+										backgroundColor: Theme.surface,
+									}}
 								/>
 							</YStack>
 
@@ -362,6 +355,13 @@ export default function TaskModal({
 									paddingTop="$3"
 									value={description}
 									onChangeText={setDescription}
+									backgroundColor={Theme.surface}
+									borderColor={Theme.border}
+									color={Theme.text}
+									focusStyle={{
+										borderColor: Theme.primary,
+										backgroundColor: Theme.surface,
+									}}
 								/>
 							</YStack>
 
