@@ -9,10 +9,18 @@
       "distribution": "internal"
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      }
     },
     "production": {
-      "autoIncrement": true
+      "android": {
+        "env": {
+          "NODE_OPTIONS": "--max-old-space-size=8192"
+        },
+        "resourceClass": "large"
+      }
     }
   },
   "submit": {
