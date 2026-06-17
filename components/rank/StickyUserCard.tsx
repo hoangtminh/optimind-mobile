@@ -1,7 +1,12 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { Theme } from "@/constants/Theme";
 import { LeaderboardUser } from "@/lib/types/user";
+import Animated, {
+	useSharedValue,
+	useAnimatedStyle,
+	withSpring,
+} from "react-native-reanimated";
 
 interface StickyUserCardProps {
 	visible: boolean;
@@ -11,25 +16,39 @@ interface StickyUserCardProps {
 }
 
 export function StickyUserCard({ visible, user, formatDuration, bottomInsets }: StickyUserCardProps) {
-	if (!visible || !user) return null;
+	const translateY = useSharedValue(200);
+
+	useEffect(() => {
+		translateY.value = withSpring(visible ? 0 : 220, {
+			damping: 18,
+			stiffness: 110,
+		});
+	}, [visible]);
+
+	if (!user) return null;
+
+	const animatedStyle = useAnimatedStyle(() => ({
+		transform: [{ translateY: translateY.value }],
+	}));
 
 	return (
-		<View
+		<Animated.View
 			style={[
 				styles.overlayContainer,
 				{ paddingBottom: Math.max(bottomInsets, 12) },
+				animatedStyle,
 			]}
 		>
 			<View style={styles.headerRow}>
-				<Text style={styles.headerTitle}>
+				<Text style={[styles.headerTitle, { color: Theme.primary }]}>
 					YOUR STANDING
 				</Text>
-				<View style={styles.divider} />
+				<View style={[styles.divider, { backgroundColor: Theme.border }]} />
 			</View>
-			<View style={styles.cardContainer}>
+			<View style={[styles.cardContainer, { backgroundColor: Theme.primaryPastel, borderColor: Theme.primary }]}>
 				{/* Rank Number */}
-				<View style={styles.rankBadge}>
-					<Text style={styles.rankText}>
+				<View style={[styles.rankBadge, { backgroundColor: Theme.primary }]}>
+					<Text style={[styles.rankText, { color: Theme.primaryText }]}>
 						#{user.rank}
 					</Text>
 				</View>
@@ -37,29 +56,31 @@ export function StickyUserCard({ visible, user, formatDuration, bottomInsets }: 
 				{/* User Info */}
 				<View style={styles.userInfo}>
 					<View style={styles.nameRow}>
-						<Text numberOfLines={1} style={styles.nameText}>
+						<Text numberOfLines={1} style={[styles.nameText, { color: Theme.text }]}>
 							{user.name}
 						</Text>
-						<Text style={styles.userBadge}>
-							You
-						</Text>
+						<View style={styles.badgeContainer}>
+							<Text style={[styles.userBadge, { backgroundColor: Theme.primary, color: Theme.primaryText }]}>
+								You
+							</Text>
+						</View>
 					</View>
-					<Text style={styles.statsText}>
+					<Text style={[styles.statsText, { color: Theme.textMuted }]}>
 						Level {user.level} • {user.streak} day streak
 					</Text>
 				</View>
 
 				{/* Study Stats */}
 				<View style={styles.studyStats}>
-					<Text style={styles.durationText}>
+					<Text style={[styles.durationText, { color: Theme.text }]}>
 						{formatDuration(user.totalStudyTime)}
 					</Text>
-					<Text style={styles.tasksText}>
+					<Text style={[styles.tasksText, { color: Theme.textMuted }]}>
 						{user.completedTasks} tasks
 					</Text>
 				</View>
 			</View>
-		</View>
+		</Animated.View>
 	);
 }
 
@@ -75,10 +96,10 @@ const styles = StyleSheet.create({
 		paddingTop: 12,
 		paddingHorizontal: 20,
 		shadowColor: "#000",
-		shadowOffset: { width: 0, height: -4 },
-		shadowOpacity: 0.08,
-		shadowRadius: 10,
-		elevation: 10,
+		shadowOffset: { width: 0, height: -6 },
+		shadowOpacity: 0.1,
+		shadowRadius: 12,
+		elevation: 12,
 	},
 	headerRow: {
 		flexDirection: "row",
@@ -88,30 +109,30 @@ const styles = StyleSheet.create({
 	headerTitle: {
 		fontSize: 11,
 		fontWeight: "800",
-		color: Theme.primary,
-		letterSpacing: 0.5,
+		letterSpacing: 0.8,
 	},
 	divider: {
 		flex: 1,
 		height: 1,
-		backgroundColor: Theme.border,
-		marginLeft: 8,
+		marginLeft: 10,
 	},
 	cardContainer: {
-		paddingHorizontal: 14,
-		paddingVertical: 12,
-		borderRadius: 12,
-		backgroundColor: Theme.primaryPastel,
+		paddingHorizontal: 16,
+		paddingVertical: 14,
+		borderRadius: 14,
 		borderWidth: 1,
-		borderColor: Theme.primary,
 		flexDirection: "row",
 		alignItems: "center",
+		shadowColor: "#000",
+		shadowOffset: { width: 0, height: 2 },
+		shadowOpacity: 0.05,
+		shadowRadius: 4,
+		elevation: 2,
 	},
 	rankBadge: {
-		width: 36,
-		height: 36,
-		borderRadius: 18,
-		backgroundColor: Theme.primary,
+		width: 38,
+		height: 38,
+		borderRadius: 19,
 		alignItems: "center",
 		justifyContent: "center",
 		marginRight: 14,
@@ -119,7 +140,6 @@ const styles = StyleSheet.create({
 	rankText: {
 		fontSize: 13,
 		fontWeight: "900",
-		color: Theme.primaryText,
 	},
 	userInfo: {
 		flex: 1,
@@ -131,23 +151,23 @@ const styles = StyleSheet.create({
 	nameText: {
 		fontWeight: "700",
 		fontSize: 15,
-		color: Theme.text,
 		maxWidth: 140,
+	},
+	badgeContainer: {
+		marginLeft: 6,
+		borderRadius: 8,
+		overflow: "hidden",
 	},
 	userBadge: {
 		fontSize: 10,
-		backgroundColor: Theme.primary,
-		color: Theme.primaryText,
 		paddingHorizontal: 6,
 		paddingVertical: 1.5,
-		borderRadius: 8,
-		marginLeft: 6,
 		fontWeight: "800",
 	},
 	statsText: {
-		color: Theme.textMuted,
 		fontSize: 12,
 		marginTop: 2,
+		fontWeight: "500",
 	},
 	studyStats: {
 		alignItems: "flex-end",
@@ -155,11 +175,10 @@ const styles = StyleSheet.create({
 	durationText: {
 		fontSize: 16,
 		fontWeight: "800",
-		color: Theme.text,
 	},
 	tasksText: {
 		fontSize: 10,
-		color: Theme.textMuted,
+		marginTop: 1,
 	},
 });
 
