@@ -37,7 +37,9 @@ export const IncomingRequestItem = React.memo(({
 				<Avatar.Image
 					src={request.user.imageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(
 						request.user.username,
-					)}&background=F2EDFA&color=4F378A&bold=true`}
+					)}&background=${Theme.isDark ? "2A223A" : "F2EDFA"}&color=${
+						Theme.isDark ? "BB86FC" : "4F378A"
+					}&bold=true`}
 				/>
 				<Avatar.Fallback backgroundColor={Theme.primaryPastel} />
 			</Avatar>
@@ -63,7 +65,7 @@ export const IncomingRequestItem = React.memo(({
 					size="$2"
 					circular
 					backgroundColor={Theme.primary}
-					icon={<Check size={16} color="white" />}
+					icon={<Check size={16} color={Theme.primaryText} />}
 					onPress={handleAccept}
 					pressStyle={{ opacity: 0.8 }}
 				/>

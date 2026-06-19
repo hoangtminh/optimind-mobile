@@ -2,9 +2,9 @@ import { AppHeader } from "@/components/common/AppHeader";
 import React from "react";
 import { ActivityIndicator, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { HistoryList } from "./_components/HistoryList";
-import { SessionDetails } from "./_components/SessionDetails";
-import { useHistory } from "./_hooks/useHistory";
+import { HistoryList } from "@/components/history/HistoryList";
+import { SessionDetails } from "@/components/history/SessionDetails";
+import { useHistory } from "@/hooks/useHistory";
 import { Theme } from "@/constants/Theme";
 
 export default function History() {
@@ -24,7 +24,7 @@ export default function History() {
   if (selectedSessionId && isLoadingDetails) {
     return (
       <SafeAreaView
-        style={{ flex: 1, backgroundColor: Theme.primaryPastel }}
+        style={{ flex: 1, backgroundColor: Theme.background }}
         edges={["top"]}
       >
         <AppHeader

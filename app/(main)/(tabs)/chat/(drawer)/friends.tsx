@@ -215,11 +215,11 @@ export default function FriendsScreen() {
 					}}
 					rightElement={
 						<Button
-							icon={<Users size={20} color="white" />}
+							icon={<Users size={20} color={Theme.text} />}
 							circular
 							chromeless
 							pressStyle={{
-								backgroundColor: "rgba(255, 255, 255, 0.1)",
+								backgroundColor: Theme.isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.05)",
 							}}
 						/>
 					}
@@ -261,9 +261,9 @@ export default function FriendsScreen() {
 						pressStyle={{ opacity: 0.8 }}
 					>
 						{isSearching ? (
-							<ActivityIndicator size="small" color="white" />
+							<ActivityIndicator size="small" color={Theme.primaryText} />
 						) : (
-							<Button.Text color="white" fontWeight="700">Search</Button.Text>
+							<Button.Text color={Theme.primaryText} fontWeight="700">Search</Button.Text>
 						)}
 					</Button>
 				</XStack>

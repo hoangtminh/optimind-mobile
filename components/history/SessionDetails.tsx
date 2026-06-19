@@ -5,8 +5,8 @@ import React from "react";
 import { ScrollView, Text, useWindowDimensions, View } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { SessionMetrics } from "../_hooks/useHistory";
-import { formatSessionDateOnly } from "../_utils/historyUtils";
+import { SessionMetrics } from "@/hooks/useHistory";
+import { formatSessionDateOnly } from "@/utils/historyUtils";
 import { Theme } from "@/constants/Theme";
 
 export interface SessionDetailsProps {
@@ -24,7 +24,7 @@ export const SessionDetails: React.FC<SessionDetailsProps> = ({
 
   return (
     <SafeAreaView
-      style={{ flex: 1, backgroundColor: Theme.primaryPastel }}
+      style={{ flex: 1, backgroundColor: Theme.background }}
       edges={["top"]}
     >
       <AppHeader
@@ -227,3 +227,5 @@ export const SessionDetails: React.FC<SessionDetailsProps> = ({
     </SafeAreaView>
   );
 };
+
+export default SessionDetails;

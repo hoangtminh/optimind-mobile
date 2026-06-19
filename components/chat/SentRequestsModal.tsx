@@ -84,7 +84,9 @@ export const SentRequestsModal = React.memo(({
 											<Avatar.Image
 												src={req.user.imageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(
 													req.user.username,
-												)}&background=F2EDFA&color=4F378A&bold=true`}
+												)}&background=${Theme.isDark ? "2A223A" : "F2EDFA"}&color=${
+													Theme.isDark ? "BB86FC" : "4F378A"
+												}&bold=true`}
 											/>
 											<Avatar.Fallback backgroundColor={Theme.primaryPastel} />
 										</Avatar>

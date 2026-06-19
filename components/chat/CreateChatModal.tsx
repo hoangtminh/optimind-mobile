@@ -114,6 +114,7 @@ export function CreateChatModal({
 							backgroundColor={Theme.surface}
 							borderWidth={1}
 							borderColor={Theme.border}
+							color={Theme.text}
 							focusStyle={{ borderColor: Theme.primary }}
 							paddingHorizontal="$3.5"
 							height={44}
@@ -148,6 +149,7 @@ export function CreateChatModal({
 								backgroundColor={Theme.surface}
 								borderWidth={1}
 								borderColor={Theme.border}
+								color={Theme.text}
 								focusStyle={{ borderColor: Theme.primary }}
 								paddingLeft={38}
 								height={44}
@@ -186,7 +188,7 @@ export function CreateChatModal({
 										>
 											<Avatar circular size="$3.5">
 												<Avatar.Image
-													src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=F2EDFA&color=4F378A&bold=true`}
+													src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=${Theme.isDark ? "2A223A" : "F2EDFA"}&color=${Theme.isDark ? "BB86FC" : "4F378A"}&bold=true`}
 												/>
 												<Avatar.Fallback backgroundColor={Theme.primaryPastel} />
 											</Avatar>

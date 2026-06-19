@@ -9,6 +9,7 @@ import React, { useState, useEffect } from "react";
 import { FlatList } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, Text, View, YStack } from "tamagui";
+import { Theme } from "@/constants/Theme";
 
 export default function AllFriendsScreen() {
   const router = useRouter();
@@ -52,10 +53,10 @@ export default function AllFriendsScreen() {
 
   return (
     <SafeAreaView
-      style={{ flex: 1, backgroundColor: "#f8f9fb" }}
+      style={{ flex: 1, backgroundColor: Theme.background }}
       edges={["top"]}
     >
-      <YStack flex={1} backgroundColor="#fdf7ff">
+      <YStack flex={1} backgroundColor={Theme.background}>
         <AppHeader
           title="All Friends"
           showBackButton
@@ -64,11 +65,11 @@ export default function AllFriendsScreen() {
           }}
           rightElement={
             <Button
-              icon={<Users size={20} color="white" />}
+              icon={<Users size={20} color={Theme.text} />}
               circular
               chromeless
               pressStyle={{
-                backgroundColor: "rgba(255, 255, 255, 0.1)",
+                backgroundColor: Theme.isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.05)",
               }}
             />
           }
@@ -103,7 +104,7 @@ export default function AllFriendsScreen() {
               alignItems="center"
               marginTop="$10"
             >
-              <Text color="$on_surface_variant" fontWeight="500">
+              <Text color={Theme.textMuted} fontWeight="500">
                 {isLoading ? "Loading..." : "No friends found matching your criteria."}
               </Text>
             </View>

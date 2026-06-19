@@ -44,7 +44,7 @@ export const MessageBubble = ({
 
 	const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(
 		message.author?.username || "U",
-	)}&background=F2EDFA&color=4F378A`;
+	)}&background=${Theme.isDark ? "2A223A" : "F2EDFA"}&color=${Theme.isDark ? "BB86FC" : "4F378A"}`;
 
 	return (
 		<XStack

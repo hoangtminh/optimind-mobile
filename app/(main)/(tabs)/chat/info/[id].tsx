@@ -15,6 +15,7 @@ import { useState } from "react";
 import { ScrollView, Switch } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Avatar, Button, Text, View, XStack, YStack } from "tamagui";
+import { Theme } from "@/constants/Theme";
 
 // Mock data for members since it's not in the context yet
 const mockMembers = [
@@ -71,9 +72,9 @@ export default function ChatInfoScreen() {
 	};
 
 	return (
-		<SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>
+		<SafeAreaView style={{ flex: 1, backgroundColor: Theme.background }} edges={["top", "bottom"]}>
 			<Stack.Screen options={{ headerShown: false }} />
-			<YStack flex={1}>
+			<YStack flex={1} backgroundColor={Theme.background}>
 				<AppHeader
 					title="Chat Info"
 					showBackButton
@@ -82,6 +83,7 @@ export default function ChatInfoScreen() {
 					}}
 				/>
 				<ScrollView
+					style={{ flex: 1, backgroundColor: Theme.background }}
 					contentContainerStyle={{
 						paddingBottom: 32,
 					}}
@@ -95,22 +97,22 @@ export default function ChatInfoScreen() {
 									borderRadius="$6"
 									elevation="$2"
 									borderWidth={4}
-									borderColor="$surface_container_low"
+									borderColor={Theme.surface}
 								>
 									<Avatar.Image src="https://lh3.googleusercontent.com/aida-public/AB6AXuCG9fCYwSlzFriunomG-x1HCka0Kc6hfkDC1DXqzaie0wABfXqfG3_Rg29zrIi-gtU1Ffw6Yfy5uZ3mgTP3cjd-oY7GtqnAe9rRww1sdOIVQsRVYLXgXTbFg32z3GRFeP_JeyYWrTXB7tQAmnchbyjBopZI211N7zRsUAKamxZ-VulBpFnGeR3NiDNN9WNyci2k21xGdLBpXmV6CpU_GeRq9QFz1PZhxRUNC2JdCpGFEparPPBXNoC3HMrkKeQuz-1jiTZ9hdK8gQ" />
-									<Avatar.Fallback backgroundColor="$surface_container" />
+									<Avatar.Fallback backgroundColor={Theme.surfaceMuted} />
 								</Avatar>
 								<View
 									position="absolute"
 									bottom={-8}
 									right={-8}
-									backgroundColor="#6750A4"
+									backgroundColor={Theme.primary}
 									padding="$1.5"
 									borderRadius="$3"
 									borderWidth={4}
-									borderColor="white"
+									borderColor={Theme.surface}
 								>
-									<Group size={14} color="white" />
+									<Group size={14} color={Theme.primaryText} />
 								</View>
 							</View>
 							<Text
@@ -118,12 +120,12 @@ export default function ChatInfoScreen() {
 								fontWeight="700"
 								textAlign="center"
 								marginBottom="$1"
-								color="$on_surface"
+								color={Theme.text}
 							>
 								{chatRoom?.name || "Chat Group"}
 							</Text>
 							<Text
-								color="$on_surface_variant"
+								color={Theme.textMuted}
 								fontSize="$3"
 								fontWeight="500"
 							>
@@ -144,27 +146,29 @@ export default function ChatInfoScreen() {
 									fontWeight="700"
 									textTransform="uppercase"
 									letterSpacing={1.5}
-									color="$on_surface_variant"
+									color={Theme.textMuted}
 								>
 									Members
 								</Text>
 								<Text
 									fontSize="$2"
 									fontWeight="600"
-									color="#6750A4"
+									color={Theme.primaryPastelText}
 									paddingHorizontal="$2"
 									paddingVertical="$1"
-									backgroundColor="#f2ecf4"
+									backgroundColor={Theme.primaryPastel}
 									borderRadius="$2"
 								>
 									Shared Workspace
 								</Text>
 							</XStack>
 							<YStack
-								backgroundColor="$surface_container_low"
+								backgroundColor={Theme.surface}
 								borderRadius={24}
 								paddingHorizontal="$2"
 								gap="$1"
+								borderWidth={1}
+								borderColor={Theme.border}
 							>
 								{members.map((member) => (
 									<XStack
@@ -174,15 +178,10 @@ export default function ChatInfoScreen() {
 										padding="$3"
 										backgroundColor={
 											member.id === currentUser?.id
-												? "$surface_container_lowest"
+												? Theme.surfaceMuted
 												: "transparent"
 										}
 										borderRadius="$5"
-										elevation={
-											member.id === currentUser?.id
-												? 2
-												: 0
-										}
 										hoverStyle={{
 											transform: [{ translateX: 4 }],
 										}}
@@ -192,21 +191,22 @@ export default function ChatInfoScreen() {
 												<Avatar.Image
 													src={
 														member.avatar ||
-														`https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=f2ecf4&color=6750A4&bold=true`
+														`https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=${Theme.isDark ? "2A223A" : "F2EDFA"}&color=${Theme.isDark ? "BB86FC" : "4F378A"}&bold=true`
 													}
 												/>
-												<Avatar.Fallback backgroundColor="#f2ecf4" />
+												<Avatar.Fallback backgroundColor={Theme.primaryPastel} />
 											</Avatar>
 											<YStack>
 												<Text
 													fontSize="$3"
 													fontWeight="600"
+													color={Theme.text}
 												>
 													{member.name}
 												</Text>
 												<Text
 													fontSize="$1"
-													color="$on_surface_variant"
+													color={Theme.textMuted}
 													textTransform="uppercase"
 													letterSpacing={0.5}
 												>
@@ -218,7 +218,7 @@ export default function ChatInfoScreen() {
 											member.id !== currentUser?.id && (
 												<Verified
 													size={14}
-													color="$on_surface_variant"
+													color={Theme.primary}
 												/>
 											)}
 									</XStack>
@@ -233,74 +233,72 @@ export default function ChatInfoScreen() {
 								fontWeight="700"
 								textTransform="uppercase"
 								letterSpacing={1.5}
-								color="$on_surface_variant"
+								color={Theme.textMuted}
 								marginBottom="$1"
 								paddingHorizontal="$2"
 							>
 								Chat Settings
 							</Text>
 							<YStack
-								backgroundColor="$surface_container_low"
+								backgroundColor={Theme.surface}
 								borderRadius={24}
 								padding="$2"
 								gap="$3"
+								borderWidth={1}
+								borderColor={Theme.border}
 							>
 								<XStack
 									alignItems="center"
 									justifyContent="space-between"
 									paddingHorizontal="$4"
-									hoverStyle={{
-										backgroundColor:
-											"$surface_container_high",
-									}}
+									paddingVertical="$1.5"
 									borderRadius="$5"
 								>
 									<XStack alignItems="center" gap="$4">
 										<View
 											borderRadius="$3"
-											backgroundColor="$surface_container_highest"
 											alignItems="center"
 											justifyContent="center"
 										>
 											<BellOff
 												size={20}
-												color="#6750A4"
+												color={Theme.primary}
 											/>
 										</View>
-										<Text fontSize="$3" fontWeight="500">
+										<Text fontSize="$3" fontWeight="500" color={Theme.text}>
 											Mute Notifications
 										</Text>
 									</XStack>
 									<Switch
 										value={isMuted}
 										onValueChange={setIsMuted}
+										trackColor={{ false: Theme.border, true: Theme.primary }}
+										thumbColor={Theme.surface}
 									/>
 								</XStack>
 								<XStack
 									alignItems="center"
 									justifyContent="space-between"
 									paddingHorizontal="$4"
-									hoverStyle={{
-										backgroundColor:
-											"$surface_container_high",
-									}}
+									paddingVertical="$1.5"
 									borderRadius="$5"
 								>
 									<XStack alignItems="center" gap="$4">
 										<View
-											backgroundColor="$surface_container_highest"
 											alignItems="center"
 											justifyContent="center"
 										>
-											<Pin size={20} color="#6750A4" />
+											<Pin size={20} color={Theme.primary} />
 										</View>
-										<Text fontSize="$3" fontWeight="500">
+										<Text fontSize="$3" fontWeight="500" color={Theme.text}>
 											Pin to Top
 										</Text>
 									</XStack>
 									<Switch
 										value={isPinned}
 										onValueChange={setIsPinned}
+										trackColor={{ false: Theme.border, true: Theme.primary }}
+										thumbColor={Theme.surface}
 									/>
 								</XStack>
 							</YStack>
@@ -313,11 +311,11 @@ export default function ChatInfoScreen() {
 								borderRadius="$5"
 								pressStyle={{ scale: 0.95 }}
 								onPress={() => {}}
-								backgroundColor="#6750A4"
+								backgroundColor={Theme.primary}
 							>
-								<UserPlus size={18} color="white" />
+								<UserPlus size={18} color={Theme.primaryText} />
 								<Text
-									color="white"
+									color={Theme.primaryText}
 									fontWeight="700"
 									marginLeft="$2"
 								>
@@ -327,18 +325,18 @@ export default function ChatInfoScreen() {
 							<Button
 								height="$5"
 								borderRadius="$5"
-								borderWidth={2}
-								borderColor="#ffdad6"
-								backgroundColor="#fffbfa"
+								borderWidth={1}
+								borderColor={Theme.border}
+								backgroundColor={Theme.accentRed}
 								onPress={handleLeaveChat}
 								pressStyle={{
 									scale: 0.95,
-									backgroundColor: "#ffdad6",
+									backgroundColor: Theme.border,
 								}}
-								icon={<LogOut size={18} color="#ba1a1a" />}
+								icon={<LogOut size={18} color={Theme.accentRedText} />}
 							>
 								<Text
-									color="#ba1a1a"
+									color={Theme.accentRedText}
 									fontWeight="700"
 									marginLeft="$2"
 								>

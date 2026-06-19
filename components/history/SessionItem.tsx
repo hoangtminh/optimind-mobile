@@ -6,7 +6,7 @@ import { Text, TouchableOpacity, View } from "react-native";
 import {
   formatSecondsDuration,
   formatSessionDateTime,
-} from "../_utils/historyUtils";
+} from "@/utils/historyUtils";
 
 export interface SessionItemProps {
   session: StudySession;

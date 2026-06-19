@@ -7,10 +7,11 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { Info, Paperclip, Send, Smile } from "lucide-react-native";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, TouchableOpacity } from "react-native";
-import { KeyboardStickyView } from "react-native-keyboard-controller";
+import { ActivityIndicator, FlatList, Platform, TouchableOpacity } from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, Input, View, XStack, YStack } from "tamagui";
+import { Theme } from "@/constants/Theme";
 
 export default function ConversationScreen() {
   const router = useRouter();
@@ -84,7 +85,7 @@ export default function ConversationScreen() {
 
   return (
     <SafeAreaView
-      style={{ flex: 1, backgroundColor: "#fdf7ff" }}
+      style={{ flex: 1, backgroundColor: Theme.background }}
       edges={["top", "bottom"]}
     >
       <Stack.Screen options={{ headerShown: false }} />
@@ -97,86 +98,92 @@ export default function ConversationScreen() {
           }}
           rightElement={
             <Button
-              icon={<Info size={20} color="white" />}
+              icon={<Info size={20} color={Theme.text} />}
               circular
               chromeless
               onPress={() =>
                 router.push(`/(main)/(tabs)/chat/info/${chatRoom?.id}`)
               }
               pressStyle={{
-                backgroundColor: "rgba(255, 255, 255, 0.1)",
+                backgroundColor: Theme.isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.05)",
               }}
             />
           }
         />
-        <Container style={{ flex: 1 }}>
-          <FlatList
-            data={messages}
-            renderItem={renderMessage}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={{
-              padding: 16,
-              paddingTop: 20,
-              paddingBottom: 10,
-            }} // paddingTop for header
-            inverted
-            onEndReached={loadMoreMessages}
-            onEndReachedThreshold={0.5}
-            ListFooterComponent={
-              isLoadingHistory ? (
-                <View marginVertical="$4">
-                  <ActivityIndicator color="#6750A4" />
-                </View>
-              ) : null
-            }
-          />
-        </Container>
-        <KeyboardStickyView offset={{ closed: 0, opened: 0 }}>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
+          <Container style={{ flex: 1 }}>
+            <FlatList
+              data={messages}
+              renderItem={renderMessage}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={{
+                padding: 16,
+                paddingTop: 20,
+                paddingBottom: 10,
+              }} // paddingTop for header
+              inverted
+              onEndReached={loadMoreMessages}
+              onEndReachedThreshold={0.5}
+              ListFooterComponent={
+                isLoadingHistory ? (
+                  <View marginVertical="$4">
+                    <ActivityIndicator color={Theme.primary} />
+                  </View>
+                ) : null
+              }
+            />
+          </Container>
           {/* Input Area */}
           <View
             paddingHorizontal="$4"
             paddingVertical="$3"
-            backgroundColor="white"
+            backgroundColor={Theme.surface}
             borderTopWidth={1}
-            borderTopColor="#f2ecf4"
+            borderTopColor={Theme.border}
           >
             <XStack alignItems="center" gap="$3">
               <Button
-                icon={<Paperclip color="#6750A4" />}
+                icon={<Paperclip color={Theme.primary} />}
                 circular
                 chromeless
-                pressStyle={{ backgroundColor: "#f2ecf4" }}
+                pressStyle={{ backgroundColor: Theme.primaryPastel }}
               />
               <YStack flex={1} position="relative" justifyContent="center">
                 <Input
                   value={inputText}
                   onChangeText={setInputText}
                   placeholder="Type your message..."
-                  backgroundColor="#f2ecf4"
-                  borderWidth={0}
+                  placeholderTextColor={Theme.textMuted as any}
+                  backgroundColor={Theme.background}
+                  color={Theme.text}
+                  borderWidth={1}
+                  borderColor={Theme.border}
                   borderRadius={20}
                   paddingHorizontal="$4"
                   fontSize="$4"
                   height={48}
                   focusStyle={{
-                    backgroundColor: "#ffffff",
-                    borderWidth: 2,
-                    borderColor: "#6750A4",
+                    backgroundColor: Theme.surface,
+                    borderWidth: 1.5,
+                    borderColor: Theme.primary,
                   }}
                   onSubmitEditing={handleSendMessage}
                 />
                 <Button
                   position="absolute"
                   right="$1"
-                  icon={<Smile color="#6750A4" />}
+                  icon={<Smile color={Theme.primary} />}
                   circular
                   chromeless
-                  pressStyle={{ backgroundColor: "#f2ecf4" }}
+                  pressStyle={{ backgroundColor: Theme.primaryPastel }}
                 />
               </YStack>
               <TouchableOpacity onPress={handleSendMessage}>
                 <LinearGradient
-                  colors={["#6750A4", "#4F378A"]}
+                  colors={Theme.isDark ? [Theme.primary, Theme.primary] : ["#6750A4", "#4F378A"]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={{
@@ -186,17 +193,17 @@ export default function ConversationScreen() {
                     justifyContent: "center",
                     alignItems: "center",
                     elevation: 4,
-                    shadowColor: "#6750A4",
+                    shadowColor: Theme.primary,
                     shadowOpacity: 0.2,
                     shadowRadius: 8,
                   }}
                 >
-                  <Send color="white" size={20} />
+                  <Send color={Theme.primaryText} size={20} />
                 </LinearGradient>
               </TouchableOpacity>
             </XStack>
           </View>
-        </KeyboardStickyView>
+        </KeyboardAvoidingView>
       </YStack>
     </SafeAreaView>
   );

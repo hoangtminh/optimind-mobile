@@ -72,7 +72,9 @@ export const SearchResultCard = React.memo(({
 					<Avatar.Image
 						src={searchResult.imageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(
 							searchResult.username,
-						)}&background=F2EDFA&color=4F378A&bold=true`}
+						)}&background=${Theme.isDark ? "2A223A" : "F2EDFA"}&color=${
+							Theme.isDark ? "BB86FC" : "4F378A"
+						}&bold=true`}
 					/>
 					<Avatar.Fallback backgroundColor={Theme.primaryPastel} />
 				</Avatar>
@@ -114,7 +116,7 @@ export const SearchResultCard = React.memo(({
 								size="$3"
 								circular
 								backgroundColor={Theme.primary}
-								icon={<Check size={18} color="white" />}
+								icon={<Check size={18} color={Theme.primaryText} />}
 								onPress={handleAccept}
 								pressStyle={{ opacity: 0.8 }}
 							/>
@@ -133,7 +135,7 @@ export const SearchResultCard = React.memo(({
 							size="$3"
 							backgroundColor={Theme.primary}
 							borderRadius={6}
-							icon={<MessageSquare size={16} color="white" />}
+							icon={<MessageSquare size={16} color={Theme.primaryText} />}
 							onPress={handleChat}
 							pressStyle={{ opacity: 0.8 }}
 						>
