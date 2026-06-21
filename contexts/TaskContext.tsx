@@ -137,7 +137,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({
 			const response = await taskActions.createTask(data);
 
 			if (response.success && response.data) {
-				setTasks((prev) => [...prev, response.data as Task]);
+				setTasks((prev) => [response.data as Task, ...prev]);
 			} else {
 				throw new Error(response.error || "Failed to create task");
 			}

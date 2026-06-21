@@ -77,9 +77,9 @@ export default function RootLayout() {
             <AuthProvider>
               <SettingsProvider>
                 <RootLayoutNav />
+                <ToastContainer />
               </SettingsProvider>
               <PortalHost name="" />
-              <ToastContainer />
             </AuthProvider>
           </PortalProvider>
         </TamaguiProvider>

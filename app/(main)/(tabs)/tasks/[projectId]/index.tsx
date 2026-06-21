@@ -49,6 +49,17 @@ export default function ProjectTaskScreen() {
 
 	const project = getProject(projectId);
 
+	const handleUpdateProject = async (id: string, data: { name: string; description: string }) => {
+		const toastId = toast.loading ? toast.loading("Updating project...") : toast("Updating project...");
+		try {
+			await updateProject(id, data);
+			toast.success("Project updated successfully", { id: toastId });
+		} catch (e) {
+			const errorMsg = e instanceof Error ? e.message : "Failed to update project";
+			toast.error(errorMsg, { id: toastId });
+		}
+	};
+
 	useEffect(() => {
 		if (projectId) {
 			fetchTasks(projectId);
@@ -374,7 +385,7 @@ export default function ProjectTaskScreen() {
 				isOpen={isEditProjectOpen}
 				onClose={() => setIsEditProjectOpen(false)}
 				project={project}
-				onUpdate={updateProject}
+				onUpdate={handleUpdateProject}
 			/>
 
 			<PremiumAlertDialog

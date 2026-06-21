@@ -82,7 +82,7 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({
 		try {
 			const response = await projectActions.createProject(data);
 			if (response.success && response.data) {
-				setProjects((prev) => [...prev, response.data as Project]);
+				setProjects((prev) => [response.data as Project, ...prev]);
 			} else {
 				throw new Error(response.error || "Failed to create project");
 			}

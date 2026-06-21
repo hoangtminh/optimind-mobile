@@ -192,6 +192,10 @@ export default function TaskModal({
 
 		setLoading(true);
 
+		const toastId = toast.loading
+			? toast.loading(task ? "Updating task..." : "Creating task...")
+			: toast(task ? "Updating task..." : "Creating task...");
+
 		try {
 			const taskData = {
 				title: title.trim(),
@@ -206,10 +210,10 @@ export default function TaskModal({
 
 			if (task) {
 				await updateTask(task.id, taskData);
-				toast.success("Task updated successfully");
+				toast.success("Task updated successfully", { id: toastId });
 			} else {
 				await createTask(taskData);
-				toast.success("Task created successfully");
+				toast.success("Task created successfully", { id: toastId });
 			}
 
 			handleClose();
@@ -217,7 +221,7 @@ export default function TaskModal({
 		} catch (err) {
 			const rawMsg = err instanceof Error ? err.message : "An error occurred";
 			console.error("Task action failed:", err);
-			toast.error(cleanErrorMessage(rawMsg));
+			toast.error(cleanErrorMessage(rawMsg), { id: toastId });
 		} finally {
 			setLoading(false);
 		}

@@ -3,6 +3,7 @@ import { PremiumAlertDialog } from "@/components/common/PremiumAlertDialog";
 import ProjectModal from "@/components/projects/CreateProjectModal";
 import { useProject } from "@/contexts/ProjectContext";
 import { useRouter } from "expo-router";
+import { toast } from "@/components/common/Toast";
 import {
 	CheckCircle2,
 	MessageSquare,
@@ -46,11 +47,18 @@ export default function ProjectsListScreen() {
 		fetchProjects();
 	}, [router]);
 
-	const handleCreateProject = (data: {
+	const handleCreateProject = async (data: {
 		name: string;
 		description: string;
 	}) => {
-		createProject(data);
+		const toastId = toast.loading ? toast.loading("Creating project...") : toast("Creating project...");
+		try {
+			await createProject(data);
+			toast.success("Project created successfully", { id: toastId });
+		} catch (error) {
+			const errorMsg = error instanceof Error ? error.message : "Failed to create project";
+			toast.error(errorMsg, { id: toastId });
+		}
 	};
 
 	return (
