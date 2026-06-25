@@ -34,8 +34,8 @@ export const MediapipeCamera = forwardRef<Camera, MediapipeCameraProps>(
   ) => {
     const device = useCameraDevice(activeCamera);
     const format = useCameraFormat(device, [
-      { videoResolution: { width: 320, height: 240 } },
-      { fps: 15 }
+      { videoResolution: { width: 640, height: 480 } },
+      { fps: 30 }
     ]);
 
     useEffect(() => {

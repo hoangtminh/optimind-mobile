@@ -206,8 +206,8 @@ const FocusCameraComponent = ({
           if (!prev) return true;
           return prev;
         });
+        onFocusScoreChange?.(0);
       }
-      onFocusScoreChange?.(0);
     },
     [modelLoaded, onFocusScoreChange],
   );
