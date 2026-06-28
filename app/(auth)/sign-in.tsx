@@ -1,8 +1,10 @@
 import { PremiumAlertDialog } from "@/components/common/PremiumAlertDialog";
+import { toast } from "@/components/common/Toast";
+import { Theme } from "@/constants/Theme";
 import { AntDesign } from "@expo/vector-icons";
 import { Link } from "@react-navigation/native";
-import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -14,13 +16,15 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../hooks/useAuth";
-import { Theme } from "@/constants/Theme";
 
 // ── Separated sub-components (better re-render isolation) ──────────────────
+import {
+  AuthPrimaryButton,
+  AuthSocialButton,
+} from "@/components/auth/AuthButtons";
 import AuthHeader from "@/components/auth/AuthHeader";
 import AuthInput from "@/components/auth/AuthInput";
 import { AuthCheckbox, AuthDivider } from "@/components/auth/AuthUtils";
-import { AuthPrimaryButton, AuthSocialButton } from "@/components/auth/AuthButtons";
 
 function GoogleIcon() {
   return <AntDesign name="google" size={18} color={Theme.text} />;
@@ -31,8 +35,9 @@ export default function SignInScreen() {
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { signIn, startGoogleLogin } = useAuth();
+  const { signIn, startGoogleLogin, signInWithGoogle } = useAuth();
   const router = useRouter();
+  const { code } = useLocalSearchParams<{ code?: string }>();
 
   const [dialog, setDialog] = useState({
     open: false,
@@ -40,6 +45,33 @@ export default function SignInScreen() {
     description: "",
     type: "error" as const,
   });
+
+  useEffect(() => {
+    async function handleCallback() {
+      if (code) {
+        try {
+          setLoading(true);
+          const redirectUri =
+            Platform.OS === "web"
+              ? window.location.origin + "/sign-in"
+              : process.env.EXPO_PUBLIC_API_URL + "/api/auth/callback";
+          await signInWithGoogle(code, redirectUri);
+          toast.success("Đăng nhập thành công");
+          router.replace("/(main)/(tabs)/study");
+        } catch (error: any) {
+          setDialog({
+            open: true,
+            title: "Google Sign In Failed",
+            description: "Đăng nhập không thành công.",
+            type: "error",
+          });
+        } finally {
+          setLoading(false);
+        }
+      }
+    }
+    handleCallback();
+  }, [code]);
 
   const handleSignIn = async () => {
     try {
@@ -62,11 +94,15 @@ export default function SignInScreen() {
     try {
       setLoading(true);
       await startGoogleLogin();
+      if (Platform.OS !== "web") {
+        toast.success("Đăng nhập thành công");
+        router.replace("/(main)/(tabs)/study");
+      }
     } catch (error: any) {
       setDialog({
         open: true,
         title: "Google Sign In Failed",
-        description: error.message,
+        description: "Đăng nhập không thành công.",
         type: "error",
       });
     } finally {

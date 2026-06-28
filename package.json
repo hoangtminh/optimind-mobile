@@ -33,6 +33,7 @@
     "expo": "~55.0.8",
     "expo-asset": "~55.0.17",
     "expo-audio": "~55.0.14",
+    "expo-build-properties": "~55.0.15",
     "expo-camera": "~55.0.19",
     "expo-constants": "~55.0.9",
     "expo-dev-client": "~55.0.35",

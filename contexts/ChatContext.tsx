@@ -1,6 +1,5 @@
 import { Client } from "@stomp/stompjs";
 import { Buffer } from "buffer";
-import * as SecureStore from "expo-secure-store";
 import {
   createContext,
   ReactNode,
@@ -9,10 +8,9 @@ import {
   useRef,
   useState,
 } from "react";
-import { AppState, Platform } from "react-native";
-import { authActions } from "../api/auth-actions";
-import { setAuthToken } from "../api/client";
+import { AppState } from "react-native";
 import { chatActions } from "../api/chat-actions";
+import { getFreshAccessToken } from "../api/client";
 import { useAuth } from "../hooks/useAuth";
 import { ChatMessageResponse, ChatRoomResponse } from "../lib/types/chat";
 
@@ -27,8 +25,10 @@ if (typeof global.Buffer === "undefined") {
   global.Buffer = Buffer;
 }
 
-const SOCKET_URL = ((process.env.EXPO_PUBLIC_API_URL || "http://localhost:8080").replace("http://", "ws://").replace("https://", "wss://") + "/chat/websocket");
-const TOKEN_REFRESH_SKEW_MS = 60 * 1000;
+const SOCKET_URL =
+  (process.env.EXPO_PUBLIC_API_URL || "http://localhost:8080")
+    .replace("http://", "ws://")
+    .replace("https://", "wss://") + "/chat/websocket";
 const HEARTBEAT_INTERVAL_MS = 10000;
 const RECONNECT_DELAY_MS = 5000;
 
@@ -84,63 +84,6 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     activeChatIdRef.current = activeChatId;
   }, [activeChatId]);
 
-  const getToken = async (key: string) => {
-    if (Platform.OS === "web") {
-      return localStorage.getItem(key);
-    }
-    return await SecureStore.getItemAsync(key);
-  };
-
-  const setToken = async (key: string, value: string) => {
-    if (Platform.OS === "web") {
-      localStorage.setItem(key, value);
-      return;
-    }
-    await SecureStore.setItemAsync(key, value);
-  };
-
-  const isTokenExpiredOrExpiringSoon = (token: string) => {
-    try {
-      const payload = token.split(".")[1];
-      if (!payload) return true;
-
-      const normalizedPayload = payload.replace(/-/g, "+").replace(/_/g, "/");
-      const decoded = JSON.parse(
-        Buffer.from(normalizedPayload, "base64").toString("utf8"),
-      );
-
-      if (typeof decoded.exp !== "number") return true;
-      return decoded.exp * 1000 - Date.now() <= TOKEN_REFRESH_SKEW_MS;
-    } catch {
-      return true;
-    }
-  };
-
-  const refreshAccessToken = async () => {
-    const refreshToken = await getToken("refreshToken");
-    if (!refreshToken) return null;
-
-    const response = await authActions.refresh({ refreshToken });
-    if (!response.success || !response.data?.accessToken) return null;
-
-    const { accessToken, refreshToken: newRefreshToken } = response.data;
-    await setToken("accessToken", accessToken);
-    if (newRefreshToken) {
-      await setToken("refreshToken", newRefreshToken);
-    }
-    setAuthToken(accessToken);
-    return accessToken;
-  };
-
-  const getFreshAccessToken = async () => {
-    const token = await getToken("accessToken");
-    if (token && !isTokenExpiredOrExpiringSoon(token)) {
-      return token;
-    }
-
-    return await refreshAccessToken();
-  };
-
   useEffect(() => {
     if (user?.id) {
       fetchChats();
@@ -167,14 +110,21 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         const client = new Client({
           brokerURL: SOCKET_URL,
           beforeConnect: async () => {
-            const token = await getFreshAccessToken();
-            if (!token) {
-              throw new Error("Missing access token for chat socket");
-            }
+            try {
+              const token = await getFreshAccessToken();
+              if (!token) {
+                console.warn(
+                  "Missing access token for chat socket, connection might fail",
+                );
+                return;
+              }
 
-            client.connectHeaders = {
-              Authorization: `Bearer ${token}`,
-            };
+              client.connectHeaders = {
+                Authorization: `Bearer ${token}`,
+              };
+            } catch (err) {
+              console.warn("Error getting fresh token in beforeConnect:", err);
+            }
           },
           // Adding for stompjs to connect from Android
           forceBinaryWSFrames: true,
@@ -235,7 +185,8 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     if (!client) return;
 
     const activateClient = () => {
-      if (isDisposed || client.active || appStateRef.current !== "active") return;
+      if (isDisposed || client.active || appStateRef.current !== "active")
+        return;
       client.activate();
     };
 
@@ -247,15 +198,35 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
     activateClient();
 
-    const subscription = AppState.addEventListener("change", (nextAppState) => {
-      appStateRef.current = nextAppState;
+    const subscription = AppState.addEventListener(
+      "change",
+      async (nextAppState) => {
+        appStateRef.current = nextAppState;
 
-      if (nextAppState === "active") {
-        activateClient();
-      } else {
-        deactivateClient();
-      }
-    });
+        if (nextAppState === "active") {
+          if (client && !client.connected) {
+            console.log(
+              "App returned to foreground, socket not connected. Re-activating...",
+            );
+            try {
+              await client.deactivate();
+            } catch (err) {
+              console.warn(
+                "Failed to deactivate STOMP client on foreground change:",
+                err,
+              );
+            }
+            if (!isDisposed && appStateRef.current === "active") {
+              client.activate();
+            }
+          } else {
+            activateClient();
+          }
+        } else {
+          deactivateClient();
+        }
+      },
+    );
 
     return () => {
       isDisposed = true;

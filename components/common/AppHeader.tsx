@@ -1,8 +1,9 @@
 import { Theme } from "@/constants/Theme";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { ArrowLeft } from "lucide-react-native";
+import { ArrowLeft, Menu } from "lucide-react-native";
 import { Button, Text, XStack } from "tamagui";
+import { DrawerActions, useNavigation } from "@react-navigation/native";
 
 interface AppHeaderProps {
 	title: string;
@@ -18,6 +19,7 @@ export const AppHeader = ({
 	onBack,
 }: AppHeaderProps) => {
 	const router = useRouter();
+	const navigation = useNavigation();
 
 	const handleBack = () => {
 		if (onBack) {
@@ -47,6 +49,18 @@ export const AppHeader = ({
 				zIndex={100}
 			>
 				<XStack alignItems="center" flex={1} gap="$3">
+					{!showBackButton && (
+						<Button
+							circular
+							size="$3"
+							chromeless
+							icon={<Menu size={20} color={Theme.text} />}
+							onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
+							pressStyle={{
+								backgroundColor: Theme.isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.05)",
+							}}
+						/>
+					)}
 					{showBackButton && (
 						<Button
 							circular

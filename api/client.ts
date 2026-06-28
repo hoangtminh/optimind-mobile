@@ -1,6 +1,6 @@
-import { getServerIp } from "@/utils/getServerIp";
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
+import { Buffer } from "buffer";
 
 export const BASE_IP = `192.168.1.22`;
 // const API_BASE_URL = `http://${BASE_IP}:8080`;
@@ -36,6 +36,87 @@ export const setOnUnauthorized = (callback: () => void) => {
   onUnauthorized = callback;
 };
 
+const TOKEN_REFRESH_SKEW_MS = 60 * 1000;
+
+export const isTokenExpiredOrExpiringSoon = (token: string): boolean => {
+  try {
+    const payload = token.split(".")[1];
+    if (!payload) return true;
+
+    const normalizedPayload = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const decoded = JSON.parse(
+      Buffer.from(normalizedPayload, "base64").toString("utf8"),
+    );
+
+    if (typeof decoded.exp !== "number") return true;
+    return decoded.exp * 1000 - Date.now() <= TOKEN_REFRESH_SKEW_MS;
+  } catch {
+    return true;
+  }
+};
+
+export const getFreshAccessToken = async (): Promise<string | null> => {
+  try {
+    const token =
+      Platform.OS === "web"
+        ? localStorage.getItem("accessToken")
+        : await SecureStore.getItemAsync("accessToken");
+
+    if (token && !isTokenExpiredOrExpiringSoon(token)) {
+      return token;
+    }
+
+    const refreshToken =
+      Platform.OS === "web"
+        ? localStorage.getItem("refreshToken")
+        : await SecureStore.getItemAsync("refreshToken");
+
+    if (!refreshToken) {
+      return null;
+    }
+
+    console.log("Token expired or missing. Attempting silent refresh...");
+    const refreshUrl = API_BASE_URL + "/api/auth/refresh";
+    const refreshResponse = await fetch(refreshUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ refreshToken }),
+    });
+
+    if (refreshResponse.ok) {
+      const refreshData = await refreshResponse.json();
+      const newAccessToken = refreshData.accessToken;
+      const newRefreshToken = refreshData.refreshToken;
+
+      if (newAccessToken) {
+        if (Platform.OS === "web") {
+          localStorage.setItem("accessToken", newAccessToken);
+          if (newRefreshToken) {
+            localStorage.setItem("refreshToken", newRefreshToken);
+          }
+        } else {
+          await SecureStore.setItemAsync("accessToken", newAccessToken);
+          if (newRefreshToken) {
+            await SecureStore.setItemAsync("refreshToken", newRefreshToken);
+          }
+        }
+
+        setAuthToken(newAccessToken);
+        console.log("Silent refresh succeeded in getFreshAccessToken.");
+        return newAccessToken;
+      }
+    } else if (refreshResponse.status === 401) {
+      onUnauthorized?.();
+    }
+    return null;
+  } catch (error) {
+    console.error("Error in getFreshAccessToken:", error);
+    return null;
+  }
+};
+
 async function apiRequest<T>(
   endpoint: string,
   options: RequestInit = {},
@@ -50,8 +131,6 @@ async function apiRequest<T>(
     if (authToken) {
       headers["Authorization"] = `Bearer ${authToken}`;
     }
-
-    console.log("Server: ", url, getServerIp());
 
     const response = await fetch(url, {
       ...options,
@@ -83,59 +162,19 @@ async function apiRequest<T>(
       if (
         endpoint !== "/api/auth/refresh" &&
         endpoint !== "/api/auth/login" &&
-        endpoint !== "/api/auth/oauth2/google"
+        endpoint !== "/api/auth/google"
       ) {
-        try {
-          const refreshToken =
-            Platform.OS === "web"
-              ? localStorage.getItem("refreshToken")
-              : await SecureStore.getItemAsync("refreshToken");
-
-          if (refreshToken) {
-            console.log("Token expired. Attempting silent refresh...");
-            const refreshUrl = API_BASE_URL + "/api/auth/refresh";
-            const refreshResponse = await fetch(refreshUrl, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ refreshToken }),
-            });
-
-            if (refreshResponse.ok) {
-              const refreshData = await refreshResponse.json();
-              const newAccessToken = refreshData.accessToken;
-              const newRefreshToken = refreshData.refreshToken;
-
-              if (newAccessToken) {
-                if (Platform.OS === "web") {
-                  localStorage.setItem("accessToken", newAccessToken);
-                  if (newRefreshToken) {
-                    localStorage.setItem("refreshToken", newRefreshToken);
-                  }
-                } else {
-                  await SecureStore.setItemAsync("accessToken", newAccessToken);
-                  if (newRefreshToken) {
-                    await SecureStore.setItemAsync("refreshToken", newRefreshToken);
-                  }
-                }
-
-                setAuthToken(newAccessToken);
-                console.log("Silent refresh succeeded. Retrying request...");
-
-                const retriedHeaders = {
-                  ...headers,
-                  Authorization: `Bearer ${newAccessToken}`,
-                };
-                return apiRequest<T>(endpoint, {
-                  ...options,
-                  headers: retriedHeaders,
-                });
-              }
-            }
-          }
-        } catch (refreshErr) {
-          console.error("Silent token refresh error:", refreshErr);
+        const newAccessToken = await getFreshAccessToken();
+        if (newAccessToken) {
+          console.log("Silent refresh succeeded. Retrying request...");
+          const retriedHeaders = {
+            ...headers,
+            Authorization: `Bearer ${newAccessToken}`,
+          };
+          return apiRequest<T>(endpoint, {
+            ...options,
+            headers: retriedHeaders,
+          });
         }
       }
 

@@ -5,9 +5,8 @@ import {
   useFonts,
 } from "@expo-google-fonts/roboto";
 import {
-  DarkTheme,
   DefaultTheme,
-  ThemeProvider,
+  ThemeProvider
 } from "@react-navigation/native";
 import "@tamagui/native/setup-teleport";
 import { Stack, useRouter, useSegments } from "expo-router";
@@ -18,22 +17,21 @@ import { PortalProvider } from "react-native-teleport";
 import { PortalHost, TamaguiProvider } from "tamagui";
 import "../global.css";
 
-import { useColorScheme } from "@/components/useColorScheme";
+import { Theme } from "@/constants/Theme";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ChatProvider } from "@/contexts/ChatContext";
 import { ProjectProvider } from "@/contexts/ProjectContext";
+import { SettingsProvider, useSettings } from "@/contexts/SettingsContext";
 import { StudySessionProvider } from "@/contexts/StudySessionContext";
 import { TaskProvider } from "@/contexts/TaskContext";
 import { UserProvider } from "@/contexts/UserContext";
-import { SettingsProvider, useSettings } from "@/contexts/SettingsContext";
 import { useAuth } from "@/hooks/useAuth";
 import { config } from "@/tamagui.config";
 import { KeyboardProvider } from "react-native-keyboard-controller";
-import { Theme } from "@/constants/Theme";
 
 export {
   // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
+  ErrorBoundary
 } from "expo-router";
 
 export const unstable_settings = {
@@ -43,8 +41,8 @@ export const unstable_settings = {
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
-import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { ToastContainer } from "@/components/common/Toast";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
@@ -54,7 +52,6 @@ export default function RootLayout() {
     Roboto_900Black,
   });
 
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
     if (error) throw error;
   }, [error]);

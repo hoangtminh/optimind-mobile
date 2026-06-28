@@ -28,7 +28,6 @@ export default function GlobalHeader({
 			<ExpoStatusBar style={Theme.isDark ? "light" : "dark"} />
 			<View
 				style={{
-					paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
 					backgroundColor: Theme.primaryPastel,
 					borderBottomWidth: 1,
 					borderBottomColor: Theme.border,

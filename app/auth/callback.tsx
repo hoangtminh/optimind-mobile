@@ -37,7 +37,8 @@ export default function AuthCallbackScreen() {
 
       // Otherwise, we are on the web client itself. Process the login here.
       try {
-        await signInWithGoogle(code);
+        const redirectUri = Platform.OS === "web" ? window.location.origin + "/auth/callback" : undefined;
+        await signInWithGoogle(code, redirectUri);
         if (active) {
           router.replace("/(main)/(tabs)/study");
         }
