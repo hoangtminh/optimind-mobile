@@ -1,15 +1,11 @@
-import { AppHeader } from "@/components/common/AppHeader";
+import { AppHeader } from "@/components/app/AppHeader";
 import { PremiumAlertDialog } from "@/components/common/PremiumAlertDialog";
 import { FocusCamera } from "@/components/study/FocusCamera";
-import type { TimerMode } from "@/components/study/PremiumPomodoro";
 import { Task, TaskManager } from "@/components/study/TaskManager";
-import {
-  TimerSettingsModal
-} from "@/components/study/TimerSettingsModal";
+import { TimerSettingsModal } from "@/components/study/TimerSettingsModal";
 import { UnifiedStudyView } from "@/components/study/UnifiedStudyView";
 import { Theme } from "@/constants/Theme";
 import { useSettings } from "@/contexts/SettingsContext";
-import { useStudySessions } from "@/contexts/StudySessionContext";
 import { activeSessionTracker } from "@/utils/activeSession";
 import {
   Brain,
@@ -20,23 +16,17 @@ import {
   RotateCcw,
   Settings,
 } from "lucide-react-native";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, Text, XStack, YStack, styled } from "tamagui";
 
-import * as ScreenOrientation from "expo-screen-orientation";
-
-const TabButton = styled(YStack, {
-  paddingVertical: "$2",
-  paddingHorizontal: "$4",
-  borderRadius: 6, // Crisp corners
-  alignItems: "center",
-  justifyContent: "center",
-  flexDirection: "row",
-  gap: "$2",
-  pressStyle: { scale: 0.98 },
-});
+import { useStudySession } from "@/hooks/useStudySession";
+import { formatTime, useStudyTimer } from "@/hooks/useStudyTimer";
+import RNOrientationDirector, {
+  useDeviceOrientation,
+  Orientation,
+} from "react-native-orientation-director";
 
 export interface SessionStats {
   startTime: string;
@@ -48,6 +38,17 @@ export interface SessionStats {
   sessionType: string;
 }
 
+const TabButton = styled(YStack, {
+  paddingVertical: "$2",
+  paddingHorizontal: "$4",
+  borderRadius: 6,
+  alignItems: "center",
+  justifyContent: "center",
+  flexDirection: "row",
+  gap: "$2",
+  pressStyle: { scale: 0.98 },
+});
+
 export default function StudyScreen() {
   const [activeTab, setActiveTab] = useState<"pomodoro" | "camera" | "tasks">(
     "pomodoro",
@@ -55,207 +56,84 @@ export default function StudyScreen() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [cameraActive, setCameraActive] = useState(false);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
-  const { saveDetailedSession } = useStudySessions();
+  const [currentFocusScore, setCurrentFocusScore] = useState(0);
 
   const { settings, updateSettings } = useSettings();
 
-  const [timerRunning, setTimerRunning] = useState(false);
-  const [timerMode, setTimerMode] = useState<TimerMode>("focus");
-  const [timerTotalTime, setTimerTotalTime] = useState(
-    settings.focusDuration * 60,
-  );
-  const [timerTimeLeft, setTimerTimeLeft] = useState(
-    settings.focusDuration * 60,
-  );
-  const [currentCycle, setCurrentCycle] = useState(1);
-  const [sessionKey, setSessionKey] = useState(Date.now());
-
-  const [sessionStats, setSessionStats] = useState<SessionStats | null>(null);
-  const [focusHistory, setFocusHistory] = useState<
-    { score: number; timeElapsed: number }[]
-  >([]);
-  const [currentFocusScore, setCurrentFocusScore] = useState(0);
+  const timer = useStudyTimer(settings);
+  const session = useStudySession(settings);
 
   useEffect(() => {
-    if (activeTab === "camera") {
-      ScreenOrientation.unlockAsync();
-    } else {
-      ScreenOrientation.lockAsync(
-        ScreenOrientation.OrientationLock.PORTRAIT_UP,
-      );
-    }
-  }, [activeTab]);
+    RNOrientationDirector.lockTo(Orientation.portrait);
+  }, []);
 
   useEffect(() => {
-    activeSessionTracker.setRunning(timerRunning);
-  }, [timerRunning]);
-
+    activeSessionTracker.setRunning(timer.timerRunning);
+  }, [timer.timerRunning]);
   useEffect(() => {
     activeSessionTracker.registerPauseCallback(() => {
-      setTimerRunning(false);
+      timer.setTimerRunning(false);
       setCameraActive(false);
     });
-    return () => {
-      activeSessionTracker.unregisterPauseCallback();
-    };
+    return () => activeSessionTracker.unregisterPauseCallback();
   }, []);
 
-  // Sync totalTime when settings or mode changes
   useEffect(() => {
-    let duration: number;
-    if (timerMode === "focus") duration = settings.focusDuration;
-    else if (timerMode === "longBreak") duration = settings.longBreakDuration;
-    else duration = settings.breakDuration;
-    setTimerTotalTime(duration * 60);
-    setTimerTimeLeft(duration * 60);
-  }, [
-    settings.focusDuration,
-    settings.breakDuration,
-    settings.longBreakDuration,
-    timerMode,
-  ]);
+    session.initSessionIfNeeded(
+      timer.timerRunning,
+      timer.currentCycle,
+      settings.mode,
+    );
+  }, [timer.timerRunning, timer.currentCycle, settings.mode]);
 
-  // Countdown tick — mode advancement is handled inside PremiumPomodoro
   useEffect(() => {
-    if (!timerRunning) return;
-
-    const interval = setInterval(() => {
-      setTimerTimeLeft((prev) => {
-        if (prev <= 0) return 0;
-        return prev - 1;
-      });
-
-      // Track stats and history
-      setSessionStats((prev) => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          totalTime: prev.totalTime + 1,
-          focusTime:
-            timerMode === "focus" ? prev.focusTime + 1 : prev.focusTime,
-          breakTime:
-            timerMode !== "focus" ? prev.breakTime + 1 : prev.breakTime,
-        };
-      });
-
-      setFocusHistory((prev) => {
-        const timeElapsed = sessionStats ? sessionStats.totalTime + 1 : 0;
-        const score = cameraActive ? currentFocusScore : 0;
-        return [...prev, { score, timeElapsed }];
-      });
+    if (!timer.timerRunning) return;
+    const id = setInterval(() => {
+      session.tickSession(timer.timerMode, cameraActive, currentFocusScore);
     }, 1000);
-
-    return () => clearInterval(interval);
-  }, [timerRunning, timerMode, sessionStats, currentFocusScore, cameraActive]);
-
-  // Initialize session stats when starting the timer
-  useEffect(() => {
-    if (timerRunning && !sessionStats) {
-      setSessionStats({
-        startTime: new Date().toISOString(),
-        endTime: "",
-        totalTime: 0,
-        focusTime: 0,
-        breakTime: 0,
-        cycles: currentCycle,
-        sessionType: settings.mode,
-      });
-    }
-  }, [timerRunning, sessionStats, currentCycle, settings.mode]);
-
-  const handleSaveSession = useCallback(
-    async (isCompletedSet: boolean) => {
-      if (!sessionStats) return;
-
-      const finalStats = {
-        ...sessionStats,
-        endTime: new Date().toISOString(),
-        cycles: isCompletedSet ? settings.totalCycles : currentCycle,
-        completed: isCompletedSet,
-      };
-
-      const averageFocus =
-        focusHistory.length > 0
-          ? focusHistory.reduce((acc, curr) => acc + curr.score, 0) /
-            focusHistory.length
-          : 0;
-
-      const focusData = focusHistory.map((item) => {
-        const startTimeMs = new Date(finalStats.startTime).getTime();
-        const ts = new Date(startTimeMs + item.timeElapsed * 1000);
-        return {
-          timestamp: ts.toISOString(),
-          focusLevel: item.score,
-        };
-      });
-
-      const sessionData = {
-        ...finalStats,
-        averageFocus,
-        focusData,
-      };
-
-      await saveDetailedSession(sessionData);
-    },
-    [sessionStats, focusHistory, currentCycle, saveDetailedSession, settings.totalCycles],
-  );
-
-  const timerTimeElapsed = timerTotalTime - timerTimeLeft;
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-  };
-
-  const handleAddTask = useCallback((task: Task) => {
-    setTasks((prev) => [...prev, task]);
-  }, []);
-
-  const handleDeleteTask = useCallback((id: string) => {
-    setTasks((prev) => prev.filter((task) => task.id !== id));
-  }, []);
+    return () => clearInterval(id);
+  }, [timer.timerRunning, timer.timerMode, cameraActive, currentFocusScore]);
 
   const handleTimerReset = useCallback(
     async (shouldSave?: boolean, completed?: boolean) => {
-      if (shouldSave) {
-        await handleSaveSession(completed ?? false);
-      }
-      setTimerRunning(false);
-      setTimerTimeLeft(timerTotalTime);
-      setCurrentCycle(1);
-      setTimerMode("focus");
-      setSessionKey(Date.now());
-      setSessionStats(null);
-      setFocusHistory([]);
+      if (shouldSave) await session.handleSaveSession(completed ?? false);
+      timer.resetTimer(settings);
+      session.resetSession();
     },
-    [timerTotalTime, handleSaveSession],
+    [session, timer, settings],
   );
 
-  /** Called by PremiumPomodoro when a focus session completes (before long break). */
-  const handleCycleComplete = useCallback(() => {
-    setCurrentCycle((prev) => {
-      const next = prev + 1;
-      return next > settings.totalCycles ? 1 : next;
-    });
-  }, [settings.totalCycles]);
-
-  /** Called when a full set (all cycles + long break) finishes — resets to cycle 1. */
-  const handleLongBreakComplete = useCallback(() => {
-    setCurrentCycle(1);
-  }, []);
-
-  const [showCongratsModal, setShowCongratsModal] = useState(false);
-
   const handleSessionFinish = useCallback(async () => {
-    await handleSaveSession(true);
-    setShowCongratsModal(true);
-  }, [handleSaveSession]);
+    await session.handleSessionFinish();
+  }, [session]);
 
   const handleCongratsConfirm = useCallback(() => {
-    setShowCongratsModal(false);
-    handleTimerReset(false);
-  }, [handleTimerReset]);
+    session.handleCongratsConfirm(() => handleTimerReset(false));
+  }, [session, handleTimerReset]);
+
+  const handleAddTask = useCallback(
+    (task: Task) => setTasks((prev) => [...prev, task]),
+    [],
+  );
+
+  const handleDeleteTask = useCallback(
+    (id: string) => setTasks((prev) => prev.filter((t) => t.id !== id)),
+    [],
+  );
+
+  const formattedTimeLeft = useMemo(
+    () => formatTime(timer.timerTimeLeft),
+    [timer.timerTimeLeft],
+  );
+
+  const showMiniBanner = activeTab === "camera" || activeTab === "tasks";
+
+  const deviceOrientation = useDeviceOrientation();
+  console.log(
+    RNOrientationDirector.convertOrientationToHumanReadableString(
+      deviceOrientation,
+    ),
+  );
 
   return (
     <SafeAreaView
@@ -276,7 +154,7 @@ export default function StudyScreen() {
       />
 
       <YStack flex={1}>
-        {/* Tab Navigation */}
+        {/* ── Tab Navigation ─────────────────────────────────── */}
         <XStack
           paddingHorizontal="$4"
           paddingVertical="$2"
@@ -303,6 +181,7 @@ export default function StudyScreen() {
               Timer
             </Text>
           </TabButton>
+
           <TabButton
             backgroundColor={
               activeTab === "camera" ? Theme.primaryPastel : "transparent"
@@ -321,6 +200,7 @@ export default function StudyScreen() {
               Camera
             </Text>
           </TabButton>
+
           <TabButton
             backgroundColor={
               activeTab === "tasks" ? Theme.primaryPastel : "transparent"
@@ -341,15 +221,15 @@ export default function StudyScreen() {
           </TabButton>
         </XStack>
 
-        {/* Mini Timer Banner when in Camera or Tasks tab */}
-        {(activeTab === "camera" || activeTab === "tasks") && (
+        {/* ── Mini Timer Banner (Camera / Tasks tabs) ─────────── */}
+        {showMiniBanner && (
           <XStack
             backgroundColor={Theme.surface}
             marginHorizontal="$4"
             marginTop="$3"
             paddingVertical="$2"
             paddingHorizontal="$4"
-            borderRadius={6} // Crisp corners
+            borderRadius={6}
             alignItems="center"
             justifyContent="space-between"
             borderWidth={1}
@@ -364,22 +244,25 @@ export default function StudyScreen() {
                   color={Theme.textMuted}
                   textTransform="uppercase"
                 >
-                  {timerMode === "focus" ? "Focus Session" : "Break Time"}
+                  {timer.timerMode === "focus" ? "Focus Session" : "Break Time"}
                 </Text>
                 <Text fontSize="$4" fontWeight="700" color={Theme.text}>
-                  {formatTime(timerTimeLeft)}
+                  {formattedTimeLeft}
                 </Text>
               </YStack>
             </XStack>
+
             <XStack gap="$2" alignItems="center">
               <Button
                 circular
                 size={32}
-                backgroundColor={timerRunning ? Theme.accentRed : Theme.primary}
-                onPress={() => setTimerRunning(!timerRunning)}
+                backgroundColor={
+                  timer.timerRunning ? Theme.accentRed : Theme.primary
+                }
+                onPress={() => timer.setTimerRunning((prev) => !prev)}
                 pressStyle={{ scale: 0.95 }}
                 icon={
-                  timerRunning ? (
+                  timer.timerRunning ? (
                     <Pause size={14} color={Theme.accentRedText} />
                   ) : (
                     <Play size={14} color={Theme.primaryText} />
@@ -410,17 +293,17 @@ export default function StudyScreen() {
           >
             <UnifiedStudyView
               timerSettings={settings}
-              timerRunning={timerRunning}
-              timerTimeLeft={timerTimeLeft}
-              timerMode={timerMode}
-              timerTotalTime={timerTotalTime}
-              currentCycle={currentCycle}
-              setTimerTimeLeft={setTimerTimeLeft}
-              setTimerRunning={setTimerRunning}
-              setTimerMode={setTimerMode}
+              timerRunning={timer.timerRunning}
+              timerTimeLeft={timer.timerTimeLeft}
+              timerMode={timer.timerMode}
+              timerTotalTime={timer.timerTotalTime}
+              currentCycle={timer.currentCycle}
+              setTimerTimeLeft={timer.setTimerTimeLeft}
+              setTimerRunning={timer.setTimerRunning}
+              setTimerMode={timer.setTimerMode}
               onTimerReset={handleTimerReset}
-              onCycleComplete={handleCycleComplete}
-              onLongBreakComplete={handleLongBreakComplete}
+              onCycleComplete={timer.handleCycleComplete}
+              onLongBreakComplete={timer.handleLongBreakComplete}
               onSettingsPress={() => setSettingsModalOpen(true)}
               onFinish={handleSessionFinish}
             />
@@ -428,13 +311,13 @@ export default function StudyScreen() {
 
           <YStack style={{ display: activeTab === "camera" ? "flex" : "none" }}>
             <FocusCamera
-              timerRunning={timerRunning}
-              setTimerRunning={setTimerRunning}
+              timerRunning={timer.timerRunning}
+              setTimerRunning={timer.setTimerRunning}
               isActive={cameraActive}
               setIsActive={setCameraActive}
-              sessionKey={sessionKey}
+              sessionKey={timer.sessionKey}
               onFocusScoreChange={setCurrentFocusScore}
-              focusHistory={focusHistory}
+              focusHistory={session.focusHistory}
             />
           </YStack>
 
@@ -456,8 +339,8 @@ export default function StudyScreen() {
       />
 
       <PremiumAlertDialog
-        open={showCongratsModal}
-        onOpenChange={setShowCongratsModal}
+        open={session.showCongratsModal}
+        onOpenChange={session.setShowCongratsModal}
         title="Congratulations! 🎉"
         description="You have successfully finished all study cycles! Your session has been completed and saved."
         type="success"

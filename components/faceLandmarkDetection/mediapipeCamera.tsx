@@ -23,7 +23,6 @@ export const MediapipeCamera = forwardRef<Camera, MediapipeCameraProps>(
       solution: {
         cameraDeviceChangeHandler,
         cameraViewLayoutChangeHandler,
-        cameraOrientationChangedHandler,
         resizeModeChangeHandler,
         frameProcessor,
       },
@@ -35,7 +34,7 @@ export const MediapipeCamera = forwardRef<Camera, MediapipeCameraProps>(
     const device = useCameraDevice(activeCamera);
     const format = useCameraFormat(device, [
       { videoResolution: { width: 640, height: 480 } },
-      { fps: 30 }
+      { fps: 15 },
     ]);
 
     useEffect(() => {
@@ -63,7 +62,6 @@ export const MediapipeCamera = forwardRef<Camera, MediapipeCameraProps>(
         isActive={true}
         frameProcessor={frameProcessor}
         onLayout={cameraViewLayoutChangeHandler}
-        onOutputOrientationChanged={cameraOrientationChangedHandler}
         photo={false}
       />
     );

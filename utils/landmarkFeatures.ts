@@ -1,11 +1,7 @@
-export interface Point3D {
-  x: number;
-  y: number;
-  z?: number;
-}
+import { Landmark } from "@/components/faceLandmarkDetection/types";
 
 // Euclidean distance between two points
-const distance = (p1: Point3D, p2: Point3D): number => {
+const distance = (p1: Landmark, p2: Landmark): number => {
   const dx = p1.x - p2.x;
   const dy = p1.y - p2.y;
   const dz = (p1.z || 0) - (p2.z || 0);
@@ -13,7 +9,7 @@ const distance = (p1: Point3D, p2: Point3D): number => {
 };
 
 // 1. Eye Aspect Ratio (EAR)
-export const calculateEAR = (landmarks: Point3D[]): number => {
+export const calculateEAR = (landmarks: Landmark[]): number => {
   if (!landmarks || landmarks.length < 468) return 0;
 
   // Left Eye Landmarks:
@@ -39,7 +35,7 @@ export const calculateEAR = (landmarks: Point3D[]): number => {
 };
 
 // 2. Mouth Aspect Ratio (MAR)
-export const calculateMAR = (landmarks: Point3D[]): number => {
+export const calculateMAR = (landmarks: Landmark[]): number => {
   if (!landmarks || landmarks.length < 468) return 0;
 
   // Mouth Landmarks:
@@ -55,7 +51,7 @@ export const calculateMAR = (landmarks: Point3D[]): number => {
 };
 
 // 3. Head Pose (Yaw, Pitch, Roll) - Approximations
-export const calculateHeadPose = (landmarks: Point3D[]) => {
+export const calculateHeadPose = (landmarks: Landmark[]) => {
   if (!landmarks || landmarks.length < 468) return { pitch: 0, yaw: 0, roll: 0 };
 
   const noseTip = landmarks[1];
@@ -89,7 +85,7 @@ export const calculateHeadPose = (landmarks: Point3D[]) => {
 };
 
 // 4. Gaze Estimation (X, Y)
-export const calculateGaze = (landmarks: Point3D[]) => {
+export const calculateGaze = (landmarks: Landmark[]) => {
   // Requires Iris landmarks (468-477)
   if (!landmarks || landmarks.length < 478) return { gazeX: 0, gazeY: 0 };
 
@@ -116,7 +112,7 @@ export interface PoseState {
 }
 
 // 5. Aggregate Feature Calculator
-export const extractFeatures = (landmarks: Point3D[], prevState?: PoseState) => {
+export const extractFeatures = (landmarks: Landmark[], prevState?: PoseState) => {
   const ear = calculateEAR(landmarks);
   const mar = calculateMAR(landmarks);
   const { pitch, yaw, roll } = calculateHeadPose(landmarks);

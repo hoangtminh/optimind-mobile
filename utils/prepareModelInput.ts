@@ -1,6 +1,7 @@
 // Thay đổi đường dẫn import cho phù hợp với dự án của bạn
 
-import { extractFeatures, Point3D, PoseState } from "./landmarkFeatures";
+import { extractFeatures, PoseState } from "./landmarkFeatures";
+import { Landmark } from "@/components/faceLandmarkDetection/types";
 
 /**
  * Trích xuất đặc trưng từ landmarks và format thành mảng input cho Random Forest Model
@@ -11,7 +12,7 @@ import { extractFeatures, Point3D, PoseState } from "./landmarkFeatures";
  * @returns Object chứa mảng input cho mô hình và newState để dùng cho frame tiếp theo
  */
 export const prepareFocusModelInput = (
-  landmarks: Point3D[],
+  landmarks: Landmark[],
   prevState?: PoseState,
 ): { modelInput: number[]; newState: PoseState } => {
   // 1. Trích xuất toàn bộ các đặc trưng và trạng thái mới

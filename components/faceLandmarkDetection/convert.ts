@@ -5,8 +5,6 @@ import {
   type FrameProcessInfo,
   type ImageOrientation,
   type Point,
-  type RectLTRB,
-  type RectXYWH,
   type ResizeMode,
   type ViewCoordinator,
 } from "./types";
@@ -81,122 +79,6 @@ export function framePointToView(
   return result;
 }
 
-export function frameRectLTRBToView(
-  rect: RectLTRB,
-  frameDims: Dims,
-  viewDims: Dims,
-  mode: ResizeMode,
-  mirrored: boolean,
-): RectLTRB {
-  const lt = framePointToView(
-    { x: rect.left, y: rect.top },
-    frameDims,
-    viewDims,
-    mode,
-    mirrored,
-  );
-  const rb = framePointToView(
-    { x: rect.right, y: rect.bottom },
-    frameDims,
-    viewDims,
-    mode,
-    mirrored,
-  );
-  const left = mirrored ? Math.min(lt.x, rb.x) : lt.x;
-  const right = mirrored ? Math.max(lt.x, rb.x) : rb.x;
-  return { left, top: lt.y, right, bottom: rb.y };
-}
-
-export function frameRectXYWHToView(
-  rect: RectXYWH,
-  frameDims: Dims,
-  viewDims: Dims,
-  mode: ResizeMode,
-  mirrored: boolean,
-): RectXYWH {
-  const lt = framePointToView(
-    { x: rect.x, y: rect.y },
-    frameDims,
-    viewDims,
-    mode,
-    mirrored,
-  );
-  const rb = framePointToView(
-    { x: rect.x + rect.width, y: rect.y + rect.height },
-    frameDims,
-    viewDims,
-    mode,
-    mirrored,
-  );
-  const width = mirrored ? Math.abs(rb.x - lt.x) : rb.x - lt.x;
-  const x = mirrored ? lt.x - width : lt.x;
-  return { x, y: lt.y, width, height: rb.y - lt.y };
-}
-
-function isRectLTRB(rect: unknown): rect is RectLTRB {
-  return (
-    typeof rect === "object" &&
-    "left" in (rect as object) &&
-    "top" in (rect as object) &&
-    "right" in (rect as object) &&
-    "bottom" in (rect as object)
-  );
-}
-
-export function frameRectToView<TRect extends RectLTRB | RectXYWH>(
-  rect: TRect,
-  frameDims: Dims,
-  viewDims: Dims,
-  mode: ResizeMode,
-  mirrored: boolean,
-): TRect {
-  if (isRectLTRB(rect)) {
-    return frameRectLTRBToView(
-      rect,
-      frameDims,
-      viewDims,
-      mode,
-      mirrored,
-    ) as TRect;
-  } else {
-    return frameRectXYWHToView(
-      rect,
-      frameDims,
-      viewDims,
-      mode,
-      mirrored,
-    ) as TRect;
-  }
-}
-
-export function ltrbToXywh(rect: RectLTRB): RectXYWH {
-  return {
-    x: rect.left,
-    y: rect.top,
-    width: rect.right - rect.left,
-    height: rect.bottom - rect.top,
-  };
-}
-
-export function clampToDims<TRect extends RectLTRB | RectXYWH>(
-  rect: TRect,
-  dims: Dims,
-): TRect {
-  if (isRectLTRB(rect)) {
-    const left = Math.max(0, Math.min(rect.left, dims.width));
-    const top = Math.max(0, Math.min(rect.top, dims.height));
-    const right = Math.max(0, Math.min(rect.right, dims.width));
-    const bottom = Math.max(0, Math.min(rect.bottom, dims.height));
-    return { left, top, right, bottom } as TRect;
-  } else {
-    const x = Math.max(0, Math.min(rect.x, dims.width));
-    const y = Math.max(0, Math.min(rect.y, dims.height));
-    const width = Math.max(0, Math.min(rect.width, dims.width - x));
-    const height = Math.max(0, Math.min(rect.height, dims.height - y));
-    return { x, y, width, height } as TRect;
-  }
-}
-
 function getDegrees(orientation: ImageOrientation): number {
   switch (orientation) {
     case "portrait":
@@ -230,44 +112,6 @@ function relativeTo(
   b: ImageOrientation,
 ): ImageOrientation {
   return getOrientation(getDegrees(a) - getDegrees(b));
-}
-
-export function worklet_getDegrees(orientation: ImageOrientation): number {
-  "worklet";
-  switch (orientation) {
-    case "portrait":
-      return 0;
-    case "landscape-left":
-      return 90;
-    case "portrait-upside-down":
-      return 180;
-    case "landscape-right":
-      return 270;
-  }
-}
-
-export function worklet_getOrientation(degrees: number): ImageOrientation {
-  "worklet";
-  const clamped = (degrees + 360) % 360;
-  if (clamped >= 315 || clamped <= 45) {
-    return "portrait";
-  } else if (clamped >= 45 && clamped <= 135) {
-    return "landscape-left";
-  } else if (clamped >= 135 && clamped <= 225) {
-    return "portrait-upside-down";
-  } else if (clamped >= 225 && clamped <= 315) {
-    return "landscape-right";
-  } else {
-    throw new Error(`Invalid degrees! ${degrees}`);
-  }
-}
-
-export function worklet_relativeTo(
-  a: ImageOrientation,
-  b: ImageOrientation,
-): ImageOrientation {
-  "worklet";
-  return worklet_getOrientation(worklet_getDegrees(a) - worklet_getDegrees(b));
 }
 
 export class BaseViewCoordinator implements ViewCoordinator {

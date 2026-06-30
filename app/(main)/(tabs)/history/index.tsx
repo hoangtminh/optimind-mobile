@@ -1,11 +1,10 @@
-import { AppHeader } from "@/components/common/AppHeader";
-import React from "react";
-import { ActivityIndicator, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { AppHeader } from "@/components/app/AppHeader";
 import { HistoryList } from "@/components/history/HistoryList";
 import { SessionDetails } from "@/components/history/SessionDetails";
-import { useHistory } from "@/hooks/useHistory";
 import { Theme } from "@/constants/Theme";
+import { useHistory } from "@/hooks/useHistory";
+import { ActivityIndicator, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function History() {
   const {
@@ -34,7 +33,14 @@ export default function History() {
         />
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color={Theme.primary} />
-          <Text style={{ color: Theme.textMuted, fontSize: 14, marginTop: 12, fontWeight: "600" }}>
+          <Text
+            style={{
+              color: Theme.textMuted,
+              fontSize: 14,
+              marginTop: 12,
+              fontWeight: "600",
+            }}
+          >
             Loading details...
           </Text>
         </View>

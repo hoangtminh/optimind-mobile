@@ -3,14 +3,14 @@
     "name": "Optimind",
     "slug": "app",
     "version": "1.0.0",
-    "orientation": "default",
+    "orientation": "portrait",
     "scheme": "app",
     "userInterfaceStyle": "automatic",
     "icon": "./assets/images/icon.png",
     "splash": {
       "image": "./assets/images/icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#2D185C"
     },
     "ios": {
       "supportsTablet": true
@@ -32,6 +32,7 @@
       "expo-router",
       "expo-audio",
       "@react-native-community/datetimepicker",
+      "react-native-orientation-director",
       "expo-secure-store",
       "expo-web-browser",
       [

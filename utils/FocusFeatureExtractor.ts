@@ -1,8 +1,4 @@
-export interface Point3D {
-  x: number;
-  y: number;
-  z?: number;
-}
+import { Landmark } from "@/components/faceLandmarkDetection/types";
 
 /**
  * CẤU HÌNH SCALER TỪ PYTHON (StandardScaler)
@@ -37,7 +33,7 @@ const LR_COEFFICIENTS = [
 // Lấy giá trị này từ log_model.intercept_[0] trong Python
 const LR_INTERCEPT = 0.5; // Bạn hãy thay số đúng từ Python vào đây
 
-const distance2D = (p1: Point3D, p2: Point3D): number => {
+const distance2D = (p1: Landmark, p2: Landmark): number => {
   return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
 };
 
@@ -91,7 +87,7 @@ export class FocusFeatureExtractor {
   }
 
   public extractAndFormatForModel(
-    landmarks: Point3D[],
+    landmarks: Landmark[],
   ): { featuresRF: number[]; detailedFeatures: any } | null {
     if (!landmarks || landmarks.length < 478) return null;
 

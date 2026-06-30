@@ -1,15 +1,26 @@
 import { FocusFeatureExtractor } from "@/utils/FocusFeatureExtractor";
-import { Point3D, PoseState } from "@/utils/landmarkFeatures";
+import { PoseState } from "@/utils/landmarkFeatures";
 import { LinearGradient } from "expo-linear-gradient";
-import { CameraOff, RefreshCw, Scan, ShieldCheck } from "lucide-react-native";
+import {
+  CameraOff,
+  RefreshCw,
+  Scan,
+  ShieldCheck
+} from "lucide-react-native";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Modal, useWindowDimensions } from "react-native";
 import { LineChart } from "react-native-chart-kit";
+import RNOrientationDirector, {
+  useDeviceOrientation,
+} from "react-native-orientation-director";
 import { useCameraPermission } from "react-native-vision-camera";
 import { Button, Circle, Text, View, XStack, YStack, ZStack } from "tamagui";
 import { useFaceLandmarkDetection } from "../faceLandmarkDetection";
 import { MediapipeCamera } from "../faceLandmarkDetection/mediapipeCamera";
-import { RunningMode } from "../faceLandmarkDetection/types";
+import {
+  Landmark,
+  RunningMode
+} from "../faceLandmarkDetection/types";
 import { PauseAlertDialog } from "./PauseAlert";
 
 export interface SessionStats {
@@ -53,6 +64,13 @@ const FocusCameraComponent = ({
   const [weightedScore, setWeightedScore] = useState<number | null>(null);
   const [isCalibrating, setIsCalibrating] = useState<boolean>(true);
 
+  const deviceOrientation = useDeviceOrientation();
+  const deviceOrientationString = React.useMemo(() => {
+    return RNOrientationDirector.convertOrientationToHumanReadableString(
+      deviceOrientation,
+    );
+  }, [deviceOrientation]);
+
   const [previousPoseState, setPreviousPoseState] = useState<
     PoseState | undefined
   >(undefined);
@@ -72,7 +90,6 @@ const FocusCameraComponent = ({
 
   const loadModel = async () => {
     setIsLoadingModel(true);
-    await new Promise((resolve) => setTimeout(resolve, 200));
     try {
       const { calculateFocusScoreRF } = await import("@/utils/FocusModelRF");
 
@@ -171,7 +188,7 @@ const FocusCameraComponent = ({
   }, [sessionKey]);
 
   const onCameraFrame = useCallback(
-    (landmarks: Point3D[]) => {
+    (landmarks: Landmark[]) => {
       const result =
         featureExtractor.current.extractAndFormatForModel(landmarks);
 
@@ -276,26 +293,6 @@ const FocusCameraComponent = ({
 
   return (
     <YStack gap="$6">
-      <YStack gap="$2" paddingHorizontal="$2">
-        <XStack alignItems="center" gap="$2">
-          <View backgroundColor="#6750A4" padding="$1.5" borderRadius={8}>
-            <Scan size={16} color="white" />
-          </View>
-          <Text fontSize="$4" fontWeight="800" color="#1D1B20">
-            AI Focus Monitor
-          </Text>
-        </XStack>
-        <Text
-          fontSize="$2"
-          fontWeight="700"
-          color="#7A7582"
-          textTransform="uppercase"
-          letterSpacing={0.5}
-        >
-          MediaPipe Facial Tracking
-        </Text>
-      </YStack>
-
       <ZStack
         width="100%"
         height={cameraHeight}
@@ -310,7 +307,10 @@ const FocusCameraComponent = ({
           <MediapipeCamera
             solution={solution}
             activeCamera={facing}
-            style={{ width: "100%", height: "100%" }}
+            style={{
+              width: "100%",
+              height: "100%",
+            }}
             resizeMode="cover"
           />
         ) : (
@@ -347,6 +347,19 @@ const FocusCameraComponent = ({
                   ? "Đang Lấy Calibration..."
                   : "Monitoring Active"
                 : "AI Paused"}
+            </Text>
+          </XStack>
+          <XStack
+            backgroundColor="rgba(0, 0, 0, 0.6)"
+            paddingHorizontal="$3"
+            paddingVertical="$1.5"
+            borderRadius={100}
+            alignItems="center"
+            gap="$2"
+            alignSelf="flex-start"
+          >
+            <Text color="white" fontWeight="800" fontSize="$1">
+              Device: {deviceOrientationString}
             </Text>
           </XStack>
         </YStack>

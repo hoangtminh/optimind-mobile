@@ -1,10 +1,13 @@
 import { Redirect, useSegments } from "expo-router";
-import { ActivityIndicator, View } from "react-native";
-import * as ScreenOrientation from "expo-screen-orientation";
-import { useEffect } from "react";
 import { Drawer } from "expo-router/drawer";
+import RNOrientationDirector, {
+  Orientation,
+} from "react-native-orientation-director";
+import { useEffect } from "react";
+import { ActivityIndicator, View } from "react-native";
 
 import Sidebar from "@/components/app/sidebar";
+import { Image } from "tamagui";
 import { useAuth } from "../../../hooks/useAuth";
 
 export default function TabLayout() {
@@ -12,7 +15,7 @@ export default function TabLayout() {
   const segments = useSegments();
 
   useEffect(() => {
-    ScreenOrientation.unlockAsync();
+    RNOrientationDirector.lockTo(Orientation.portrait);
   }, []);
 
   if (isLoading) {
@@ -22,18 +25,16 @@ export default function TabLayout() {
           flex: 1,
           justifyContent: "center",
           alignItems: "center",
-          backgroundColor: "#1E1040",
+          backgroundColor: "#2D185C",
           gap: 20,
         }}
       >
-        <View
+        <Image
+          src={require("@/assets/images/icon.png")}
           style={{
-            width: 56,
-            height: 56,
-            borderRadius: 16,
-            backgroundColor: "#4F378A",
-            justifyContent: "center",
-            alignItems: "center",
+            width: 80,
+            height: 80,
+            borderRadius: 20,
           }}
         />
         <ActivityIndicator size="large" color="#BB86FC" />
