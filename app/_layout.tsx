@@ -4,14 +4,12 @@ import {
   Roboto_900Black,
   useFonts,
 } from "@expo-google-fonts/roboto";
-import {
-  DefaultTheme,
-  ThemeProvider
-} from "@react-navigation/native";
+import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import "@tamagui/native/setup-teleport";
 import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect } from "react";
+import { ReactNode, useEffect } from "react";
+import { ActivityIndicator, Image, View } from "react-native";
 import "react-native-reanimated";
 import { PortalProvider } from "react-native-teleport";
 import { PortalHost, TamaguiProvider } from "tamagui";
@@ -63,9 +61,53 @@ export default function RootLayout() {
   }, [loaded]);
 
   if (!loaded) {
-    return null;
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: "#2D185C",
+          gap: 20,
+        }}
+      >
+        <Image
+          source={require("../assets/images/icon.png")}
+          style={{ width: 100, height: 100, borderRadius: 24 }}
+        />
+        <ActivityIndicator size="large" color="#BB86FC" />
+      </View>
+    );
   }
 
+  return (
+    <AppProviders>
+      <RootLayoutNav />
+      <ToastContainer />
+    </AppProviders>
+  );
+}
+
+function NavigationThemeProvider({ children }: { children: ReactNode }) {
+  const { settings } = useSettings();
+  const CustomNavigationTheme = {
+    ...DefaultTheme,
+    colors: {
+      ...DefaultTheme.colors,
+      background: Theme.background,
+      card: Theme.surface,
+      text: Theme.text,
+      border: Theme.border,
+      notification: Theme.accentRedText,
+    },
+  };
+
+  return (
+    <ThemeProvider value={CustomNavigationTheme}>{children}</ThemeProvider>
+  );
+}
+
+function AppProviders({ children }: { children: ReactNode }) {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <KeyboardProvider>
@@ -73,10 +115,21 @@ export default function RootLayout() {
           <PortalProvider>
             <AuthProvider>
               <SettingsProvider>
-                <RootLayoutNav />
-                <ToastContainer />
+                <NavigationThemeProvider>
+                  <UserProvider>
+                    <ProjectProvider>
+                      <TaskProvider>
+                        <StudySessionProvider>
+                          <ChatProvider>
+                            {children}
+                            <PortalHost name="" />
+                          </ChatProvider>
+                        </StudySessionProvider>
+                      </TaskProvider>
+                    </ProjectProvider>
+                  </UserProvider>
+                </NavigationThemeProvider>
               </SettingsProvider>
-              <PortalHost name="" />
             </AuthProvider>
           </PortalProvider>
         </TamaguiProvider>
@@ -86,7 +139,6 @@ export default function RootLayout() {
 }
 
 function RootLayoutNav() {
-  const { settings } = useSettings();
   const { user, isLoading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
@@ -104,41 +156,11 @@ function RootLayoutNav() {
     }
   }, [user, segments, isLoading, router]);
 
-  const CustomNavigationTheme = {
-    ...DefaultTheme,
-    colors: {
-      ...DefaultTheme.colors,
-      background: Theme.background,
-      card: Theme.surface,
-      text: Theme.text,
-      border: Theme.border,
-      notification: Theme.accentRedText,
-    },
-  };
-
   return (
-    <ThemeProvider value={CustomNavigationTheme}>
-      <UserProvider>
-        <ProjectProvider>
-          <TaskProvider>
-            <StudySessionProvider>
-              <ChatProvider>
-                <Stack>
-                  <Stack.Screen
-                    name="(main)/(tabs)"
-                    options={{ headerShown: false }}
-                  />
-                  <Stack.Screen
-                    name="(auth)"
-                    options={{ headerShown: false }}
-                  />
-                  <Stack.Screen name="+not-found" />
-                </Stack>
-              </ChatProvider>
-            </StudySessionProvider>
-          </TaskProvider>
-        </ProjectProvider>
-      </UserProvider>
-    </ThemeProvider>
+    <Stack>
+      <Stack.Screen name="(main)/(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+      <Stack.Screen name="+not-found" />
+    </Stack>
   );
 }

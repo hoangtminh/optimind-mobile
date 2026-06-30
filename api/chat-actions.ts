@@ -18,10 +18,10 @@ export const chatActions = {
 		chatId: string,
 		userId: string,
 	): Promise<ApiResponse<any>> => {
-		return apiPost<any>(`/api/chats${chatId}/invite`, { userId });
+		return apiPost<any>(`/api/chats/${chatId}/invite`, { userId });
 	},
 	addMember: (chatId: string, userId: string): Promise<ApiResponse<any>> => {
-		return apiPost<any>(`/api/chats${chatId}/members`, { userId });
+		return apiPost<any>(`/api/chats/${chatId}/members`, { userId });
 	},
 	createChat: (
 		name: string,
@@ -35,5 +35,11 @@ export const chatActions = {
 	},
 	getChats: (): Promise<ApiResponse<ChatRoomResponse[]>> => {
 		return apiGet<ChatRoomResponse[]>(`/api/chats`);
+	},
+	getChatDetail: (chatId: string): Promise<ApiResponse<any>> => {
+		return apiGet<any>(`/api/chats/${chatId}`);
+	},
+	getChatMembers: (chatId: string): Promise<ApiResponse<any[]>> => {
+		return apiGet<any[]>(`/api/chats/${chatId}/members`);
 	},
 };

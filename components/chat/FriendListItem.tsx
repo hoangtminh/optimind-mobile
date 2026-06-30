@@ -15,10 +15,11 @@ interface FriendListItemProps {
 	friend: {
 		id: string;
 		name: string;
+		email: string;
 		isOnline?: boolean;
 	};
-	onPress?: () => void;
-	onMessagePress?: () => void;
+	onPress?: (email: string, username: string) => void;
+	onMessagePress?: (email: string, username: string) => void;
 }
 
 const FriendListItemComponent = ({
@@ -28,7 +29,7 @@ const FriendListItemComponent = ({
 }: FriendListItemProps) => {
 	return (
 		<StyledFriendCard
-			onPress={onPress}
+			onPress={() => onPress?.(friend.email, friend.name)}
 			backgroundColor={Theme.surface}
 			borderColor={Theme.border}
 			pressStyle={{ scale: 0.98, backgroundColor: Theme.primaryPastel }}
@@ -74,7 +75,7 @@ const FriendListItemComponent = ({
 				chromeless
 				onPress={(e) => {
 					e.stopPropagation();
-					onMessagePress?.();
+					onMessagePress?.(friend.email, friend.name);
 				}}
 				pressStyle={{ backgroundColor: Theme.background }}
 			/>

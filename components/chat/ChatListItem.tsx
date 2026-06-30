@@ -1,5 +1,4 @@
 import React from "react";
-import { useChat } from "@/contexts/ChatContext";
 import { useRouter } from "expo-router";
 import { LogOut, MoreVertical } from "lucide-react-native";
 import {
@@ -33,14 +32,15 @@ interface ChatListItemProps {
 		};
 	};
 	hasUnread?: boolean;
+	onLeave?: (chatId: string) => void;
 }
 
 const ChatListItemComponent = ({
 	chat,
 	hasUnread = false,
+	onLeave,
 }: ChatListItemProps) => {
 	const router = useRouter();
-	const { leaveChat, fetchChats } = useChat();
 
 	return (
 		<StyledCard
@@ -141,8 +141,9 @@ const ChatListItemComponent = ({
 							paddingVertical="$3"
 							onPress={async (e) => {
 								e.stopPropagation();
-								await leaveChat(chat.id);
-								await fetchChats();
+								if (onLeave) {
+									await onLeave(chat.id);
+								}
 							}}
 							pressStyle={{ backgroundColor: Theme.accentRed }}
 						>
@@ -159,5 +160,17 @@ const ChatListItemComponent = ({
 		</StyledCard>
 	);
 };
-export const ChatListItem = React.memo(ChatListItemComponent);
+export const ChatListItem = React.memo(
+	ChatListItemComponent,
+	(prevProps, nextProps) => {
+		return (
+			prevProps.hasUnread === nextProps.hasUnread &&
+			prevProps.chat.id === nextProps.chat.id &&
+			prevProps.chat.name === nextProps.chat.name &&
+			prevProps.chat.lastMessage?.content === nextProps.chat.lastMessage?.content &&
+			prevProps.chat.lastMessage?.createdAt === nextProps.chat.lastMessage?.createdAt &&
+			prevProps.onLeave === nextProps.onLeave
+		);
+	}
+);
 export default ChatListItem;

@@ -1,15 +1,16 @@
 import React from "react";
-import { Modal, ScrollView } from "react-native";
+import { Modal, ScrollView, ActivityIndicator } from "react-native";
 import { Avatar, Button, Text, View, XStack, YStack } from "tamagui";
 import { X } from "lucide-react-native";
 import { Theme } from "@/constants/Theme";
 import { FriendRequestResponse } from "@/api/friend-actions";
 
 interface SentRequestsModalProps {
-	isOpen: boolean;
-	onClose: () => void;
-	sentRequests: FriendRequestResponse[];
-	onWithdraw: (requestId: string) => void;
+  isOpen: boolean;
+  onClose: () => void;
+  sentRequests: FriendRequestResponse[];
+  onWithdraw: (requestId: string) => void;
+  isLoading?: boolean;
 }
 
 export const SentRequestsModal = React.memo(({
@@ -17,6 +18,7 @@ export const SentRequestsModal = React.memo(({
 	onClose,
 	sentRequests,
 	onWithdraw,
+	isLoading,
 }: SentRequestsModalProps) => {
 	return (
 		<Modal
@@ -66,71 +68,77 @@ export const SentRequestsModal = React.memo(({
 						/>
 					</XStack>
 
-					<ScrollView contentContainerStyle={{ padding: 20 }}>
-						<YStack gap="$3">
-							{sentRequests.map((req) => (
-								<XStack
-									key={req.id}
-									padding="$3"
-									backgroundColor={Theme.surfaceMuted}
-									borderRadius={8}
-									borderWidth={1}
-									borderColor={Theme.border}
-									alignItems="center"
-									justifyContent="space-between"
-								>
-									<XStack alignItems="center" gap="$3" flex={1}>
-										<Avatar circular size={48}>
-											<Avatar.Image
-												src={req.user.imageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(
-													req.user.username,
-												)}&background=${Theme.isDark ? "2A223A" : "F2EDFA"}&color=${
-													Theme.isDark ? "BB86FC" : "4F378A"
-												}&bold=true`}
-											/>
-											<Avatar.Fallback backgroundColor={Theme.primaryPastel} />
-										</Avatar>
-										<YStack flex={1}>
-											<Text
-												fontWeight="700"
-												color={Theme.text}
-												numberOfLines={1}
-											>
-												{req.user.username}
-											</Text>
+					{isLoading ? (
+						<View flex={1} justifyContent="center" alignItems="center" padding="$6">
+							<ActivityIndicator size="large" color={Theme.primary} />
+						</View>
+					) : (
+						<ScrollView contentContainerStyle={{ padding: 20 }}>
+							<YStack gap="$3">
+								{sentRequests.map((req) => (
+									<XStack
+										key={req.id}
+										padding="$3"
+										backgroundColor={Theme.surfaceMuted}
+										borderRadius={8}
+										borderWidth={1}
+										borderColor={Theme.border}
+										alignItems="center"
+										justifyContent="space-between"
+									>
+										<XStack alignItems="center" gap="$3" flex={1}>
+											<Avatar circular size={48}>
+												<Avatar.Image
+													src={req.user.imageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(
+														req.user.username,
+													)}&background=${Theme.isDark ? "2A223A" : "F2EDFA"}&color=${
+														Theme.isDark ? "BB86FC" : "4F378A"
+													}&bold=true`}
+												/>
+												<Avatar.Fallback backgroundColor={Theme.primaryPastel} />
+											</Avatar>
+											<YStack flex={1}>
+												<Text
+													fontWeight="700"
+													color={Theme.text}
+													numberOfLines={1}
+												>
+													{req.user.username}
+												</Text>
+												<Text
+													fontSize={12}
+													color={Theme.textMuted}
+													numberOfLines={1}
+												>
+													{req.user.email}
+												</Text>
+											</YStack>
+										</XStack>
+										<Button
+											size="$2"
+											backgroundColor={Theme.accentRed}
+											borderRadius={6}
+											height={36}
+											onPress={() => onWithdraw(req.id)}
+										>
 											<Text
 												fontSize={12}
-												color={Theme.textMuted}
-												numberOfLines={1}
+												fontWeight="700"
+												color={Theme.accentRedText}
 											>
-												{req.user.email}
+												Withdraw
 											</Text>
-										</YStack>
+										</Button>
 									</XStack>
-									<Button
-										size="$2"
-										backgroundColor={Theme.accentRed}
-										borderRadius={6}
-										height={36}
-										onPress={() => onWithdraw(req.id)}
-									>
-										<Text
-											fontSize={12}
-											fontWeight="700"
-											color={Theme.accentRedText}
-										>
-											Withdraw
-										</Text>
-									</Button>
-								</XStack>
-							))}
-							{sentRequests.length === 0 && (
-								<Text textAlign="center" color={Theme.textMuted} fontSize="$3" marginVertical="$4">
-									No pending sent requests.
-								</Text>
-							)}
-						</YStack>
-					</ScrollView>
+								))}
+								{sentRequests.length === 0 && (
+									<Text textAlign="center" color={Theme.textMuted} fontSize="$3" marginVertical="$4">
+										No pending sent requests.
+									</Text>
+								)}
+							</YStack>
+						</ScrollView>
+					)}
 
 					<View
 						padding="$4"

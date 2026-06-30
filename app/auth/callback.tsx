@@ -1,14 +1,16 @@
-import React, { useEffect, useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useAuth } from "../../hooks/useAuth";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuth } from "@/hooks/useAuth";
 import * as Linking from "expo-linking";
-import { Platform } from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, Platform, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function AuthCallbackScreen() {
   const router = useRouter();
-  const { code, state } = useLocalSearchParams<{ code?: string; state?: string }>();
+  const { code, state } = useLocalSearchParams<{
+    code?: string;
+    state?: string;
+  }>();
   const { signInWithGoogle } = useAuth();
   const [error, setError] = useState<string | null>(null);
 
@@ -37,7 +39,10 @@ export default function AuthCallbackScreen() {
 
       // Otherwise, we are on the web client itself. Process the login here.
       try {
-        const redirectUri = Platform.OS === "web" ? window.location.origin + "/auth/callback" : undefined;
+        const redirectUri =
+          Platform.OS === "web"
+            ? window.location.origin + "/auth/callback"
+            : undefined;
         await signInWithGoogle(code, redirectUri);
         if (active) {
           router.replace("/(main)/(tabs)/study");
@@ -67,14 +72,17 @@ export default function AuthCallbackScreen() {
           <>
             <Text style={styles.errorText}>Authentication Error</Text>
             <Text style={styles.subtitleText}>{error}</Text>
-            <Text style={styles.redirectText}>Redirecting back to Sign In...</Text>
+            <Text style={styles.redirectText}>
+              Redirecting back to Sign In...
+            </Text>
           </>
         ) : (
           <>
             <ActivityIndicator size="large" color="#6750a4" />
             <Text style={styles.titleText}>Signing you in</Text>
             <Text style={styles.subtitleText}>
-              {state && (state.startsWith("app://") || state.startsWith("exp://"))
+              {state &&
+              (state.startsWith("app://") || state.startsWith("exp://"))
                 ? "Connecting back to your mobile app..."
                 : "Please wait while we complete the Google authentication process..."}
             </Text>

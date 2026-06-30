@@ -1,3 +1,4 @@
+import React from "react";
 import { Avatar, Text, View, XStack, YStack } from "tamagui";
 import { Theme } from "@/constants/Theme";
 
@@ -17,7 +18,7 @@ interface MessageBubbleProps {
 	isLastInGroup: boolean;
 }
 
-export const MessageBubble = ({
+const MessageBubbleComponent = ({
 	message,
 	isSelf,
 	isFirstInGroup,
@@ -140,4 +141,24 @@ export const MessageBubble = ({
 		</XStack>
 	);
 };
+
+export const MessageBubble = React.memo(
+	MessageBubbleComponent,
+	(prevProps, nextProps) => {
+		return (
+			prevProps.isSelf === nextProps.isSelf &&
+			prevProps.isFirstInGroup === nextProps.isFirstInGroup &&
+			prevProps.isLastInGroup === nextProps.isLastInGroup &&
+			prevProps.message.id === nextProps.message.id &&
+			(prevProps.message.content || prevProps.message.text) ===
+				(nextProps.message.content || nextProps.message.text) &&
+			prevProps.message.createdAt === nextProps.message.createdAt &&
+			prevProps.message.author?.username ===
+				nextProps.message.author?.username &&
+			prevProps.message.author?.imageUrl ===
+				nextProps.message.author?.imageUrl
+		);
+	}
+);
+
 export default MessageBubble;
