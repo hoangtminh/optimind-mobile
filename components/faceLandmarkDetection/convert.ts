@@ -79,31 +79,35 @@ export function framePointToView(
   return result;
 }
 
+import { Orientation as RNOrientation } from "react-native-orientation-director";
+
 function getDegrees(orientation: ImageOrientation): number {
   switch (orientation) {
-    case "portrait":
+    case RNOrientation.portrait:
       return 0;
-    case "landscape-left":
+    case RNOrientation.landscapeLeft:
       return 90;
-    case "portrait-upside-down":
+    case RNOrientation.portraitUpsideDown:
       return 180;
-    case "landscape-right":
+    case RNOrientation.landscapeRight:
       return 270;
+    default:
+      return 0;
   }
 }
 
 function getOrientation(degrees: number): ImageOrientation {
   const clamped = (degrees + 360) % 360;
   if (clamped >= 315 || clamped <= 45) {
-    return "portrait";
+    return RNOrientation.portrait;
   } else if (clamped >= 45 && clamped <= 135) {
-    return "landscape-left";
+    return RNOrientation.landscapeLeft;
   } else if (clamped >= 135 && clamped <= 225) {
-    return "portrait-upside-down";
+    return RNOrientation.portraitUpsideDown;
   } else if (clamped >= 225 && clamped <= 315) {
-    return "landscape-right";
+    return RNOrientation.landscapeRight;
   } else {
-    throw new Error(`Invalid degrees! ${degrees}`);
+    return RNOrientation.portrait;
   }
 }
 
@@ -142,5 +146,9 @@ export class BaseViewCoordinator implements ViewCoordinator {
       this.resizeMode,
       this.mirrored,
     );
+  }
+  convertNormalizedPoint(p: Point): Point {
+    const rotated = rotateNormalizedPoint(p, this.rotation);
+    return this.mirrored ? { x: 1 - rotated.x, y: rotated.y } : rotated;
   }
 }

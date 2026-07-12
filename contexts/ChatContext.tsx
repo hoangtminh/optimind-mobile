@@ -52,6 +52,11 @@ interface ChatContextType {
   ) => Promise<string | undefined>;
   joinChatById: (chatId: string) => Promise<void>;
   fetchChats: () => Promise<void>;
+  editingMessage: ChatMessageResponse | null;
+  setEditingMessage: (message: ChatMessageResponse | null) => void;
+  updateMessage: (messageId: string, content: string) => Promise<void>;
+  deleteMessage: (messageId: string) => Promise<void>;
+  updateChatName: (chatId: string, newName: string) => Promise<void>;
 }
 
 export const ChatContext = createContext<ChatContextType | undefined>(
@@ -79,6 +84,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const stompClientRef = useRef<Client | null>(null);
   const activeChatIdRef = useRef<string | null>(null);
   const appStateRef = useRef(AppState.currentState);
+  const [editingMessage, setEditingMessage] = useState<ChatMessageResponse | null>(null);
 
   useEffect(() => {
     activeChatIdRef.current = activeChatId;
@@ -158,6 +164,10 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             client.subscribe(`/user/${user.id}/delete`, (message) => {
               const deletedId = message.body.replace(/"/g, "");
               setMessages((prev) => prev.filter((msg) => msg.id !== deletedId));
+            });
+
+            client.subscribe(`/user/${user.id}/chat-update`, (message) => {
+              fetchChats();
             });
           },
           onDisconnect: () => setIsConnected(false),
@@ -344,6 +354,37 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const updateMessage = async (messageId: string, content: string) => {
+    if (!activeChatId) return;
+    try {
+      const res = await chatActions.updateMessage(messageId, content, activeChatId);
+      if (res.success) {
+        setEditingMessage(null);
+      }
+    } catch (error) {
+      console.error("Failed to update message:", error);
+    }
+  };
+
+  const deleteMessage = async (messageId: string) => {
+    try {
+      await chatActions.deleteMessage(messageId);
+    } catch (error) {
+      console.error("Failed to delete message:", error);
+    }
+  };
+
+  const updateChatName = async (chatId: string, newName: string) => {
+    try {
+      const res = await chatActions.updateChat(chatId, newName);
+      if (res.success) {
+        await fetchChats();
+      }
+    } catch (error) {
+      console.error("Failed to update chat name:", error);
+    }
+  };
+
   const fetchChats = async () => {
     const res = await chatActions.getChats();
     if (res.success && res.data) {
@@ -369,6 +410,11 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         createChat,
         joinChatById,
         fetchChats,
+        editingMessage,
+        setEditingMessage,
+        updateMessage,
+        deleteMessage,
+        updateChatName,
       }}
     >
       {children}

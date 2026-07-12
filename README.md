@@ -102,6 +102,7 @@ Remove-Item -Force package-lock.json
    **Thêm các config, cấu hình cần thiết:**
    - android/gradle.properties
    - các thư viện native
+   - Bổ sung vào AndroidManifest.xml trong android/app/src/main <uses-permission android:name="android.permission.CAMERA"/>
 
 **Khởi động server phát triển và chạy trên Android**:
 

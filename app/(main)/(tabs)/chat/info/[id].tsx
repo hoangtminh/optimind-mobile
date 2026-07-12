@@ -6,23 +6,29 @@ import { useChat } from "@/contexts/ChatContext";
 import { useAuth } from "@/hooks/useAuth";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import {
-    BellOff,
-    Group,
-    LogOut,
-    Pin,
-    UserPlus,
-    Verified,
+  BellOff,
+  Edit2,
+  Group,
+  LogOut,
+  Pin,
+  UserPlus,
+  Verified,
 } from "lucide-react-native";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, ScrollView, Switch } from "react-native";
+import { ActivityIndicator, Modal, ScrollView, Switch } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Avatar, Button, Text, View, XStack, YStack } from "tamagui";
+import { Avatar, Button, Input, Text, View, XStack, YStack } from "tamagui";
 
 export default function ChatInfoScreen() {
   const router = useRouter();
   const { user: currentUser } = useAuth();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { leaveChat: leaveRoom, chats: rooms, fetchChats } = useChat();
+  const {
+    leaveChat: leaveRoom,
+    chats: rooms,
+    fetchChats,
+    updateChatName,
+  } = useChat();
 
   const chatRoom = rooms.find((r) => r.id === id);
   const [chatDetail, setChatDetail] = useState<any>(null);
@@ -96,6 +102,8 @@ export default function ChatInfoScreen() {
   const [isMuted, setIsMuted] = useState(false);
   const [isPinned, setIsPinned] = useState(true);
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
+  const [showRenameModal, setShowRenameModal] = useState(false);
+  const [newName, setNewName] = useState("");
 
   const handleLeaveChat = () => {
     setShowLeaveDialog(true);
@@ -174,15 +182,34 @@ export default function ChatInfoScreen() {
                     <Group size={14} color={Theme.primaryText} />
                   </View>
                 </View>
-                <Text
-                  fontSize="$7"
-                  fontWeight="700"
-                  textAlign="center"
+                <XStack
+                  alignItems="center"
+                  gap="$2"
+                  justifyContent="center"
                   marginBottom="$1"
-                  color={Theme.text}
                 >
-                  {chatRoom?.name || chatDetail?.name || "Chat Group"}
-                </Text>
+                  <Text
+                    fontSize="$7"
+                    fontWeight="700"
+                    textAlign="center"
+                    color={Theme.text}
+                  >
+                    {chatRoom?.name || chatDetail?.name || "Chat Group"}
+                  </Text>
+                  <Button
+                    icon={<Edit2 size={16} color={Theme.primary} />}
+                    circular
+                    chromeless
+                    size="$2"
+                    onPress={() => {
+                      setNewName(chatRoom?.name || chatDetail?.name || "");
+                      setShowRenameModal(true);
+                    }}
+                    pressStyle={{
+                      backgroundColor: Theme.primaryPastel,
+                    }}
+                  />
+                </XStack>
                 <Text color={Theme.textMuted} fontSize="$3" fontWeight="500">
                   Academic Sanctuary • {members.length} Members
                 </Text>
@@ -405,6 +432,97 @@ export default function ChatInfoScreen() {
         type="confirm"
         confirmText="Leave"
       />
+
+      {/* Rename Modal */}
+      <Modal
+        visible={showRenameModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowRenameModal(false)}
+      >
+        <View
+          flex={1}
+          justifyContent="center"
+          alignItems="center"
+          backgroundColor="rgba(29, 27, 32, 0.4)"
+          padding="$4"
+        >
+          <View
+            backgroundColor={Theme.surface}
+            width="100%"
+            maxWidth={400}
+            borderRadius={12}
+            borderWidth={1}
+            borderColor={Theme.border}
+            padding="$5"
+          >
+            <Text
+              fontSize="$5"
+              fontWeight="700"
+              color={Theme.text}
+              marginBottom="$4"
+            >
+              Rename Sanctuary
+            </Text>
+
+            <YStack gap="$1.5" marginBottom="$4">
+              <Text fontSize="$3" color={Theme.text} fontWeight="600">
+                New Name
+              </Text>
+              <Input
+                backgroundColor={Theme.background}
+                borderWidth={1}
+                borderColor={Theme.border}
+                color={Theme.text}
+                focusStyle={{ borderColor: Theme.primary }}
+                paddingHorizontal="$3.5"
+                height={44}
+                borderRadius={8}
+                value={newName}
+                onChangeText={setNewName}
+                placeholder="Enter new sanctuary name..."
+                placeholderTextColor={Theme.textMuted as any}
+                selectionColor={Theme.primary as any}
+              />
+            </YStack>
+
+            <XStack justifyContent="flex-end" gap="$3">
+              <Button
+                height={36}
+                borderRadius={6}
+                backgroundColor={Theme.background}
+                borderWidth={1}
+                borderColor={Theme.border}
+                onPress={() => setShowRenameModal(false)}
+                pressStyle={{ backgroundColor: Theme.border, scale: 0.98 }}
+              >
+                <Text color={Theme.textMuted} fontWeight="600">
+                  Cancel
+                </Text>
+              </Button>
+
+              <Button
+                height={36}
+                borderRadius={6}
+                backgroundColor={Theme.primary}
+                disabled={!newName.trim()}
+                opacity={!newName.trim() ? 0.6 : 1}
+                onPress={async () => {
+                  if (newName.trim() && id) {
+                    await updateChatName(id, newName.trim());
+                    setShowRenameModal(false);
+                  }
+                }}
+                pressStyle={{ scale: 0.98 }}
+              >
+                <Text color={Theme.primaryText} fontWeight="700">
+                  Save
+                </Text>
+              </Button>
+            </XStack>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }

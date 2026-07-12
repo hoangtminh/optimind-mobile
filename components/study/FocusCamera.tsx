@@ -1,25 +1,23 @@
 import { FocusFeatureExtractor } from "@/utils/FocusFeatureExtractor";
-import { PoseState } from "@/utils/landmarkFeatures";
 import { LinearGradient } from "expo-linear-gradient";
 import {
   CameraOff,
   RefreshCw,
   Scan,
-  ShieldCheck
+  ShieldCheck,
+  Smartphone,
 } from "lucide-react-native";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Modal, useWindowDimensions } from "react-native";
 import { LineChart } from "react-native-chart-kit";
-import RNOrientationDirector, {
-  useDeviceOrientation,
-} from "react-native-orientation-director";
 import { useCameraPermission } from "react-native-vision-camera";
 import { Button, Circle, Text, View, XStack, YStack, ZStack } from "tamagui";
 import { useFaceLandmarkDetection } from "../faceLandmarkDetection";
 import { MediapipeCamera } from "../faceLandmarkDetection/mediapipeCamera";
 import {
+  Delegate,
   Landmark,
-  RunningMode
+  RunningMode,
 } from "../faceLandmarkDetection/types";
 import { PauseAlertDialog } from "./PauseAlert";
 
@@ -63,17 +61,9 @@ const FocusCameraComponent = ({
   const [focusScore, setFocusScore] = useState<number | null>(null);
   const [weightedScore, setWeightedScore] = useState<number | null>(null);
   const [isCalibrating, setIsCalibrating] = useState<boolean>(true);
-
-  const deviceOrientation = useDeviceOrientation();
-  const deviceOrientationString = React.useMemo(() => {
-    return RNOrientationDirector.convertOrientationToHumanReadableString(
-      deviceOrientation,
-    );
-  }, [deviceOrientation]);
-
-  const [previousPoseState, setPreviousPoseState] = useState<
-    PoseState | undefined
-  >(undefined);
+  const [orientationLockMode, setOrientationLockMode] = useState<
+    "portrait" | "landscape"
+  >("portrait");
 
   const [modelLoaded, setModelLoaded] = useState(false);
   const [isLoadingModel, setIsLoadingModel] = useState(false);
@@ -87,6 +77,13 @@ const FocusCameraComponent = ({
   const cameraHeight = 320;
 
   const featureExtractor = useRef(new FocusFeatureExtractor());
+
+  const resetFocusCalibration = useCallback(() => {
+    featureExtractor.current.resetCalibration();
+    setIsCalibrating(true);
+    setFocusScore(null);
+    setWeightedScore(null);
+  }, []);
 
   const loadModel = async () => {
     setIsLoadingModel(true);
@@ -238,7 +235,10 @@ const FocusCameraComponent = ({
         results.results[0].faceLandmarks.length > 0 &&
         results.results[0].faceLandmarks[0]
       ) {
-        const faceLandmarks = results.results[0].faceLandmarks[0];
+        const faceLandmarks =
+          results.results[0].rawFaceLandmarks?.[0] ??
+          results.results[0].trackingFaceLandmarks?.[0] ??
+          results.results[0].faceLandmarks[0];
         lastFaceDetectedTimeRef.current = Date.now();
         onCameraFrame(faceLandmarks);
       }
@@ -258,6 +258,11 @@ const FocusCameraComponent = ({
       numFaces: 1,
       fpsMode: isCalibrating ? 5 : 1,
       mirrorMode: "mirror-front-only",
+      orientationMode: orientationLockMode,
+      minFaceDetectionConfidence: 0.3,
+      minFacePresenceConfidence: 0.3,
+      minTrackingConfidence: 0.3,
+      delegate: Delegate.GPU,
     },
   );
 
@@ -359,7 +364,8 @@ const FocusCameraComponent = ({
             alignSelf="flex-start"
           >
             <Text color="white" fontWeight="800" fontSize="$1">
-              Device: {deviceOrientationString}
+              Tracking:{" "}
+              {orientationLockMode === "portrait" ? "Cùng hướng" : "90°"}
             </Text>
           </XStack>
         </YStack>
@@ -371,6 +377,44 @@ const FocusCameraComponent = ({
           right={20}
           gap="$3"
         >
+          {/* Orientation Lock Button */}
+          <Button
+            circular
+            size="$4"
+            backgroundColor={
+              orientationLockMode === "portrait"
+                ? "rgba(103, 80, 164, 0.85)"
+                : "rgba(0, 137, 123, 0.85)"
+            }
+            pressStyle={{
+              scale: 0.9,
+              backgroundColor: "rgba(255,255,255,0.3)",
+            }}
+            onPress={() => {
+              setOrientationLockMode((prev) => {
+                const nextMode = prev === "portrait" ? "landscape" : "portrait";
+                console.log(
+                  "[FocusCamera] Tracking orientation mode changed to:",
+                  nextMode,
+                );
+                return nextMode;
+              });
+              resetFocusCalibration();
+            }}
+            icon={
+              <Smartphone
+                size={20}
+                color="white"
+                style={
+                  orientationLockMode === "landscape"
+                    ? { transform: [{ rotate: "90deg" }] }
+                    : undefined
+                }
+              />
+            }
+          />
+
+          {/* Calibration Button */}
           <Button
             circular
             size="$4"
@@ -380,13 +424,12 @@ const FocusCameraComponent = ({
               backgroundColor: "rgba(255,255,255,0.3)",
             }}
             onPress={() => {
-              featureExtractor.current.resetCalibration();
-              setIsCalibrating(true);
-              setFocusScore(null);
-              setWeightedScore(null);
+              resetFocusCalibration();
             }}
             icon={<Scan size={20} color="white" />}
           />
+
+          {/* Flip Camera Button */}
           <Button
             circular
             size="$4"
@@ -395,7 +438,10 @@ const FocusCameraComponent = ({
               scale: 0.9,
               backgroundColor: "rgba(255,255,255,0.3)",
             }}
-            onPress={() => setFacing(facing === "front" ? "back" : "front")}
+            onPress={() => {
+              setFacing((prev) => (prev === "front" ? "back" : "front"));
+              resetFocusCalibration();
+            }}
             icon={<RefreshCw size={20} color="white" />}
           />
         </XStack>

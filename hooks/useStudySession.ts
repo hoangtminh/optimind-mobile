@@ -22,23 +22,63 @@ export interface UseStudySessionResult {
 export function useStudySession(
   settings: UserSettings,
 ): UseStudySessionResult {
-  const { saveDetailedSession } = useStudySessions();
+  const { saveDetailedSession, addSession, updateSession } = useStudySessions();
 
   const [sessionStats, setSessionStats] = useState<SessionStats | null>(null);
   const [focusHistory, setFocusHistory] = useState<
     { score: number; timeElapsed: number }[]
   >([]);
   const [showCongratsModal, setShowCongratsModal] = useState(false);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
 
-  // Ref so the tick closure always has fresh values without being re-created.
+  // Refs so the tick/save closures always have fresh values without being re-created.
   const sessionStatsRef = useRef(sessionStats);
   const focusHistoryRef = useRef(focusHistory);
+  const currentSessionIdRef = useRef(currentSessionId);
+
   useEffect(() => {
     sessionStatsRef.current = sessionStats;
   }, [sessionStats]);
   useEffect(() => {
     focusHistoryRef.current = focusHistory;
   }, [focusHistory]);
+  useEffect(() => {
+    currentSessionIdRef.current = currentSessionId;
+  }, [currentSessionId]);
+
+  /** Asynchronously save the current session progress to the database */
+  const saveProgress = useCallback(async () => {
+    const sessionId = currentSessionIdRef.current;
+    const stats = sessionStatsRef.current;
+    if (!sessionId || !stats) return;
+
+    const history = focusHistoryRef.current;
+    const averageFocus =
+      history.length > 0
+        ? history.reduce((acc, curr) => acc + curr.score, 0) / history.length
+        : 0;
+
+    const focusData = history.map((item) => {
+      const startMs = new Date(stats.startTime).getTime();
+      return {
+        timestamp: new Date(startMs + item.timeElapsed * 1000).toISOString(),
+        focusLevel: item.score,
+      };
+    });
+
+    const updatedData = {
+      ...stats,
+      endTime: new Date().toISOString(),
+      averageFocus,
+      focusData,
+    };
+
+    try {
+      await updateSession(sessionId, updatedData);
+    } catch (err) {
+      console.error("Failed to auto-save study session progress", err);
+    }
+  }, [updateSession]);
 
   /** Accumulate stats and focus history on each 1-second timer tick. */
   const tickSession = useCallback(
@@ -58,30 +98,47 @@ export function useStudySession(
         const score = cameraActive ? currentFocusScore : 0;
         return [...prev, { score, timeElapsed }];
       });
+
+      // Auto-save progress every 15 seconds (about 10-20 seconds range)
+      const nextTotalTime = (sessionStatsRef.current?.totalTime ?? 0) + 1;
+      if (nextTotalTime > 0 && nextTotalTime % 15 === 0) {
+        saveProgress();
+      }
     },
-    [],
+    [saveProgress],
   );
 
-  /** Create a new session object when the timer starts for the first time. */
+  /** Create a new session object in the database when the timer starts for the first time. */
   const initSessionIfNeeded = useCallback(
     (timerRunning: boolean, currentCycle: number, sessionMode: string) => {
       if (!timerRunning || sessionStatsRef.current) return;
-      setSessionStats({
+      
+      const initialStats = {
         startTime: new Date().toISOString(),
-        endTime: "",
+        endTime: new Date().toISOString(),
         totalTime: 0,
         focusTime: 0,
         breakTime: 0,
         cycles: currentCycle,
         sessionType: sessionMode,
+        completed: false,
+      };
+
+      setSessionStats(initialStats);
+      
+      addSession(initialStats).then((createdSession) => {
+        if (createdSession?.id) {
+          setCurrentSessionId(createdSession.id);
+        }
       });
     },
-    [],
+    [addSession],
   );
 
   const handleSaveSession = useCallback(
     async (isCompletedSet: boolean) => {
       const stats = sessionStatsRef.current;
+      const sessionId = currentSessionIdRef.current;
       if (!stats) return;
 
       const finalStats = {
@@ -105,9 +162,13 @@ export function useStudySession(
         };
       });
 
-      await saveDetailedSession({ ...finalStats, averageFocus, focusData });
+      if (sessionId) {
+        await updateSession(sessionId, { ...finalStats, averageFocus, focusData });
+      } else {
+        await saveDetailedSession({ ...finalStats, averageFocus, focusData });
+      }
     },
-    [saveDetailedSession, settings.totalCycles],
+    [updateSession, saveDetailedSession, settings.totalCycles],
   );
 
   const handleSessionFinish = useCallback(async () => {
@@ -123,6 +184,7 @@ export function useStudySession(
   const resetSession = useCallback(() => {
     setSessionStats(null);
     setFocusHistory([]);
+    setCurrentSessionId(null);
   }, []);
 
   return {

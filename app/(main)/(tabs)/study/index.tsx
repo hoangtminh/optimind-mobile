@@ -24,7 +24,6 @@ import { Button, Text, XStack, YStack, styled } from "tamagui";
 import { useStudySession } from "@/hooks/useStudySession";
 import { formatTime, useStudyTimer } from "@/hooks/useStudyTimer";
 import RNOrientationDirector, {
-  useDeviceOrientation,
   Orientation,
 } from "react-native-orientation-director";
 
@@ -127,13 +126,6 @@ export default function StudyScreen() {
   );
 
   const showMiniBanner = activeTab === "camera" || activeTab === "tasks";
-
-  const deviceOrientation = useDeviceOrientation();
-  console.log(
-    RNOrientationDirector.convertOrientationToHumanReadableString(
-      deviceOrientation,
-    ),
-  );
 
   return (
     <SafeAreaView

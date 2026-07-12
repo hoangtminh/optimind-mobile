@@ -14,8 +14,13 @@ import { useAuth } from "../hooks/useAuth";
 interface StudySessionContextType {
   studySessions: StudySession[];
   isLoading: boolean;
-  addSession: (session: Partial<StudySession>) => Promise<void>;
-  updateSession: (id: string, session: Partial<StudySession>) => Promise<void>;
+  addSession: (
+    session: Partial<StudySession>,
+  ) => Promise<StudySession | undefined>;
+  updateSession: (
+    id: string,
+    session: Partial<StudySession>,
+  ) => Promise<StudySession | undefined>;
   deleteSession: (id: string) => Promise<void>;
   saveDetailedSession: (sessionData: any) => Promise<boolean>;
   refreshSessions: () => Promise<void>;
@@ -54,8 +59,11 @@ export const StudySessionProvider = ({ children }: { children: ReactNode }) => {
 
   const addSession = useCallback(async (session: Partial<StudySession>) => {
     const response = await studyActions.createSession(session);
-    if (response.success && response.data)
+    console.log(response);
+    if (response.success && response.data) {
       setStudySessions((prev) => [...prev, response.data!]);
+      return response.data;
+    }
   }, []);
 
   const updateSession = useCallback(
@@ -65,6 +73,7 @@ export const StudySessionProvider = ({ children }: { children: ReactNode }) => {
         setStudySessions((prev) =>
           prev.map((s) => (s.id === id ? response.data! : s)),
         );
+        return response.data;
       }
     },
     [],

@@ -22,7 +22,8 @@
       },
       "predictiveBackGestureEnabled": false,
       "softwareKeyboardLayoutMode": "resize",
-      "package": "com.anonymous.app"
+      "package": "com.anonymous.app",
+      "permissions": ["android.permission.CAMERA"]
     },
     "web": {
       "bundler": "metro",

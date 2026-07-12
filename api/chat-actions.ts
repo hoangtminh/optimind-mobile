@@ -1,5 +1,5 @@
 import { ChatMessageResponse, ChatRoomResponse } from "../lib/types/chat";
-import { apiGet, apiPost, ApiResponse } from "./client";
+import { apiGet, apiPost, apiPut, apiDelete, ApiResponse } from "./client";
 
 export const chatActions = {
 	getHistory: (
@@ -41,5 +41,26 @@ export const chatActions = {
 	},
 	getChatMembers: (chatId: string): Promise<ApiResponse<any[]>> => {
 		return apiGet<any[]>(`/api/chats/${chatId}/members`);
+	},
+	updateMessage: (
+		messageId: string,
+		text: string,
+		chatId: string,
+	): Promise<ApiResponse<any>> => {
+		return apiPut<any>(`/api/messages/${messageId}`, {
+			id: messageId,
+			text,
+			chatId,
+		});
+	},
+	deleteMessage: (messageId: string): Promise<ApiResponse<any>> => {
+		return apiDelete<any>(`/api/messages/${messageId}`);
+	},
+	updateChat: (
+		chatId: string,
+		name: string,
+		isPublic?: boolean,
+	): Promise<ApiResponse<any>> => {
+		return apiPut<any>(`/api/chats/${chatId}`, { name, isPublic });
 	},
 };

@@ -1,4 +1,10 @@
-import React from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from "react";
 import {
   NativeEventEmitter,
   NativeModules,
@@ -6,17 +12,17 @@ import {
   type LayoutChangeEvent,
 } from "react-native";
 import {
+  Orientation as RNOrientation,
+  useDeviceOrientation,
+} from "react-native-orientation-director";
+import {
   runAtTargetFps,
   useFrameProcessor,
   VisionCameraProxy,
   type CameraDevice,
   type Orientation,
 } from "react-native-vision-camera";
-import { useRunOnJS, useSharedValue } from "react-native-worklets-core";
-import RNOrientationDirector, {
-  useDeviceOrientation,
-  Orientation as RNOrientation,
-} from "react-native-orientation-director";
+import { useSharedValue } from "react-native-worklets-core";
 import { BaseViewCoordinator } from "./convert";
 import {
   Delegate,
@@ -24,12 +30,13 @@ import {
   type DetectionCallbacks,
   type DetectionCallbackState,
   type DetectionError,
-  type ImageOrientation,
   type Landmark,
   type MediaPipeSolution,
   type ResizeMode,
   type RunningMode,
 } from "./types";
+
+type OrientationMode = "auto" | "portrait" | "landscape";
 
 const { FaceLandmarkDetection } = NativeModules;
 const eventEmitter = new NativeEventEmitter(FaceLandmarkDetection);
@@ -92,6 +99,8 @@ interface Classifications {
 
 export interface FaceLandmarkerResult {
   faceLandmarks: Landmark[][];
+  rawFaceLandmarks?: Landmark[][];
+  trackingFaceLandmarks?: Landmark[][];
   faceBlendshapes: Classifications[];
   facialTransformationMatrixes: TransformMatrix[];
 }
@@ -106,18 +115,67 @@ export interface FaceLandmarkDetectionOptions {
   delegate: Delegate;
   mirrorMode: "no-mirror" | "mirror" | "mirror-front-only";
   fpsMode?: FpsMode;
+  orientationMode?: OrientationMode;
 }
 
-const detectorMap = new Map<
-  number,
-  DetectionCallbackState<FaceLandmarkDetectionResultBundle>
->();
+type FaceLandmarkCallbackState =
+  DetectionCallbackState<FaceLandmarkDetectionResultBundle> & {
+    trackingViewCoordinator: BaseViewCoordinator;
+  };
+
+const detectorMap = new Map<number, FaceLandmarkCallbackState>();
 
 eventEmitter.addListener(
   "onResults",
-  (args: { handle: number } & FaceLandmarkDetectionResultBundle) => {
+  (
+    args: {
+      handle: number;
+      orientation?: string;
+    } & FaceLandmarkDetectionResultBundle,
+  ) => {
     const callbacks = detectorMap.get(args.handle);
     if (callbacks) {
+      if (args.results) {
+        args.results = args.results.map((result) => {
+          if (result.faceLandmarks) {
+            return {
+              ...result,
+              rawFaceLandmarks: result.faceLandmarks,
+              trackingFaceLandmarks: result.faceLandmarks.map((landmarks) =>
+                landmarks.map((landmark) => {
+                  const converted =
+                    callbacks.trackingViewCoordinator.convertNormalizedPoint({
+                      x: landmark.x,
+                      y: landmark.y,
+                    });
+                  return {
+                    ...landmark,
+                    x: converted.x,
+                    y: converted.y,
+                  };
+                }),
+              ),
+              faceLandmarks: result.faceLandmarks.map((landmarks) =>
+                landmarks.map((landmark) => {
+                  const converted = callbacks.viewCoordinator
+                    .convertNormalizedPoint
+                    ? callbacks.viewCoordinator.convertNormalizedPoint({
+                        x: landmark.x,
+                        y: landmark.y,
+                      })
+                    : { x: landmark.x, y: landmark.y };
+                  return {
+                    ...landmark,
+                    x: converted.x,
+                    y: converted.y,
+                  };
+                }),
+              ),
+            };
+          }
+          return result;
+        });
+      }
       callbacks.onResults(args, callbacks.viewCoordinator);
     }
   },
@@ -139,34 +197,25 @@ export function useFaceLandmarkDetection(
   model: string,
   options?: Partial<FaceLandmarkDetectionOptions>,
 ): MediaPipeSolution {
-  const [detectorHandle, setDetectorHandle] = React.useState<
-    number | undefined
-  >();
-  const [cameraViewDimensions, setCameraViewDimensions] = React.useState<{
+  const [detectorHandle, setDetectorHandle] = useState<number | undefined>();
+  const [cameraViewDimensions, setCameraViewDimensions] = useState<{
     width: number;
     height: number;
   }>({ width: 1, height: 1 });
 
-  const outputOrientation = useSharedValue<Orientation>("portrait");
-  const frameOrientation = useSharedValue<Orientation>("portrait");
+  const outputOrientation = useSharedValue<RNOrientation>(
+    RNOrientation.portrait,
+  );
+  const displayFrameOrientation = useSharedValue<RNOrientation>(
+    RNOrientation.portrait,
+  );
+  const trackingFrameOrientation = useSharedValue<RNOrientation>(
+    RNOrientation.portrait,
+  );
 
   const deviceOrientation = useDeviceOrientation();
-  const currentOrientation = React.useMemo((): Orientation => {
-    switch (deviceOrientation) {
-      case RNOrientation.portrait:
-        return "portrait";
-      case RNOrientation.portraitUpsideDown:
-        return "portrait-upside-down";
-      case RNOrientation.landscapeLeft:
-        return "landscape-left";
-      case RNOrientation.landscapeRight:
-        return "landscape-right";
-      default:
-        return "portrait";
-    }
-  }, [deviceOrientation]);
 
-  const cameraViewLayoutChangeHandler = React.useCallback(
+  const cameraViewLayoutChangeHandler = useCallback(
     (event: LayoutChangeEvent) => {
       setCameraViewDimensions({
         height: event.nativeEvent.layout.height,
@@ -180,12 +229,10 @@ export function useFaceLandmarkDetection(
     options?.mirrorMode ??
     Platform.select({ android: "mirror-front-only", default: "no-mirror" });
 
-  const [cameraDevice, setCameraDevice] = React.useState<
-    CameraDevice | undefined
-  >();
-  const [resizeMode, setResizeMode] = React.useState<ResizeMode>("cover");
+  const [cameraDevice, setCameraDevice] = useState<CameraDevice | undefined>();
+  const [resizeMode, setResizeMode] = useState<ResizeMode>("cover");
 
-  const mirrored = React.useMemo((): boolean => {
+  const mirrored = useMemo((): boolean => {
     return (
       (mirrorMode === "mirror-front-only" &&
         cameraDevice?.position === "front") ||
@@ -193,12 +240,19 @@ export function useFaceLandmarkDetection(
     );
   }, [cameraDevice?.position, mirrorMode]);
 
-  const updateDetectorMap = React.useCallback(() => {
+  const updateDetectorMap = useCallback(() => {
     if (detectorHandle !== undefined) {
       const viewCoordinator = new BaseViewCoordinator(
         cameraViewDimensions,
         mirrored,
-        frameOrientation.value,
+        displayFrameOrientation.value,
+        outputOrientation.value,
+        resizeMode,
+      );
+      const trackingViewCoordinator = new BaseViewCoordinator(
+        cameraViewDimensions,
+        false,
+        trackingFrameOrientation.value,
         outputOrientation.value,
         resizeMode,
       );
@@ -206,34 +260,61 @@ export function useFaceLandmarkDetection(
         onResults: callbacks.onResults,
         onError: callbacks.onError,
         viewCoordinator,
+        trackingViewCoordinator,
       });
     }
   }, [
     cameraViewDimensions,
     detectorHandle,
-    frameOrientation.value,
+    displayFrameOrientation.value,
     mirrored,
     callbacks.onError,
     callbacks.onResults,
     outputOrientation.value,
     resizeMode,
+    trackingFrameOrientation.value,
   ]);
 
-  React.useEffect(() => {
-    outputOrientation.value = currentOrientation;
-    updateDetectorMap();
-  }, [currentOrientation, updateDetectorMap]);
+  const getTrackingFrameRNOrientation = useCallback(
+    (devOrient: RNOrientation, mode: OrientationMode) => {
+      if (mode === "portrait") {
+        return RNOrientation.portrait;
+      }
+      if (mode === "landscape") {
+        return RNOrientation.landscapeLeft;
+      }
+      return devOrient;
+    },
+    [],
+  );
 
-  React.useLayoutEffect(() => {
+  useEffect(() => {
+    const mode = options?.orientationMode ?? "auto";
+    outputOrientation.value = RNOrientation.portrait;
+    displayFrameOrientation.value =
+      mode === "auto" ? deviceOrientation : RNOrientation.portrait;
+    trackingFrameOrientation.value = getTrackingFrameRNOrientation(
+      deviceOrientation,
+      mode,
+    );
+    updateDetectorMap();
+  }, [
+    deviceOrientation,
+    options?.orientationMode,
+    updateDetectorMap,
+    getTrackingFrameRNOrientation,
+  ]);
+
+  useLayoutEffect(() => {
     updateDetectorMap();
   }, [updateDetectorMap]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     let newHandle: number | undefined;
     getFaceLandmarkDetectionModule()
       .createDetector(
         options?.numFaces ?? 1,
-        options?.minFaceDetectionConfidence ?? 0.5,
+        options?.minFaceDetectionConfidence ?? 0.4,
         options?.minFacePresenceConfidence ?? 0.5,
         options?.minTrackingConfidence ?? 0.5,
         model,
@@ -259,44 +340,56 @@ export function useFaceLandmarkDetection(
     options?.minTrackingConfidence,
   ]);
 
-  const updateDetectorMapFromWorklet = useRunOnJS(updateDetectorMap, [
-    updateDetectorMap,
-  ]);
-
   const frameProcessor = useFrameProcessor(
     (frame) => {
       "worklet";
-      if (frame.orientation !== frameOrientation.value) {
-        frameOrientation.value = frame.orientation;
-        updateDetectorMapFromWorklet();
-      }
-      const orientation: ImageOrientation = outputOrientation.value;
       const fpsMode = options?.fpsMode ?? "none";
 
-      if (fpsMode === "none") {
+      const processFrame = () => {
+        const orientationMode = options?.orientationMode ?? "auto";
+        let orientationStr: Orientation = "portrait";
+
+        if (orientationMode === "portrait") {
+          orientationStr =
+            deviceOrientation === 3 ? "portrait-upside-down" : "portrait";
+          console.log("portrait", orientationStr);
+        } else if (orientationMode === "landscape") {
+          orientationStr =
+            deviceOrientation === 2 ? "landscape-right" : "landscape-left";
+          console.log("landscape", orientationStr);
+        } else {
+          console.log("other");
+          switch (deviceOrientation) {
+            case 1:
+              orientationStr = "portrait";
+              break;
+            case 3:
+              orientationStr = "portrait-upside-down";
+              break;
+            case 4:
+              orientationStr = "landscape-left";
+              break;
+            case 2:
+              orientationStr = "landscape-right";
+              break;
+          }
+        }
+
         plugin?.call(frame, {
           detectorHandle,
-          orientation,
+          orientation: orientationStr,
         });
+      };
+      if (fpsMode === "none") {
+        processFrame();
       } else {
-        runAtTargetFps(fpsMode, () => {
-          plugin?.call(frame, {
-            detectorHandle,
-            orientation,
-          });
-        });
+        runAtTargetFps(fpsMode, processFrame);
       }
     },
-    [
-      detectorHandle,
-      frameOrientation,
-      options?.fpsMode,
-      outputOrientation.value,
-      updateDetectorMapFromWorklet,
-    ],
+    [detectorHandle, options?.fpsMode, deviceOrientation],
   );
 
-  return React.useMemo(
+  return useMemo(
     (): MediaPipeSolution => ({
       cameraViewLayoutChangeHandler,
       cameraDeviceChangeHandler: (d) => {
@@ -306,10 +399,6 @@ export function useFaceLandmarkDetection(
       cameraViewDimensions,
       frameProcessor,
     }),
-    [
-      cameraViewDimensions,
-      cameraViewLayoutChangeHandler,
-      frameProcessor,
-    ],
+    [cameraViewDimensions, cameraViewLayoutChangeHandler, frameProcessor],
   );
 }

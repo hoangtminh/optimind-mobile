@@ -5,6 +5,8 @@ import type {
 	ReadonlyFrameProcessor,
 } from "react-native-vision-camera";
 
+import { Orientation as RNOrientation } from "react-native-orientation-director";
+
 export type Dims = { width: number; height: number };
 export type Point = { x: number; y: number };
 export type RectXYWH = { x: number; y: number; width: number; height: number };
@@ -16,7 +18,7 @@ export type RectLTRB = {
 };
 export type ResizeMode = "cover" | "contain";
 
-export type ImageOrientation = Orientation;
+export type ImageOrientation = RNOrientation;
 
 export interface MediaPipeSolution {
   frameProcessor: ReadonlyFrameProcessor;
@@ -57,6 +59,7 @@ export interface DetectionResultBundle<TResult> extends FrameProcessInfo {
 export interface ViewCoordinator {
   getFrameDims: (info: FrameProcessInfo) => Dims;
   convertPoint: (frame: Dims, p: Point) => Point;
+  convertNormalizedPoint?: (p: Point) => Point;
 }
 
 export interface DetectionCallbacks<TResultBundle> {
@@ -86,25 +89,27 @@ export interface TransformMatrix {
   data: number[];
 }
 
-export function orientationToRotation(orientation: Orientation): number {
+export function orientationToRotation(orientation: ImageOrientation): number {
   switch (orientation) {
-    case "landscape-left":
+    case RNOrientation.landscapeLeft:
       return -90;
-    case "portrait":
+    case RNOrientation.portrait:
       return 0;
-    case "landscape-right":
+    case RNOrientation.landscapeRight:
       return 90;
-    case "portrait-upside-down":
+    case RNOrientation.portraitUpsideDown:
       return 180;
+    default:
+      return 0;
   }
 }
 
 export function dimsByOrientation(
-  orientation: Orientation,
+  orientation: ImageOrientation,
   width: number,
   height: number,
 ): Dims {
-  return orientation === "portrait" || orientation === "portrait-upside-down"
+  return orientation === RNOrientation.portrait || orientation === RNOrientation.portraitUpsideDown
     ? { width, height }
     : { width: height, height: width };
 }

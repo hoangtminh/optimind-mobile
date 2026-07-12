@@ -63,6 +63,7 @@ export const MediapipeCamera = forwardRef<Camera, MediapipeCameraProps>(
         frameProcessor={frameProcessor}
         onLayout={cameraViewLayoutChangeHandler}
         photo={false}
+        enableZoomGesture={true}
       />
     );
   },

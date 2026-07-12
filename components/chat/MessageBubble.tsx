@@ -1,6 +1,8 @@
 import React from "react";
+import { Alert } from "react-native";
 import { Avatar, Text, View, XStack, YStack } from "tamagui";
 import { Theme } from "@/constants/Theme";
+import { useChat } from "@/contexts/ChatContext";
 
 interface MessageBubbleProps {
 	message: {
@@ -24,6 +26,7 @@ const MessageBubbleComponent = ({
 	isFirstInGroup,
 	isLastInGroup,
 }: MessageBubbleProps) => {
+	const { setEditingMessage, deleteMessage } = useChat();
 	const content = message.content || message.text;
 	const date = new Date(message.createdAt || Date.now());
 	const isToday = new Date().toDateString() === date.toDateString();
@@ -46,6 +49,42 @@ const MessageBubbleComponent = ({
 	const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(
 		message.author?.username || "U",
 	)}&background=${Theme.isDark ? "2A223A" : "F2EDFA"}&color=${Theme.isDark ? "BB86FC" : "4F378A"}`;
+
+	const handleLongPress = () => {
+		if (!isSelf) return;
+
+		Alert.alert(
+			"Message Options",
+			"What would you like to do with this message?",
+			[
+				{
+					text: "Edit Message",
+					onPress: () => {
+						setEditingMessage(message as any);
+					},
+				},
+				{
+					text: "Delete Message",
+					style: "destructive",
+					onPress: () => {
+						Alert.alert(
+							"Delete Message",
+							"Are you sure you want to delete this message?",
+							[
+								{ text: "Cancel", style: "cancel" },
+								{
+									text: "Delete",
+									style: "destructive",
+									onPress: () => deleteMessage(message.id),
+								},
+							]
+						);
+					},
+				},
+				{ text: "Cancel", style: "cancel" },
+			]
+		);
+	};
 
 	return (
 		<XStack
@@ -114,6 +153,8 @@ const MessageBubbleComponent = ({
 								!isSelf && !isFirstInGroup ? 2 : 8
 							}
 							alignSelf={isSelf ? "flex-end" : "flex-start"}
+							onLongPress={handleLongPress}
+							pressStyle={isSelf ? { opacity: 0.8 } : undefined}
 						>
 							<Text
 								color={isSelf ? Theme.primaryText : Theme.text}
